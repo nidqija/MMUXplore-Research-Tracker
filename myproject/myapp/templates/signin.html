@@ -48,15 +48,28 @@
 <div class="container mt-5 p-5 ">
 <div class="card w-50 mx-auto" style="border:none; box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);border-radius: 20px;">
  
+  
   <div class="card-body">
-    <form class="container mb-5 mt-5" >
+    <form class="container mb-5 mt-5" method="post">
+      {% csrf_token %}
         <h3 class="mt-4">Sign In Account</h3>
         <p class="mt-4">Enter your details below</p>
+
+        {% if messages %}
+       {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+   {% endif %}
+
+
   <div class="mb-3 mt-4">
-    <input type="email" class="form-control" id="exampleInputEmail1" placeholder="email" aria-describedby="emailHelp">
+    <input type="email" class="form-control" name="email" id="exampleInputEmail1" placeholder="email" aria-describedby="emailHelp">
   </div>
   <div class="mb-3 mt-4">
-    <input type="password" class="form-control" placeholder="password" id="exampleInputPassword1">
+    <input type="password" class="form-control" name="password" placeholder="password" id="exampleInputPassword1">
   </div>
 
   <p class="mt-4 mb-4">Don't have an account <a href="/signup">sign up!</a></p>

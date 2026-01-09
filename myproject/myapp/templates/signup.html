@@ -47,25 +47,33 @@
 
 <div class="container mt-5 p-5 ">
 <div class="card w-50 mx-auto" style="border:none; box-shadow: 0 4px 8px 0 rgba(0, 0, 0, 0.2), 0 6px 20px 0 rgba(0, 0, 0, 0.19);border-radius: 20px;">
- 
   <div class="card-body">
-    <form class="container mb-5 mt-5" >
+    <form class="container mb-5 mt-5"  method="post" >
+       {% csrf_token %}
+
         <h3 class="mt-4">Sign Up Account</h3>
         <p class="mt-4">Enter your details below</p>
+
+      
+       
+
+    <div class="mb-3 mt-4">
+    <input type="text" class="form-control" name="fullname" id="exampleInputEmail1" placeholder="full name" aria-describedby="emailHelp">
+    </div>
+
   <div class="mb-3 mt-4">
-    <input type="text" class="form-control" id="exampleInputEmail1" placeholder="university id" aria-describedby="emailHelp">
+    <input type="text" class="form-control" name="university_id" id="exampleInputEmail1" placeholder="university id" aria-describedby="emailHelp">
   </div>
   <div class="mb-3 mt-4">
-    <input type="email" class="form-control" placeholder="email" id="exampleInputPassword1">
+    <input type="email" class="form-control" name="email" placeholder="email" id="exampleInputPassword1">
   </div>
     <div class="mb-3 mt-4">
-    <input type="password" class="form-control" placeholder="password" id="exampleInputPassword1">
+    <input type="password" class="form-control" name="password" placeholder="password" id="exampleInputPassword1">
   </div>
 
   <p class="mt-4 mb-4">Already have an account? <a href="/signin">Sign in!</a></p>
 
   <div class="text-center">
-
   <button type="submit" class="btn btn-danger w-50">Sign Up</button>
   </div>
 </form>
@@ -74,6 +82,10 @@
 </div>
 
 <!---------------------------------------------------------------------------------------------------------------------------------------------------------------------------->
+
+
+
+
   
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
 </body>

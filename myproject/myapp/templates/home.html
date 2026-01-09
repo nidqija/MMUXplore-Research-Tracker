@@ -31,13 +31,19 @@
     <a class="nav-link text-white" href="#">Inventory</a>
   </li>
   <li class="nav-item">
-    <a class="nav-link text-white" href="/signup">Sign Up</a>
+{% if user_name != 'Guest' %}
+  <a class="nav-link text-white" href="#">{{ user_name }}</a>
+{% else %}
+  <a class="nav-link text-white" href="/signup">Sign Up</a>
+{% endif %}
   </li>
 </ul>
   <form class="d-flex" role="search">
       <input class="form-control me-2" type="search" placeholder="What are you looking for?" aria-label="Search">
       <button class="btn btn-success" type="submit">Search</button>
     </form>
+    
+     
 </div>
 </nav>
 
