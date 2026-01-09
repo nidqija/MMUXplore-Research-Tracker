@@ -1,23 +1,16 @@
 from django.db import models
+from django.contrib.auth.models import AbstractUser
 
-# Create your models here.
+
+     # Create your models here.
 class User(models.Model):
-    username = models.CharField(max_length=150, unique=True)
-    email = models.EmailField(unique=True)
-    date_joined = models.DateTimeField(auto_now_add=True)
-
-    def __str__(self):
-         return self.username
-
-class Item(models.Model):
-     name = models.CharField(max_length=255)
-     description = models.TextField()
-     owner = models.ForeignKey(User, on_delete=models.CASCADE, related_name='items')
-     created_at = models.DateTimeField(auto_now_add=True)
-
-class AdminProfile(models.Model):
-     user = models.OneToOneField(User, on_delete=models.CASCADE)
-     is_superadmin = models.BooleanField(default=False)
+     fullname = models.CharField(max_length=150 , default='unknown')
+     university_id = models.CharField(max_length=50, unique=True , default='0000')
+     email = models.EmailField(unique=True , default='unknown@example.com')
+     password = models.CharField(max_length=250 , default='password')
+     date_joined = models.DateTimeField(auto_now_add=True )
 
      def __str__(self):
-         return f"Admin Profile for {self.user.username}"
+          return self.fullname
+
+
