@@ -1,4 +1,4 @@
-# Django Project Setup
+# MMU Xplore Research Paper Tracker Project 
 
 This guide will help you set up and run the Django project. Make sure you follow the steps carefully to ensure the project works correctly.
 
