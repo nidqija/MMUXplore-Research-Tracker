@@ -38,6 +38,9 @@ def researcher_home(request, user_id):
     }
 
     return render(request, 'researcher/researcher_home.html/', context)
+
+
+
 def user_signin(request):
 
     if request.method == 'POST':
@@ -65,7 +68,10 @@ def user_signin(request):
 
 
         
-        
+
+def research_paper_page(request):
+    user_name = request.session.get('user_name', 'Guest')
+    return render(request , 'researchpaper.html', {'user_name': user_name})      
 
   
 
