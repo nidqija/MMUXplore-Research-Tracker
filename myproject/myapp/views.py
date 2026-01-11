@@ -1,7 +1,7 @@
 
 from django.shortcuts import render, redirect
 from django.conf import settings
-from .models import User
+from .models import User,Researcher
 from django.contrib import messages
 
 
@@ -31,8 +31,13 @@ def user_signup(request):
        return render(request , 'signup.html')
       
 
+def researcher_home(request, user_id):
+    researcher = Researcher.objects.get(user_id=user_id)
+    context = {
+        'researcher': researcher
+    }
 
-
+    return render(request, 'researcher/researcher_home.html/', context)
 def user_signin(request):
 
     if request.method == 'POST':

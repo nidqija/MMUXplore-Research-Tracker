@@ -12,5 +12,12 @@ class User(models.Model):
 
      def __str__(self):
           return self.fullname
+     
+class Researcher(models.Model):
 
-
+     researcher_id = models.AutoField(primary_key=True)
+     user = models.ForeignKey(User, on_delete=models.CASCADE)
+     bio_description = models.TextField(blank=True)
+     OCRID = models.CharField(max_length=50, blank=True)
+     google_scholar_id = models.CharField(max_length=50, blank=True)
+     publications = models.TextField(blank=True)
