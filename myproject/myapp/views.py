@@ -1,7 +1,7 @@
 
 from django.shortcuts import render, redirect
 from django.conf import settings
-from .models import User,Researcher
+from .models import Admin, User,Researcher
 from django.contrib import messages
 
 
@@ -19,9 +19,19 @@ def user_signup(request):
            fullname = request.POST.get('fullname')
            university_id = request.POST.get('university_id')
            email = request.POST.get('email')
-           password = request.POST.get('password')       
-           user = User(fullname=fullname , university_id=university_id , email=email , password=password)
-           user.save()
+           password = request.POST.get('password')  
+
+           if  university_id.upper().startswith('MQA123') :
+               admin = Admin(user_name=fullname , email=email , password=password)
+               admin.save()
+               return redirect('/admin/admin_homepage/')
+
+           else :
+
+             user = User(fullname=fullname , university_id=university_id , email=email , password=password)
+             user.save()
+
+
            messages.success(request, 'Account created successfully. Please sign in.')
            return redirect('signin')
       
@@ -46,22 +56,48 @@ def user_signin(request):
     if request.method == 'POST':
         email = request.POST.get('email')
         password = request.POST.get('password')
+
+# Check for admin or user
+
+        admin = None
+        user = None
         
-        try:
-            user = User.objects.get(email=email)
+# try to get admin first , if not found then get user
+
+        try: 
+            admin = Admin.objects.get(email=email)
+
+        except Admin.DoesNotExist:
+
+# if not admin , get user
+
+            try: 
+              user = User.objects.get(email=email)
+
+            except User.DoesNotExist:
+                messages.error(request, "Invalid email or password. Please try again.")
+                return render(request, 'signin.html')
+            
 
         except User.DoesNotExist:
             messages.error(request, "Invalid email or password. Please try again.")
             return render(request, 'signin.html')
 
-        if user.password == password:
+
+        if admin and admin.password == password:
+            request.session['user_name'] = admin.user_name
+            messages.success(request, 'Admin Signed in successfully.')
+            return redirect('admin_homepage')
+           
+        if user and user.password == password:
             request.session['user_name'] = user.fullname
             messages.success(request, 'Signed in successfully.')
             return redirect('home')
-            
-        else:
-            messages.error(request , 'Invalid email or password. Please try again.')
-            return render(request , 'signin.html')
+        
+        
+        
+        messages.error(request , 'Invalid email or password. Please try again.')
+        return render(request , 'signin.html')
             
        
     return render(request , 'signin.html')
@@ -74,10 +110,15 @@ def research_paper_page(request):
     return render(request , 'researchpaper.html', {'user_name': user_name})      
 
   
-
+def admin_page(request):
+    user_name = request.session.get('user_name', 'Guest')
+    return render(request , 'adminguy/admin_homepage.html', {'user_name': user_name})
 
 
     
+def term_condition_page(request):
+    user_name = request.session.get('user_name', 'Guest')
+    return render(request , 'adminguy/term_condition_page.html', {'user_name': user_name})
 
 
 
