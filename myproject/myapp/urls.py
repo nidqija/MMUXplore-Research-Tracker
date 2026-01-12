@@ -8,4 +8,6 @@ urlpatterns = [
     path('signin/', views.user_signin, name='signin'),
     path('researcher/researcher_home/<int:user_id>/', views.researcher_home, name='researcher_home'),
     path('researchpaper/', views.research_paper_page, name='researchpaper'),
+    path('adminguy/admin_page/', views.admin_page, name='admin_homepage' ),
+    path('adminguy/term_condition_page/', views.term_condition_page, name='term_condition_page' ),
 ]
