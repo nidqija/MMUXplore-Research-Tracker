@@ -86,28 +86,101 @@
   <button class="btn btn-danger" type="button" id="button-addon2">Button</button>
 </div>
 
+    {% if messages %}
+       {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+   {% endif %}
+
 <div class="d-flex justify-content-end">
-    <button class="btn btn-primary " style="border-radius: 20px; background-color: blue; width: 200px;">Add +</button>
+  
+    <button class="btn btn-primary "  data-bs-toggle="modal" data-bs-target="#exampleModal" style="border-radius: 20px; background-color: blue; width: 200px;">Add +</button>
 </div>
-    <div class="card mb-5 mt-5">
-  <div class="card-body">
-    <h5>Manage Terms and Conditions</h5>
-    <p>lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-  </div>
+
+
+<div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="exampleModalLabel">Insert New Term and Condition</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+         <div class="mb-3">
+        
+          <form method="post">
+            {% csrf_token %}
+  <label for="exampleFormControlInput1" class="form-label">New Rules</label>
+  <input type="text" class="form-control" name="ruletitle"  placeholder="new rules">
 </div>
-<div class="card  mb-5 mt-5">
-  <div class="card-body">
-     <h5>Manage Terms and Conditions</h5>
-     <p>lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-  </div>
+<div class="mb-3">
+  <label for="exampleFormControlTextarea1" class="form-label">New Rule Description</label>
+  <textarea class="form-control" placeholder="huhu skibidi" name="ruledescription" rows="3"></textarea>
 </div>
-<div class="card  mb-5 mt-5">
-  <div class="card-body">
-     <h5>Manage Terms and Conditions</h5>
-     <p>lorem ipsum dolor sit amet, consectetur adipiscing elit.</p>
-  </div>
+<div class="mb-3">
+  <button type="submit"  class="btn btn-primary">Add</button>
+  </form>
 </div>
+      </div>
+     
     </div>
+  </div>
+</div>
+
+{% for term in view_terms %}
+  <div class="card mb-5 mt-5">
+  <div class="card-body">
+    <h5>{{ term.title }}</h5>
+    <p>{{ term.content }}</p>
+
+    <div class="d-flex justify-content-end">
+        <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#exampleModal2">Update</button>
+        <div class="modal fade" id="exampleModal2" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h1 class="modal-title fs-5" id="exampleModalLabel">Update Term and Condition</h1>
+        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+      </div>
+      <div class="modal-body">
+         <div class="mb-3">
+        
+          <form method="post" action="{% url 'update_term_condition' term.term_id %}">
+            {% csrf_token %}
+  <label for="exampleFormControlInput1" class="form-label">New Rules</label>
+  <input type="text" class="form-control" name="ruletitle"  placeholder="new rules" value="{{ term.title }}">
+</div>
+<div class="mb-3">
+  <label for="exampleFormControlTextarea1" class="form-label">New Rule Description</label>
+  <textarea class="form-control" placeholder="huhu skibidi" name="ruledescription" rows="3">{{ term.content }}</textarea>
+</div>
+<div class="mb-3">
+  <button type="submit"  class="btn btn-primary">Update</button>
+  <button type="submit"  class="btn btn-primary">Cancel</button>
+  </form>
+</div>
+      </div>
+     
+    </div>
+  </div>
+</div>
+        <form  action="{% url 'delete_term_condition' term.term_id %}" method="post">
+          {% csrf_token %}
+         <button class="btn btn-danger ms-2"  type="submit">Delete</button>
+        </form>
+    </div>
+
+  </div>
+  <div>
+  </div>
+     
+</div>
+ {% endfor %}
+    </div>
+
 </section>
     
 
