@@ -1,8 +1,9 @@
 
 from django.shortcuts import render, redirect
 from django.conf import settings
-from .models import Admin, User,Researcher
+from .models import Admin, User,Researcher , TermsAndConditions
 from django.contrib import messages
+from django.views.decorators.http import require_POST
 
 
 
@@ -116,10 +117,68 @@ def admin_page(request):
 
 
     
+#===================================== Terms and Conditions Page =====================================#
+
 def term_condition_page(request):
     user_name = request.session.get('user_name', 'Guest')
-    return render(request , 'adminguy/term_condition_page.html', {'user_name': user_name})
+    view_terms = TermsAndConditions.objects.all()
+
+
+    if request.method == 'POST':
+          ruletitle = request.POST.get('ruletitle')
+          ruledescription = request.POST.get('ruledescription')
+
+          if ruletitle and ruledescription :
+            new_term = TermsAndConditions(title=ruletitle, content=ruledescription)
+            new_term.save()
+
+            messages.success(request, 'New term and condition added successfully.')
+            return redirect('term_condition_page')
+    
+          else :
+            messages.error(request , 'Failed to add new term and condition. Please try again.')
+
+          return redirect('term_condition_page')
+
+    return render(request , 'adminguy/term_condition_page.html', {'user_name': user_name , 'view_terms': view_terms} )
+
+
+@require_POST
+def delete_term_condition(request, term_id):
+    try:
+        term = TermsAndConditions.objects.get(term_id=term_id)
+        term.delete()
+        messages.success(request, 'Term and condition deleted successfully.')
+    except TermsAndConditions.DoesNotExist:
+        messages.error(request, 'Term and condition not found.')
+
+    return redirect('term_condition_page')
+
+
+@require_POST
+def update_term_condition(request, term_id):
+
+    if request.method == 'POST':
+     try:
+        term = TermsAndConditions.objects.get(term_id=term_id)
+        new_title = request.POST.get('ruletitle')
+        new_content = request.POST.get('ruledescription')
+
+        if new_title and new_content :
+            term.title = new_title
+            term.content = new_content
+            term.save()
+            messages.success(request, 'Term and condition updated successfully.')
+
+        else:
+            messages.error(request , 'Failed to update term and condition. Please try again.')
+     
+     except TermsAndConditions.DoesNotExist:
+        messages.error(request, 'Term and condition not found.')
+        return redirect('term_condition_page')
+     
+    return redirect('term_condition_page')
 
 
 
-
+#==============================================================================================================#
