@@ -4,13 +4,30 @@ from django.conf import settings
 from .models import Admin, User,Researcher , TermsAndConditions
 from django.contrib import messages
 from django.views.decorators.http import require_POST
+from functools import wraps
 
+
+
+# function to check if user is admin
+
+def admin_required(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        user_name = request.session.get('user_name')
+        try:
+            admin = Admin.objects.get(user_name=user_name)
+            return view_func(request, *args, **kwargs)
+        except Admin.DoesNotExist:
+            messages.error(request, "You must be an admin to access this page.")
+            return redirect('signin')
+    return _wrapped_view
 
 
 
 def index(request):
     user_name = request.session.get('user_name', 'Guest')
     return render(request, 'home.html', {'user_name': user_name})
+
 
 
 
@@ -110,15 +127,16 @@ def research_paper_page(request):
     user_name = request.session.get('user_name', 'Guest')
     return render(request , 'researchpaper.html', {'user_name': user_name})      
 
-  
+
+@admin_required
 def admin_page(request):
     user_name = request.session.get('user_name', 'Guest')
     return render(request , 'adminguy/admin_homepage.html', {'user_name': user_name})
 
 
-    
 #===================================== Terms and Conditions Page =====================================#
 
+@admin_required
 def term_condition_page(request):
     user_name = request.session.get('user_name', 'Guest')
     view_terms = TermsAndConditions.objects.all()
@@ -153,6 +171,7 @@ def delete_term_condition(request, term_id):
         messages.error(request, 'Term and condition not found.')
 
     return redirect('term_condition_page')
+
 
 
 @require_POST
