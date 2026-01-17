@@ -23,13 +23,10 @@ def admin_required(view_func):
     return _wrapped_view
 
 
-
 def index(request):
     user_name = request.session.get('user_name', 'Guest')
     announcemnents = Announcements.objects.all()
     return render(request, 'home.html', {'user_name': user_name , 'announcemnents': announcemnents})
-
-
 
 
 def user_signup(request):
@@ -60,15 +57,31 @@ def user_signup(request):
        return render(request , 'signup.html')
       
 
+#==================================== Researcher Parts ====================================#
 def researcher_home(request, user_id):
     researcher = Researcher.objects.get(user_id=user_id)
     context = {
         'researcher': researcher
     }
 
-    return render(request, 'researcher/researcher_home.html/', context)
+    return render(request, 'researcher/researcher_home.html', context)
 
+def researcher_upload_page(request, user_id):
+    researcher = Researcher.objects.get(user_id=user_id)
+    context = {
+        'researcher': researcher
+    }
 
+    return render(request, 'researcher/researcher_upload_page.html', context)
+
+def researcher_profile(request, user_id):
+    researcher = Researcher.objects.get(user_id=user_id)
+    context = {
+        'researcher': researcher
+    }
+
+    return render(request, 'researcher/researcher_profile.html', context)
+#====================================Researcher Parts End ====================================#
 
 def user_signin(request):
 

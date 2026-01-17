@@ -29,5 +29,8 @@ pip install -r requirements.txt
 
 ```
 
+##4. Run server
+
+(.venv) PS C:\Users\deter\MyProjects\SEProject\MMUXplore-Research-Tracker\myproject> python manage.py runserver
 
 
