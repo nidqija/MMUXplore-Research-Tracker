@@ -1,7 +1,7 @@
 
 from django.shortcuts import render, redirect
 from django.conf import settings
-from .models import Admin, User,Researcher , TermsAndConditions
+from .models import Admin, User,Researcher , TermsAndConditions , Announcements
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from functools import wraps
@@ -25,7 +25,8 @@ def admin_required(view_func):
 
 def index(request):
     user_name = request.session.get('user_name', 'Guest')
-    return render(request, 'home.html', {'user_name': user_name})
+    announcemnents = Announcements.objects.all()
+    return render(request, 'home.html', {'user_name': user_name , 'announcemnents': announcemnents})
 
 
 def user_signup(request):
@@ -214,3 +215,27 @@ def update_term_condition(request, term_id):
 
 
 #==============================================================================================================#
+
+@admin_required
+def announcement_page(request):
+    user_name = request.session.get('user_name', 'Guest')
+    announcement_list = Announcements.objects.all()
+
+    if request.method == 'POST':
+         announcement_title = request.POST.get('announcementtitle')
+         announcement_description = request.POST.get('announcementdescription')
+         announcement_attachment = request.FILES.get('announcementattachment')
+
+         if announcement_title and announcement_description :
+             new_announcement = Announcements(announcement_title=announcement_title , announcement_desc=announcement_description , attachment=announcement_attachment)
+             new_announcement.save()
+             messages.success(request, "New announcement added successfully.")
+             return redirect('announcement_page')
+         
+         else:
+                messages.error(request , 'Failed to add new announcement. Please try again.')
+                return redirect('announcement_page')
+            
+    return render(request , 'adminguy/announcement_page.html', {'user_name': user_name , 'announcement_list': announcement_list} )
+
+
