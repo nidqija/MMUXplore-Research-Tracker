@@ -12,4 +12,5 @@ urlpatterns = [
     path('adminguy/term_condition_page/', views.term_condition_page, name='term_condition_page' ),
     path('adminguy/delete_term/<int:term_id>/', views.delete_term_condition, name='delete_term_condition' ),
     path('adminguy/update_term/<int:term_id>/', views.update_term_condition, name='update_term_condition' ),
+    path('adminguy/announcement_page/', views.announcement_page, name='announcement_page' ),
 ]

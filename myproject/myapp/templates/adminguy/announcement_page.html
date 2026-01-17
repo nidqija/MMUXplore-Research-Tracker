@@ -26,10 +26,10 @@
     <a class="nav-link text-white" href="/researchpaper">Papers</a>
   </li>
    <li class="nav-item">
-    <a class="nav-link text-white" href="/adminguy/announcement_page/" >Announcements</a>
+    <a class="nav-link " href="#" style="color: orange;">Announcements</a>
   </li>
     <li class="nav-item">
-    <a class="nav-link" href="/adminguy/term_condition_page"  style="color: orange;"  >T&C Management</a>
+    <a class="nav-link text-white" href="/adminguy/term_condition_page"  >T&C Management</a>
   </li>
     <li class="nav-item">
     <a class="nav-link text-white" href="#">Reports</a>
@@ -77,9 +77,9 @@
 
 <!---------------------------------------------------------------Terms and Condition Management Page Content--------------------------------------------------------------------------------------->
 
-<section id="term_condition_page" style="height: 700px;">
+<section id="announcement_page" style="min-height: 70vh;">
     <div class="container">
-    <h2 class="mt-5 mb-5 text-center">Terms and Condition Management</h2>
+    <h2 class="mt-5 mb-5 text-center">Announcements Management</h2>
     <hr class="my-4">
     <div class="input-group mb-3 p-3">
   <input type="text" class="form-control" placeholder="Search for terms and conditions" aria-label="Recipient's username" aria-describedby="button-addon2">
@@ -105,7 +105,7 @@
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h1 class="modal-title fs-5" id="exampleModalLabel">Insert New Term and Condition</h1>
+        <h1 class="modal-title fs-5" id="exampleModalLabel">Insert New Announcement</h1>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
@@ -113,12 +113,17 @@
         
           <form method="post">
             {% csrf_token %}
-  <label for="exampleFormControlInput1" class="form-label">New Rules</label>
-  <input type="text" class="form-control" name="ruletitle"  placeholder="new rules">
+  <label for="exampleFormControlInput1" class="form-label">New Announcement Title</label>
+  <input type="text" class="form-control" name="announcementtitle"  placeholder="new announcement title">
 </div>
 <div class="mb-3">
-  <label for="exampleFormControlTextarea1" class="form-label">New Rule Description</label>
-  <textarea class="form-control" placeholder="huhu skibidi" name="ruledescription" rows="3"></textarea>
+  <label for="exampleFormControlTextarea1" class="form-label">New Announcement Description</label>
+  <textarea class="form-control" placeholder="new announcement description" name="announcementdescription" rows="3"></textarea>
+</div>
+
+<div class="mb-3">
+  <label for="formFile" class="form-label">New Announcement Attachment</label>
+  <input class="form-control" type="file" id="formImage"  name="announcementattachment">
 </div>
 <div class="mb-3">
   <button type="submit"  class="btn btn-primary">Add</button>
@@ -130,12 +135,11 @@
   </div>
 </div>
 
-{% for term in view_terms %}
+{% for announcement in announcement_list %}
   <div class="card mb-5 mt-5">
   <div class="card-body">
-    <h5>{{ term.title }}</h5>
-    <p>{{ term.content }}</p>
-
+    <h5>{{ announcement.announcement_title }}</h5>
+    <p>{{ announcement.announcement_desc }}</p>
     <div class="d-flex justify-content-end">
         <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#exampleModal2">Update</button>
         <div class="modal fade" id="exampleModal2" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
@@ -148,7 +152,7 @@
       <div class="modal-body">
          <div class="mb-3">
         
-          <form method="post" action="{% url 'update_term_condition' term.term_id %}">
+          <form method="post" >
             {% csrf_token %}
   <label for="exampleFormControlInput1" class="form-label">New Rules</label>
   <input type="text" class="form-control" name="ruletitle"  placeholder="new rules" value="{{ term.title }}">
@@ -167,7 +171,7 @@
     </div>
   </div>
 </div>
-        <form  action="{% url 'delete_term_condition' term.term_id %}" method="post">
+        <form   method="post">
           {% csrf_token %}
          <button class="btn btn-danger ms-2"  type="submit">Delete</button>
         </form>
