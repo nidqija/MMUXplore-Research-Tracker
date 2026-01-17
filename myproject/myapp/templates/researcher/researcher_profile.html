@@ -1,0 +1,19 @@
+{% extends "researcher/base.html" %}
+
+{% block title %}Upload Research - MMU Xplore{% endblock %}
+
+{% block styles %}
+<style>
+
+</style>
+{% endblock %}
+
+{% block content %}
+<section>
+   <div>
+    <h2>Researcher Profile</h2>
+    <p><strong>Name:</strong> {{ researcher.user.fullname }}</p>
+    <p><strong>Email:</strong> {{ researcher.user.email }}</p>
+   </div>
+</section>
+{% endblock %}
