@@ -1,5 +1,7 @@
 from django.urls import path
 from . import views
+from django.conf import settings
+from django.conf.urls.static import static
 
 
 urlpatterns = [
@@ -18,4 +20,10 @@ urlpatterns = [
     path('adminguy/delete_term/<int:term_id>/', views.delete_term_condition, name='delete_term_condition' ),
     path('adminguy/update_term/<int:term_id>/', views.update_term_condition, name='update_term_condition' ),
     path('adminguy/announcement_page/', views.announcement_page, name='announcement_page' ),
+    path('adminguy/delete_announcement/<int:announcement_id>/', views.delete_announcement, name='delete_announcement' ),
 ]
+
+if settings.DEBUG:
+    urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
+
+    

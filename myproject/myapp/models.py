@@ -63,7 +63,7 @@ class Announcements(models.Model):
      announcement_id = models.AutoField(primary_key=True)
      announcement_title = models.CharField(max_length=200)
      announcement_desc = models.TextField()
-     attachment = models.FileField(upload_to='announcements/', blank=True, null=True)
+     attachment = models.FileField(upload_to='announcements_folder/', blank=True, null=True)
      date_posted = models.DateTimeField(auto_now_add=True)
 
      def __str__(self):

@@ -89,14 +89,16 @@
      <div class="row">
   <div class="col-sm-6">
     <div class="card" style="border:none;">
-        <img src="https://www.freepnglogos.com/uploads/android-logo-png/android-logo-integrations-support-web-development-services-14.png" alt="">
-     
+  {% if announcement.attachment %}
+    <img src="{{ announcement.attachment.url }}" class="card-img-top" alt="Announcement Image">
+  {% endif %}     
     </div>
   </div>
 
   
   <div class="col-sm-6">
     <div class="card  " style="border: none;">
+     
       <div class="card-body ">
         <h5 class="card-title">{{ announcement.announcement_title }}</h5>
         <p class="card-text">{{ announcement.announcement_desc }}</p>
