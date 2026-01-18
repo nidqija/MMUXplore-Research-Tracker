@@ -111,7 +111,7 @@
       <div class="modal-body">
          <div class="mb-3">
         
-          <form method="post">
+          <form method="post" enctype="multipart/form-data">
             {% csrf_token %}
   <label for="exampleFormControlInput1" class="form-label">New Announcement Title</label>
   <input type="text" class="form-control" name="announcementtitle"  placeholder="new announcement title">
@@ -137,6 +137,10 @@
 
 {% for announcement in announcement_list %}
   <div class="card mb-5 mt-5">
+   {% if announcement.attachment %}
+  <img src="{{ announcement.attachment.url }}" class="card-img-top" alt="Announcement Image">
+   {% endif %}
+
   <div class="card-body">
     <h5>{{ announcement.announcement_title }}</h5>
     <p>{{ announcement.announcement_desc }}</p>
@@ -171,9 +175,9 @@
     </div>
   </div>
 </div>
-        <form   method="post">
+        <form  action="{% url 'delete_announcement' announcement.announcement_id %}" method="post">
           {% csrf_token %}
-         <button class="btn btn-danger ms-2"  type="submit">Delete</button>
+         <button class="btn btn-danger ms-2"   type="submit">Delete</button>
         </form>
     </div>
 

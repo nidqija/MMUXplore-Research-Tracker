@@ -226,6 +226,7 @@ def announcement_page(request):
          announcement_description = request.POST.get('announcementdescription')
          announcement_attachment = request.FILES.get('announcementattachment')
 
+
          if announcement_title and announcement_description :
              new_announcement = Announcements(announcement_title=announcement_title , announcement_desc=announcement_description , attachment=announcement_attachment)
              new_announcement.save()
@@ -239,3 +240,17 @@ def announcement_page(request):
     return render(request , 'adminguy/announcement_page.html', {'user_name': user_name , 'announcement_list': announcement_list} )
 
 
+
+
+@require_POST
+def delete_announcement(request, announcement_id):
+    try:
+        announcement = Announcements.objects.get(announcement_id=announcement_id)
+        announcement.delete()
+        messages.success(request, 'Announcement deleted successfully.')
+    
+    except Announcements.DoesNotExist:
+        messages.error(request, 'Announcement not found.')
+
+
+    return redirect('announcement_page')
