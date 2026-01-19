@@ -1,19 +1,210 @@
 {% extends "researcher/base.html" %}
 
-{% block title %}Upload Research - MMU Xplore{% endblock %}
+{% block title %}My Profile - MMU Xplore{% endblock %}
 
 {% block styles %}
 <style>
+    .profile-container {
+        max-width: 900px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    /* Avatar Section */
+    .avatar-circle {
+        width: 150px;
+        height: 150px;
+        background-color: #e8fce8; /* Mint Green */
+        border-radius: 50%;
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        font-size: 3rem;
+        font-weight: 600;
+        color: #666;
+        text-transform: uppercase;
+        margin: 0 auto 20px auto;
+    }
+
+    /* Mode Toggling classes */
+    .hidden {
+        display: none !important;
+    }
+
+    /* View Mode Styles */
+    .view-field {
+        margin-bottom: 25px;
+    }
+    .view-label {
+        font-size: 0.85rem;
+        color: #888;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+        font-weight: 600;
+        margin-bottom: 5px;
+    }
+    .view-value {
+        font-size: 1.1rem;
+        color: #333;
+        font-weight: 500;
+        border-bottom: 1px solid #eee;
+        padding-bottom: 5px;
+    }
+    .view-value a {
+        color: #2a2a72;
+        text-decoration: none;
+    }
+
+    /* Edit Mode Styles (Inputs) */
+    .form-label {
+        font-weight: 600;
+        color: #444;
+        margin-bottom: 8px;
+    }
+    .custom-input {
+        background-color: #f8f9fa;
+        border: 1px solid #e0e0e0; /* Slight border for visibility */
+        border-radius: 6px;
+        padding: 10px 15px;
+        width: 100%;
+        margin-bottom: 20px;
+    }
+
+    /* Buttons */
+    .btn-edit {
+        background-color: #2a2a72;
+        color: white;
+        padding: 8px 30px;
+        border-radius: 20px;
+        border: none;
+        font-weight: 500;
+        transition: 0.2s;
+    }
+    .btn-edit:hover { background-color: #1f1f58; color: #fff; }
+
+    .btn-cancel {
+        background-color: #e0e0e0;
+        color: #333;
+        padding: 8px 30px;
+        border-radius: 20px;
+        border: none;
+        font-weight: 500;
+        margin-right: 10px;
+    }
+    .btn-save {
+        background-color: #28a745; /* Green for save */
+        color: white;
+        padding: 8px 30px;
+        border-radius: 20px;
+        border: none;
+        font-weight: 500;
+    }
+    .btn-save:hover { background-color: #218838; }
 
 </style>
 {% endblock %}
 
 {% block content %}
-<section>
-   <div>
-    <h2>Researcher Profile</h2>
-    <p><strong>Name:</strong> {{ researcher.user.fullname }}</p>
-    <p><strong>Email:</strong> {{ researcher.user.email }}</p>
-   </div>
-</section>
+<div class="profile-container">
+    
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h1 class="m-0">My Profile</h1>
+        <button id="editBtn" class="btn-edit" onclick="toggleEditMode(true)">
+            <i class="bi bi-pencil-fill"></i> Edit Profile
+        </button>
+    </div>
+    
+    <hr class="mb-5">
+
+    <div class="row">
+        <div class="col-md-4 text-center">
+            <div class="avatar-circle">
+                {{ user.first_name|slice:":1" }}{{ user.last_name|slice:":1" }}
+            </div>
+            <p class="text-muted">{{ user.email }}</p>
+        </div>
+
+        <div class="col-md-8">
+            
+            <form method="POST" >
+                {% csrf_token %}
+
+                <div id="viewMode">
+                    <div class="view-field">
+                        <div class="view-label">Full Name</div>
+                        <div class="view-value">{{ user.fullname|default:user.username }}</div>
+                    </div>
+
+                    <div class="view-field">
+                        <div class="view-label">Biography</div>
+                        <div class="view-value">
+                            {{ user.researcherprofile.biography|default:"No biography added yet."|linebreaksbr }}
+                        </div>
+                    </div>
+
+                    <div class="view-field">
+                        <div class="view-label">Field of Interest</div>
+                        <div class="view-value">{{ user.researcherprofile.field_of_interest|default:"-" }}</div>
+                    </div>
+
+                    <div class="view-field">
+                        <div class="view-label">Links</div>
+                        <div class="view-value">
+                            {% if user.researcherprofile.google_scholar_link %}
+                                <a href="{{ user.researcherprofile.google_scholar_link }}" target="_blank">Google Scholar Profile</a>
+                            {% else %}
+                                -
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+
+                <div id="editMode" class="hidden">
+                    
+                    <label class="form-label">First Name</label>
+                    <input type="text" name="first_name" class="custom-input" value="{{ user.first_name }}">
+                    
+                    <label class="form-label">Last Name</label>
+                    <input type="text" name="last_name" class="custom-input" value="{{ user.last_name }}">
+
+                    <label class="form-label">Biography</label>
+                    <textarea name="biography" class="custom-input" rows="4">{{ user.researcherprofile.biography }}</textarea>
+
+                    <label class="form-label">Field of Interest</label>
+                    <input type="text" name="field_of_interest" class="custom-input" value="{{ user.researcherprofile.field_of_interest }}">
+
+                    <label class="form-label">Google Scholar Link</label>
+                    <input type="url" name="google_scholar_link" class="custom-input" value="{{ user.researcherprofile.google_scholar_link }}">
+                    
+                    <label class="form-label">ORCID</label>
+                    <input type="text" name="orcid" class="custom-input" value="{{ user.researcherprofile.orcid }}">
+
+                    <div class="mt-4 text-end">
+                        <button type="button" class="btn-cancel" onclick="toggleEditMode(false)">Cancel</button>
+                        <button type="submit" class="btn-save">Update Profile</button>
+                    </div>
+                </div>
+
+            </form>
+            </div>
+    </div>
+</div>
+
+<script>
+    function toggleEditMode(enable) {
+        const viewMode = document.getElementById('viewMode');
+        const editMode = document.getElementById('editMode');
+        const editBtn = document.getElementById('editBtn');
+
+        if (enable) {
+            viewMode.classList.add('hidden');
+            editBtn.classList.add('hidden'); // Hide the top "Edit" button
+            editMode.classList.remove('hidden');
+        } else {
+            viewMode.classList.remove('hidden');
+            editBtn.classList.remove('hidden'); // Show the top "Edit" button
+            editMode.classList.add('hidden');
+        }
+    }
+</script>
 {% endblock %}

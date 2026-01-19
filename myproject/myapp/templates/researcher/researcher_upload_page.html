@@ -4,33 +4,224 @@
 
 {% block styles %}
 <style>
+    .upload-container {
+        max-width: 800px;
+        margin: 0 auto;
+        padding: 20px;
+        background-color: #fff;
+    }
 
+    h1 {
+        font-weight: 600;
+        margin-bottom: 30px;
+        color: #333;
+    }
+
+    /* Profile Section Styling */
+    .profile-summary {
+        background-color: #f1f3f5;
+        padding: 15px 20px;
+        border-radius: 8px;
+        margin-bottom: 30px;
+        border-left: 5px solid #2a2a72;
+    }
+
+    /* Custom Input Styling */
+    .form-label {
+        font-weight: 500;
+        margin-bottom: 8px;
+        color: #2c2c2c;
+        display: block;
+    }
+
+    .custom-input {
+        background-color: #f8f9fa;
+        border: none;
+        border-radius: 8px;
+        padding: 12px 15px;
+        width: 100%;
+        display: block;
+        box-sizing: border-box;
+    }
+
+    .custom-input:focus {
+        background-color: #fff;
+        box-shadow: 0 0 0 2px #3d3b8e;
+        outline: none;
+    }
+
+    textarea.custom-input {
+        resize: vertical;
+        min-height: 120px;
+    }
+
+    /* File Upload Zone */
+    .file-upload-wrapper {
+        background-color: #f8f9fa;
+        border-radius: 8px;
+        padding: 40px 20px;
+        text-align: center;
+        position: relative;
+        min-height: 200px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+        border: 2px dashed #dee2e6;
+        transition: all 0.3s;
+    }
+
+    .file-upload-wrapper:hover {
+        background-color: #f1f3f5;
+        border-color: #2a2a72;
+    }
+
+    .file-upload-text {
+        color: #999;
+        font-size: 0.9rem;
+        margin-top: 10px;
+    }
+
+    .btn-select-file {
+        position: absolute;
+        top: 15px;
+        right: 15px;
+        background-color: #fff;
+        border: 1px solid #dee2e6;
+        color: #333;
+        font-size: 0.8rem;
+        padding: 5px 15px;
+        border-radius: 6px;
+        cursor: pointer;
+        font-weight: 500;
+    }
+
+
+    .btn-search-inside {
+        position: absolute;
+        right: 10px;
+        top: 50%;
+        transform: translateY(-50%);
+        background-color: #fff;
+        border: none;
+        padding: 5px 15px;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        font-weight: 500;
+        color: #333;
+        box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        cursor: pointer;
+    }
+
+    /* Submit Button */
+    .btn-submit {
+        background-color: #2a2a72;
+        color: white;
+        padding: 12px 60px;
+        border-radius: 6px;
+        font-weight: 500;
+        border: none;
+        margin-top: 20px;
+        font-size: 1rem;
+        cursor: pointer;
+        transition: background 0.2s;
+    }
+
+    .btn-submit:hover {
+        background-color: #1f1f58;
+    }
+
+    /* Grid helpers */
+    .form-row {
+        display: flex;
+        gap: 20px;
+        margin-bottom: 1.5rem;
+    }
+    .form-col {
+        flex: 1;
+    }
+    
+    .mb-4 { margin-bottom: 1.5rem; }
+    .text-center { text-align: center; }
 </style>
 {% endblock %}
 
 {% block content %}
-<section>
-    <div class="container"></div>
-        <div class="row">
-            <div class="col-md-8 offset-md-2">
-                <h2 class="my-4">Upload Research Paper</h2>
-                <form method="post" enctype="multipart/form-data">
-                    {% csrf_token %}
-                    <div class="mb-3">
-                        <label for="title" class="form-label">Title</label>
-                        <input type="text" class="form-control" id="title" name="title" required>
-                    </div>
-                    <div class="mb-3">
-                        <label for="abstract" class="form-label">Abstract</label>
-                        <textarea class="form-control" id="abstract" name="abstract" rows="4" required></textarea>
-                    </div>
-                    <div class="mb-3">
-                        <label for="file" class="form-label">Select File</label>
-                        <input type="file" class="form-control" id="file" name="file" required>
-                    </div>
-                    <button type="submit" class="btn btn-primary">Upload</button>
-                </form>
+<section class="upload-container">
+
+
+    <h1>Upload Paper</h1>
+
+    <form action="" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        
+        <div class="mb-4">
+            <label for="paperTitle" class="form-label">Title</label>
+            <input type="text" name="title" class="custom-input" id="paperTitle" placeholder="Enter paper title" required>
+        </div>
+
+        <div class="mb-4">
+            <label for="paperAbstract" class="form-label">Abstract</label>
+            <textarea name="abstract" class="custom-input" id="paperAbstract" placeholder="Enter paper abstract"></textarea>
+        </div>
+
+        <div class="form-row">
+            <div class="form-col">
+                <label for="doi" class="form-label">DOI (Digital Object Identifier)</label>
+                <input type="text" name="doi" class="custom-input" id="doi" placeholder="e.g., 10.1000/xyz123">
+            </div>
+            <div class="form-col">
+                <label for="pubDate" class="form-label">Publication Date</label>
+                <input type="date" name="publication_date" class="custom-input" id="pubDate">
             </div>
         </div>
+
+        <div class="mb-4">
+            <label class="form-label">Paper Attachment</label>
+            <div class="file-upload-wrapper" id="dropZone">
+                <input type="file" name="pdf_file" id="fileInput" accept=".pdf" style="display: none;" onchange="updateFileName()">
+                <button type="button" class="btn-select-file" onclick="document.getElementById('fileInput').click()">select file</button>
+                <div class="file-upload-text" id="fileNameDisplay">
+                    must be in pdf format!
+                </div>
+            </div>
+        </div>
+
+
+        <div class="mb-4">
+            <label for="coAuthor" class="form-label">Co-Author</label>
+            <input type="text" name="co_author" class="custom-input" id="coAuthor" placeholder="Enter co-author names">
+        </div>
+
+
+
+
+            <div class="form-col">
+                <label for="pubType" class="form-label">Publication Type</label>
+                <select name="publication_type" class="custom-input" id="pubType">
+                    <option value="journal">Journal Article</option>
+                    <option value="conference">Conference Paper</option>
+                    <option value="thesis">Thesis</option>
+                    <option value="book_chapter">Book Chapter</option>
+                </select>
+            </div>
+
+        <div class="text-center">
+            <button type="submit" class="btn-submit">Submit</button>
+        </div>
+
+    </form>
 </section>
+
+<script>
+    function updateFileName() {
+        const input = document.getElementById('fileInput');
+        const display = document.getElementById('fileNameDisplay');
+        if (input.files.length > 0) {
+            display.textContent = "Selected: " + input.files[0].name;
+            display.style.color = "#333";
+            display.style.fontWeight = "bold";
+        }
+    }
+</script>
 {% endblock %}
