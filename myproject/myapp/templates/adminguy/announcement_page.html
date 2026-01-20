@@ -10,67 +10,7 @@
        <!----------------------------------------------------------------------Navbar component-------------------------------------------------------------------------------------->
 
 
-<nav class="navbar navbar-expand-lg" style="background-color: rgb(0, 0, 141);">
-    <div class="container p-2" >
-    <nav class="navbar " style="background-color: rgb(0, 0, 141);" >
-  <div class="container-fluid">
-    <a class="navbar-brand text-white"  href="#">MMU Xplore</a>
-  </div>
-</nav>
-  <ul class="nav justify-content-center">
-
-  <li class="nav-item">
-    <a class="nav-link text-white" href="/adminguy/admin_page/">Home </a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link text-white" href="/researchpaper">Papers</a>
-  </li>
-   <li class="nav-item">
-    <a class="nav-link " href="#" style="color: orange;">Announcements</a>
-  </li>
-    <li class="nav-item">
-    <a class="nav-link text-white" href="/adminguy/term_condition_page"  >T&C Management</a>
-  </li>
-    <li class="nav-item">
-    <a class="nav-link text-white" href="#">Reports</a>
-  </li>
-  <li class="nav-item">
-{% if user_name != 'Guest' %}
-  <a class="nav-link text-white"  data-bs-toggle="modal" data-bs-target="#staticBackdrop" href="#">{{ user_name }}</a>
-
-  <!-- Modal -->
-<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="staticBackdropLabel">Modal title</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        Welcome back, {{ user_name }}!
-        <br>
-        Would you like to edit your profile?
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary">Go to Profile Page</button>
-      </div>
-    </div>
-  </div>
-</div>
-{% else %}
-  <a class="nav-link text-white" href="/signup">Sign Up</a>
-{% endif %}
-  </li>
-</ul>
-  <form class="d-flex" role="search">
-      <input class="form-control me-2" type="search" placeholder="What are you looking for?" aria-label="Search">
-      <button class="btn btn-success" type="submit">Search</button>
-    </form>
-    
-     
-</div>
-</nav>
+{% include 'components/admin_navbar.html' %}
 
 <!--------------------------------------------------------------------------------------------------------------------------------------------------------------------->
 
@@ -136,113 +76,70 @@
 </div>
 
 {% for announcement in announcement_list %}
-  <div class="card mb-5 mt-5">
-   {% if announcement.attachment %}
-  <img src="{{ announcement.attachment.url }}" class="card-img-top" alt="Announcement Image">
-   {% endif %}
+<div class="card mt-5 mb-4 overflow-hidden"> <div class="row g-0 align-items-center">
+    
+    {% if announcement.attachment %}
+    <div class="col-md-4">
+      <img src="{{ announcement.attachment.url }}" class="img-fluid" alt="Announcement Image" style="object-fit: cover; height: 100%; min-height: 200px;">
+    </div>
+    {% endif %}
 
-  <div class="card-body">
-    <h5>{{ announcement.announcement_title }}</h5>
-    <p>{{ announcement.announcement_desc }}</p>
-    <div class="d-flex justify-content-end">
-        <button class="btn btn-primary" type="button" data-bs-toggle="modal" data-bs-target="#exampleModal2">Update</button>
-        <div class="modal fade" id="exampleModal2" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
+    <div class="{% if announcement.attachment %}col-md-8{% else %}col-12{% endif %}">
+      <div class="card-body">
+        <h5 class="card-title">{{ announcement.announcement_title }}</h5>
+        <p class="card-text text-muted">{{ announcement.announcement_desc }}</p>
+
+        <div class="d-flex justify-content-end mt-3">
+          <button class="btn btn-primary btn-sm me-2" type="button" data-bs-toggle="modal" data-bs-target="#updateModal-{{ announcement.announcement_id }}">
+            Update
+          </button>
+          
+          <form action="{% url 'delete_announcement' announcement.announcement_id %}" method="post">
+            {% csrf_token %}
+            <button class="btn btn-outline-danger btn-sm" type="submit">Delete</button>
+          </form>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="modal fade" id="updateModal-{{ announcement.announcement_id }}" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h1 class="modal-title fs-5" id="exampleModalLabel">Update Term and Condition</h1>
+        <h1 class="modal-title fs-5">Update Announcement</h1>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <div class="modal-body">
-         <div class="mb-3">
-        
-          <form method="post" >
-            {% csrf_token %}
-  <label for="exampleFormControlInput1" class="form-label">New Rules</label>
-  <input type="text" class="form-control" name="ruletitle"  placeholder="new rules" value="{{ term.title }}">
-</div>
-<div class="mb-3">
-  <label for="exampleFormControlTextarea1" class="form-label">New Rule Description</label>
-  <textarea class="form-control" placeholder="huhu skibidi" name="ruledescription" rows="3">{{ term.content }}</textarea>
-</div>
-<div class="mb-3">
-  <button type="submit"  class="btn btn-primary">Update</button>
-  <button type="submit"  class="btn btn-primary">Cancel</button>
-  </form>
-</div>
-      </div>
-     
+      <form method="post">
+        {% csrf_token %}
+        <div class="modal-body">
+          <div class="mb-3">
+            <label class="form-label">Title</label>
+            <input type="text" class="form-control" name="ruletitle" value="{{ announcement.announcement_title }}">
+          </div>
+          <div class="mb-3">
+            <label class="form-label">Description</label>
+            <textarea class="form-control" name="ruledescription" rows="3">{{ announcement.announcement_desc }}</textarea>
+          </div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Cancel</button>
+          <button type="submit" class="btn btn-primary">Save Changes</button>
+        </div>
+      </form>
     </div>
   </div>
 </div>
-        <form  action="{% url 'delete_announcement' announcement.announcement_id %}" method="post">
-          {% csrf_token %}
-         <button class="btn btn-danger ms-2"   type="submit">Delete</button>
-        </form>
-    </div>
-
-  </div>
-  <div>
-  </div>
-     
-</div>
- {% endfor %}
-    </div>
+{% endfor %}
 
 </section>
     
 
 <!---------------------------------------------------------------Footer Component----------------------------------------------------------------------------------------->
 
-  <section class="contact-us-page">
-      <div style="background-color:darkblue ;">
-        <div class="container">      
-       <div class="row text-center p-2 "> 
-  <div class="col-sm-4 mb-sm-0 ">
-    <div class="card mb-5 " style="background-color:transparent;border: none;" data-aos="fade-middle" data-aos-duration="1000">
-      <div class="card-body">
-        <h5 class="card-title mb-3" style=" color: white;">Support</h5>
-        <p class="card-text text-white" style="font-size:18px; font-weight: 100;">Manchester Metropolitan University <br> England</p>
-        <p class="card-text text-white" style="font-size:18px; font-weight: 100;">exclusive@gmail.com</p>
-        <p class="card-text text-white" style="font-size:18px; font-weight: 100;">+6012-3456789</p>
+ {% include 'components/footer.html' %}
 
-
-
-      </div>
-    </div>
-  </div>
-   <div class="col-sm-4 mb-3">
-    <div class="card" style="background-color:transparent;border: none;"data-aos="fade-middle" data-aos-duration="1000">
-      <div class="card-body">
-        <h5 class="card-title mb-3" style=" color: white;">Account</h5>
-          <p class="card-text text-white" style="font-size:18px; font-weight: 100;">My Account</p>
-          <p class="card-text text-white" style="font-size:18px; font-weight: 100;">Register</p>
-          <p class="card-text text-white" style="font-size:18px; font-weight: 100;">Login</p>
-          <p class="card-text text-white" style="font-size:18px; font-weight: 100;">Papers</p>
-          <p class="card-text text-white" style="font-size:18px; font-weight: 100;">Inventory</p>
-        
-      </div>
-    </div>
-  </div>
-  <div class="col-sm-4">
-    <div class="card" style="background-color:transparent;border: none;" data-aos="fade-middle" data-aos-duration="1000">
-      <div class="card-body">
-        <h5 class="card-title mb-3"  style=" color: white;">Quick Link</h5>
-          <p class="card-text text-white" style="font-size:18px; font-weight: 100;">Terms and Condition</p>
-          <p class="card-text text-white" style="font-size:18px; font-weight: 100;">FAQ</p>
-
-      </div>
-    </div>
-  </div>
-</div>
-      </div>
-    </section>
-
-     <section class="contact-us-page">
-      <div class="bg-danger">
-        <p style=" font-size:15px;" class="text-white p-2 text-center">copyright @ MMU Xplore</p>
-      </div>
-    </section>
 
 <!--------------------------------------------------------------------------------------------------------------------------------------------------------------------->
 

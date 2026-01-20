@@ -1,5 +1,7 @@
 from django.db import models
 from django.contrib.auth.models import AbstractUser
+from django.utils import timezone
+from datetime import timedelta
 
 
 # =================================== User Model ======================================== 
@@ -68,3 +70,8 @@ class Announcements(models.Model):
 
      def __str__(self):
           return self.announcement_title
+     
+     @property
+     def is_new(self):
+          return timezone.now() - self.date_posted <= timedelta(hours=24)
+     

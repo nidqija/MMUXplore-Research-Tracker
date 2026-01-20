@@ -25,8 +25,14 @@ def admin_required(view_func):
 
 def index(request):
     user_name = request.session.get('user_name', 'Guest')
-    announcemnents = Announcements.objects.all()
-    return render(request, 'home.html', {'user_name': user_name , 'announcemnents': announcemnents})
+    announcements = Announcements.objects.all().order_by('-date_posted') 
+
+    is_admin = False
+
+    if 'user_name' != 'Guest':
+        is_admin = Admin.objects.filter(user_name=user_name).exists()
+
+    return render(request, 'home.html', {'user_name': user_name , 'announcements': announcements, 'is_admin': is_admin})
 
 
 def user_signup(request):
@@ -139,7 +145,13 @@ def user_signin(request):
 
 def research_paper_page(request):
     user_name = request.session.get('user_name', 'Guest')
-    return render(request , 'researchpaper.html', {'user_name': user_name})      
+    is_admin = False
+
+    if 'user_name' != 'Guest':
+        is_admin = Admin.objects.filter(user_name=user_name).exists()
+
+
+    return render(request , 'researchpaper.html', {'user_name': user_name , 'is_admin': is_admin} )      
 
 
 @admin_required

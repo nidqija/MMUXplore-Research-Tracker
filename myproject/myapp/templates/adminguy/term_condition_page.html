@@ -10,67 +10,7 @@
        <!----------------------------------------------------------------------Navbar component-------------------------------------------------------------------------------------->
 
 
-<nav class="navbar navbar-expand-lg" style="background-color: rgb(0, 0, 141);">
-    <div class="container p-2" >
-    <nav class="navbar " style="background-color: rgb(0, 0, 141);" >
-  <div class="container-fluid">
-    <a class="navbar-brand text-white"  href="#">MMU Xplore</a>
-  </div>
-</nav>
-  <ul class="nav justify-content-center">
-
-  <li class="nav-item">
-    <a class="nav-link text-white" href="/adminguy/admin_page/">Home </a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link text-white" href="/researchpaper">Papers</a>
-  </li>
-   <li class="nav-item">
-    <a class="nav-link text-white" href="/adminguy/announcement_page/" >Announcements</a>
-  </li>
-    <li class="nav-item">
-    <a class="nav-link" href="/adminguy/term_condition_page"  style="color: orange;"  >T&C Management</a>
-  </li>
-    <li class="nav-item">
-    <a class="nav-link text-white" href="#">Reports</a>
-  </li>
-  <li class="nav-item">
-{% if user_name != 'Guest' %}
-  <a class="nav-link text-white"  data-bs-toggle="modal" data-bs-target="#staticBackdrop" href="#">{{ user_name }}</a>
-
-  <!-- Modal -->
-<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="staticBackdropLabel">Modal title</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        Welcome back, {{ user_name }}!
-        <br>
-        Would you like to edit your profile?
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary">Go to Profile Page</button>
-      </div>
-    </div>
-  </div>
-</div>
-{% else %}
-  <a class="nav-link text-white" href="/signup">Sign Up</a>
-{% endif %}
-  </li>
-</ul>
-  <form class="d-flex" role="search">
-      <input class="form-control me-2" type="search" placeholder="What are you looking for?" aria-label="Search">
-      <button class="btn btn-success" type="submit">Search</button>
-    </form>
-    
-     
-</div>
-</nav>
+{% include 'components/admin_navbar.html' %}
 
 <!--------------------------------------------------------------------------------------------------------------------------------------------------------------------->
 
@@ -186,55 +126,8 @@
 
 <!---------------------------------------------------------------Footer Component----------------------------------------------------------------------------------------->
 
-  <section class="contact-us-page">
-      <div style="background-color:darkblue ;">
-        <div class="container">      
-       <div class="row text-center p-2 "> 
-  <div class="col-sm-4 mb-sm-0 ">
-    <div class="card mb-5 " style="background-color:transparent;border: none;" data-aos="fade-middle" data-aos-duration="1000">
-      <div class="card-body">
-        <h5 class="card-title mb-3" style=" color: white;">Support</h5>
-        <p class="card-text text-white" style="font-size:18px; font-weight: 100;">Manchester Metropolitan University <br> England</p>
-        <p class="card-text text-white" style="font-size:18px; font-weight: 100;">exclusive@gmail.com</p>
-        <p class="card-text text-white" style="font-size:18px; font-weight: 100;">+6012-3456789</p>
+  {% include 'components/footer.html' %}
 
-
-
-      </div>
-    </div>
-  </div>
-   <div class="col-sm-4 mb-3">
-    <div class="card" style="background-color:transparent;border: none;"data-aos="fade-middle" data-aos-duration="1000">
-      <div class="card-body">
-        <h5 class="card-title mb-3" style=" color: white;">Account</h5>
-          <p class="card-text text-white" style="font-size:18px; font-weight: 100;">My Account</p>
-          <p class="card-text text-white" style="font-size:18px; font-weight: 100;">Register</p>
-          <p class="card-text text-white" style="font-size:18px; font-weight: 100;">Login</p>
-          <p class="card-text text-white" style="font-size:18px; font-weight: 100;">Papers</p>
-          <p class="card-text text-white" style="font-size:18px; font-weight: 100;">Inventory</p>
-        
-      </div>
-    </div>
-  </div>
-  <div class="col-sm-4">
-    <div class="card" style="background-color:transparent;border: none;" data-aos="fade-middle" data-aos-duration="1000">
-      <div class="card-body">
-        <h5 class="card-title mb-3"  style=" color: white;">Quick Link</h5>
-          <p class="card-text text-white" style="font-size:18px; font-weight: 100;">Terms and Condition</p>
-          <p class="card-text text-white" style="font-size:18px; font-weight: 100;">FAQ</p>
-
-      </div>
-    </div>
-  </div>
-</div>
-      </div>
-    </section>
-
-     <section class="contact-us-page">
-      <div class="bg-danger">
-        <p style=" font-size:15px;" class="text-white p-2 text-center">copyright @ MMU Xplore</p>
-      </div>
-    </section>
 
 <!--------------------------------------------------------------------------------------------------------------------------------------------------------------------->
 
