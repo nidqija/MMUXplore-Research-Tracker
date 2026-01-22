@@ -289,3 +289,11 @@ def delete_announcement(request, announcement_id):
 
 
     return redirect('announcement_page')
+
+
+def manage_users(request):
+    user_name = request.session.get('user_name', 'Guest')
+    users = User.objects.all()
+    total_users = users.count()
+    return render(request , 'adminguy/manage_users.html', {'user_name': user_name , 'users': users, 'total_users': total_users} )
+

@@ -21,6 +21,7 @@ urlpatterns = [
     path('adminguy/update_term/<int:term_id>/', views.update_term_condition, name='update_term_condition' ),
     path('adminguy/announcement_page/', views.announcement_page, name='announcement_page' ),
     path('adminguy/delete_announcement/<int:announcement_id>/', views.delete_announcement, name='delete_announcement' ),
+    path('adminguy/manage_users/', views.manage_users, name='manage_users' ),
 ]
 
 if settings.DEBUG:
