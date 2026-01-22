@@ -37,20 +37,38 @@ def index(request):
 
 def user_signup(request):
 
+   
       if request.method == 'POST':
            fullname = request.POST.get('fullname')
            university_id = request.POST.get('university_id')
            email = request.POST.get('email')
+           role = request.POST.get('role')
            password = request.POST.get('password')  
+
+           if not role:
+               messages.error(request , 'Please select a valid role.')
+               return render(request , 'signup.html')
 
            if  university_id.upper().startswith('MQA123') :
                admin = Admin(user_name=fullname , email=email , password=password)
                admin.save()
                return redirect('/admin/admin_homepage/')
+           
+           if role == 'researcher' :
+                user = User(fullname=fullname , university_id=university_id , email=email , password=password , role=role)
+                user.save()
+    
+                researcher_profile = Researcher(user=user)
+                researcher_profile.save()
+                return redirect('signin')
+           
+           
+           
+           
 
            else :
 
-             user = User(fullname=fullname , university_id=university_id , email=email , password=password)
+             user = User(fullname=fullname , university_id=university_id , email=email , password=password , role=role)
              user.save()
 
 
@@ -127,12 +145,17 @@ def user_signin(request):
             messages.success(request, 'Admin Signed in successfully.')
             return redirect('admin_homepage')
            
+       
+        
         if user and user.password == password:
             request.session['user_name'] = user.fullname
-            messages.success(request, 'Signed in successfully.')
-            return redirect('home')
-        
-        
+            if user.role == 'researcher' :
+                messages.success(request, 'Researcher Signed in successfully.')
+                return redirect('researcher_home' , user.id)
+            
+            elif user.role == 'student':
+                messages.success(request, 'Student Signed in successfully.')
+                return redirect('home')
         
         messages.error(request , 'Invalid email or password. Please try again.')
         return render(request , 'signin.html')
