@@ -297,3 +297,13 @@ def manage_users(request):
     total_users = users.count()
     return render(request , 'adminguy/manage_users.html', {'user_name': user_name , 'users': users, 'total_users': total_users} )
 
+
+
+def profile_page(request):
+
+
+    user_name = request.session.get('user_name', 'Guest')
+
+    user_data = User.objects.filter(fullname=user_name).first()
+
+    return render(request , 'profile_page.html', {'user_name': user_name, 'user_data': user_data} )

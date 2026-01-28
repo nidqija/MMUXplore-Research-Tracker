@@ -5,9 +5,13 @@ from django.conf.urls.static import static
 
 
 urlpatterns = [
+
+    # General URLs
     path('', views.index, name='home'),
     path('signup/', views.user_signup, name='signup'),
     path('signin/', views.user_signin, name='signin'),
+    path('profile/', views.profile_page, name='profile'),
+    
 
     #researcher URLs
     path('researcher/researcher_profile/<int:user_id>/', views.researcher_profile, name='researcher_profile'),
