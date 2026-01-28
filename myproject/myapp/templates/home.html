@@ -50,6 +50,9 @@
      {% if announcement.is_new %}
       <span class="badge bg-danger">New</span>
       {% endif %}
+
+      {% empty %}
+      <h5 class="text-center p-5" style="font-weight: 400;">There are no announcements available. Stay tuned for updates!</h5>      
       <div class="card-body ">
         <h5 class="card-title">{{ announcement.announcement_title }}</h5>
         <p class="card-text">{{ announcement.announcement_desc }}</p>
