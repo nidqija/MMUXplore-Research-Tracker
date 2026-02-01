@@ -8,13 +8,13 @@ from datetime import timedelta
 
 class User(models.Model):
      user_id = models.AutoField(primary_key=True)
-     fullname = models.CharField(max_length=150 , default='unknown')
+     fullname = models.CharField(max_length=150 , default='unknown' , blank=True)
      university_id = models.CharField(max_length=50, unique=True , default='0000')
      email = models.EmailField(unique=True , default='unknown@example.com')
      password = models.CharField(max_length=250 , default='password')
      role = models.CharField(max_length=50, default='student')
      date_joined = models.DateTimeField(auto_now_add=True )
-
+     
      def __str__(self):
           return self.fullname
 
