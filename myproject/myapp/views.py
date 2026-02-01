@@ -35,51 +35,47 @@ def index(request):
     return render(request, 'home.html', {'user_name': user_name , 'announcements': announcements, 'is_admin': is_admin})
 
 
+def user_avatar_register(request):
+    return render(request , 'user_avatar_register.html' )
+
+
 def user_signup(request):
+    if request.method == 'POST':
+        university_id = request.POST.get('university_id')
+        email = request.POST.get('email')
+        role = request.POST.get('role')
+        password = request.POST.get('password')
 
-   
-      if request.method == 'POST':
-           fullname = request.POST.get('fullname')
-           university_id = request.POST.get('university_id')
-           email = request.POST.get('email')
-           role = request.POST.get('role')
-           password = request.POST.get('password')  
+        if not role:
+            messages.error(request, 'Please select a valid role.')
+            return render(request, 'signup.html')
 
-           if not role:
-               messages.error(request , 'Please select a valid role.')
-               return render(request , 'signup.html')
+        # Handle Admin Logic
+        if university_id.upper().startswith('MQA123'):
+            admin = Admin(user_name=email, email=email, password=password)
+            admin.save()
+            return redirect('/admin/admin_homepage/')
 
-           if  university_id.upper().startswith('MQA123') :
-               admin = Admin(user_name=fullname , email=email , password=password)
-               admin.save()
-               return redirect('/admin/admin_homepage/')
-           
-           if role == 'researcher' :
-                user = User(fullname=fullname , university_id=university_id , email=email , password=password , role=role)
-                user.save()
-    
-                researcher_profile = Researcher(user=user)
-                researcher_profile.save()
-                return redirect('signin')
-           
-           
-           
-           
+        # Create the Base User first (for both Researcher and Student)
+        user = User.objects.create(
+            fullname='', 
+            university_id=university_id, 
+            email=email, 
+            password=password, 
+            role=role
+        )
 
-           else :
+        # Handle Role-Specific Profile Creation
+        if role == 'researcher':
+            Researcher.objects.create(user=user)
+        elif role == 'student':
+            # You might want to create a Student profile here too
+            pass
 
-             user = User(fullname=fullname , university_id=university_id , email=email , password=password , role=role)
-             user.save()
+        messages.success(request, 'Account created successfully. Please sign in.')
+        return redirect('avatar_register')
 
-
-           messages.success(request, 'Account created successfully. Please sign in.')
-           return redirect('signin')
-      
-
-      else :
-       messages.error(request , 'Invalid email or password. Please try again.')
-       return render(request , 'signup.html')
-      
+    return render(request, 'signup.html') 
 
 #==================================== Researcher Parts ====================================#
 def researcher_home(request, user_id):
