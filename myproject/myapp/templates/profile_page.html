@@ -22,7 +22,7 @@
     <div class="card" style="border: none;">
       <div class="card-body">
         <div class="d-flex justify-content-center">
-       <img height="350px" src="https://img.somake.ai/cdn-cgi/image/width=800,quality=80,format=auto,fit=scale-down/tools/gorilla-tag-pfp-maker_cover_1752634628_6094.jpg" alt="">
+       <img height="350px" width="200px" src="{{ user_data.avatar.url }}" alt="">
        </div>
       </div>
     </div>
@@ -48,25 +48,32 @@
     <div class="modal-content">
       <div class="modal-header">
         <h1 class="modal-title fs-5" id="exampleModalLabel">Edit Profile</h1>
+        <form action="{% url 'update_profile' %}" method="POST" enctype="multipart/form-data">
+          {% csrf_token %}
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
       <div class="modal-body">
         <div class="mb-3">
+  <label for="exampleFormControlInput1" class="form-label">Avatar</label>
+  <input type="file" class="form-control" id="exampleFormControlInput1" name="avatar" value="{{ user_data.avatar.url }}" >
+</div>
+   <div class="mb-3">
   <label for="exampleFormControlInput1" class="form-label">Full Name</label>
-  <input type="email" class="form-control" id="exampleFormControlInput1" value="{{ user_data.fullname }}" >
+  <input type="text" class="form-control" id="exampleFormControlInput1" name="fullname" value="{{ user_data.fullname }}" >
 </div>
 <div class="mb-3">
   <label for="exampleFormControlTextarea1" class="form-label">Email</label>
-  <textarea class="form-control" id="exampleFormControlTextarea1" rows="3">{{ user_data.email }}</textarea>
+  <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" name="email">{{ user_data.email }}</textarea>
 </div>
 <div class="mb-3 d-flex justify-content-end">
-  <a class="btn btn-primary" href=""> Update Profile </a>
+  <button type="submit" class="btn btn-primary"> Update Profile </button>
 </div>
       </div>
       <div class="modal-footer">
         <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary">Save changes</button>
+        <a href="{% url 'logout' %}"> <button type="button" class="btn btn-primary" >Log Out</button></a>
       </div>
+      </form>
     </div>
   </div>
 </div>

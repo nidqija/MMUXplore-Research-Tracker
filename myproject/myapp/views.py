@@ -36,7 +36,67 @@ def index(request):
 
 
 def user_avatar_register(request):
-    return render(request , 'user_avatar_register.html' )
+    if request.method == 'POST':
+        fullname = request.POST.get('fullname')
+        avatar = request.FILES.get('avatar')
+
+        # Retrieve the email we just stored in the signup view
+        temp_email = request.session.get('temp_user_email')
+        user = User.objects.filter(email=temp_email).first()
+
+        if user:
+            user.fullname = fullname
+            user.avatar = avatar
+            user.save()
+            
+            # Now that the profile is complete, set the main session
+            request.session['user_name'] = user.fullname
+            
+            # Clean up the temporary session
+            del request.session['temp_user_email']
+            
+            messages.success(request, 'Profile updated successfully.')
+            return redirect('home')
+        else:
+            messages.error(request, 'Session expired. Please sign up again.')
+            return redirect('user_signup')
+            
+    return render(request, 'user_avatar_register.html')
+
+
+def user_logout(request):
+    try:
+        del request.session['user_name']
+    except KeyError:
+        pass
+    messages.success(request, 'You have been logged out successfully.')
+    return redirect('home')
+
+
+def update_profile(request):
+    if request.method == 'POST':
+        fullname = request.POST.get('fullname')
+        avatar = request.FILES.get('avatar')
+
+        current_user_name = request.session.get('user_name')
+        user = User.objects.filter(fullname=current_user_name).first()
+
+        if user:
+            user.fullname = fullname
+            if avatar:
+                user.avatar = avatar
+            user.save()
+            
+            # Update session
+            request.session['user_name'] = user.fullname
+            
+            messages.success(request, 'Profile updated successfully.')
+            return redirect('profile')
+        else:
+            messages.error(request, 'User not found. Please sign in again.')
+            return redirect('signin')
+            
+    return render(request, 'update_profile.html')
 
 
 def user_signup(request):
@@ -50,13 +110,24 @@ def user_signup(request):
             messages.error(request, 'Please select a valid role.')
             return render(request, 'signup.html')
 
-        # Handle Admin Logic
+        # 1. Handle Admin Logic
         if university_id.upper().startswith('MQA123'):
-            admin = Admin(user_name=email, email=email, password=password)
-            admin.save()
-            return redirect('/admin/admin_homepage/')
+            admin = Admin.objects.create(
+                user_name=email, 
+                email=email, 
+                password=password
+            )
+            # Store admin session immediately
+            request.session['user_name'] = admin.user_name
+            messages.success(request, 'Admin account created.')
+            return redirect('admin_homepage')
 
-        # Create the Base User first (for both Researcher and Student)
+        # 2. Check if user already exists to prevent crashes
+        if User.objects.filter(email=email).exists():
+            messages.error(request, 'Email already registered.')
+            return render(request, 'signup.html')
+
+        
         user = User.objects.create(
             fullname='', 
             university_id=university_id, 
@@ -65,14 +136,16 @@ def user_signup(request):
             role=role
         )
 
-        # Handle Role-Specific Profile Creation
+      
         if role == 'researcher':
-            Researcher.objects.create(user=user)
+            Researcher.objects.create(user_id=user) #
         elif role == 'student':
-            # You might want to create a Student profile here too
             pass
 
-        messages.success(request, 'Account created successfully. Please sign in.')
+       
+        request.session['temp_user_email'] = email
+
+        messages.success(request, 'Account created! Now let\'s set up your profile.')
         return redirect('avatar_register')
 
     return render(request, 'signup.html') 
