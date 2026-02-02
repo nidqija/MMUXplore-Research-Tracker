@@ -70,14 +70,13 @@ class ResearchPaper(models.Model):
     paper_id = models.AutoField(primary_key=True)
     researcher_id = models.ForeignKey(Researcher, on_delete=models.CASCADE)
     prog_coor_id = models.ForeignKey(ProgrammeCoordinator, on_delete=models.SET_NULL, null=True, blank=True)
-    
     paper_title = models.CharField(max_length=250)
     paper_category = models.CharField(max_length=100)
     paper_desc = models.TextField()
     paper_doi = models.CharField(max_length=100, blank=True, verbose_name="DOI")
     paper_pdf = models.FileField(upload_to='research_papers/')
     paper_status = models.CharField(max_length=20, choices=PAPER_STATUS_CHOICES, default='Pending')
-    
+    paper_coauthor = models.ManyToManyField(User, related_name='coauthored_papers', blank=True)
     total_bookmarked = models.IntegerField(default=0)
     total_likes = models.IntegerField(default=0)
     
@@ -161,6 +160,17 @@ class Announcements(models.Model):
           return timezone.now() - self.date_posted <= timedelta(hours=24)
      
 
+
+class Submissions(models.Model):
+     submission_id = models.AutoField(primary_key=True)
+     paper_id = models.ForeignKey(ResearchPaper, on_delete=models.CASCADE)
+     submitted_at = models.DateTimeField(auto_now_add=True)
+     status = models.CharField(max_length=50, default='under review')
+
+     def __str__(self):
+          return f"Submission {self.submission_id} for Paper {self.paper_id.paper_title}"
+     
+
 class Violations(models.Model):
      violation_id = models.AutoField(primary_key=True)
      user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -171,13 +181,26 @@ class Violations(models.Model):
           return f"Violation {self.violation_id} by {self.user.fullname}"
      
 
-class Violation_User(models.Model):
-     violation_user_id = models.AutoField(primary_key=True)
-     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
-     violation_id = models.ForeignKey(Violations, on_delete=models.CASCADE)
-     date_recorded = models.DateTimeField(auto_now_add=True)
 
-     def __str__(self):
-          return f"User {self.user_id.fullname} - Violation {self.violation_id.violation_id}"
      
-     
+class Bookmarks(models.Model):
+    bookmark_id = models.AutoField(primary_key=True)
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    paper_id = models.ForeignKey(ResearchPaper, on_delete=models.CASCADE)
+    bookmarked_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Bookmark {self.bookmark_id} by {self.user_id.fullname} for {self.paper_id.paper_title}"
+    
+
+class Likes(models.Model):
+    like_id = models.AutoField(primary_key=True)
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
+    paper_id = models.ForeignKey(ResearchPaper, on_delete=models.CASCADE)
+    liked_at = models.DateTimeField(auto_now_add=True)
+
+    def __str__(self):
+        return f"Like {self.like_id} by {self.user_id.fullname} for {self.paper_id.paper_title}"
+    
+
+

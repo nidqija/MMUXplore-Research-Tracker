@@ -157,18 +157,18 @@
         
         <div class="mb-4">
             <label for="paperTitle" class="form-label">Title</label>
-            <input type="text" name="title" class="custom-input" id="paperTitle" placeholder="Enter paper title" required>
+            <input type="text" name="paper_title" class="custom-input" id="paperTitle" placeholder="Enter paper title" required>
         </div>
 
         <div class="mb-4">
             <label for="paperAbstract" class="form-label">Abstract</label>
-            <textarea name="abstract" class="custom-input" id="paperAbstract" placeholder="Enter paper abstract"></textarea>
+            <textarea name="paper_abstract" class="custom-input" id="paperAbstract" placeholder="Enter paper abstract"></textarea>
         </div>
 
         <div class="form-row">
             <div class="form-col">
                 <label for="doi" class="form-label">DOI (Digital Object Identifier)</label>
-                <input type="text" name="doi" class="custom-input" id="doi" placeholder="e.g., 10.1000/xyz123">
+                <input type="text" name="paper_doi" class="custom-input" id="doi" placeholder="e.g., 10.1000/xyz123">
             </div>
             <div class="form-col">
                 <label for="pubDate" class="form-label">Publication Date</label>
@@ -179,8 +179,8 @@
         <div class="mb-4">
             <label class="form-label">Paper Attachment</label>
             <div class="file-upload-wrapper" id="dropZone">
-                <input type="file" name="pdf_file" id="fileInput" accept=".pdf" style="display: none;" onchange="updateFileName()">
-                <button type="button" class="btn-select-file" onclick="document.getElementById('fileInput').click()">select file</button>
+                <input type="file" name="paper_pdf" id="fileInput" accept=".pdf" style="display: none;" onchange="updateFileName()">
+                <button type="button" class="btn-select-file"  onclick="document.getElementById('fileInput').click()">select file</button>
                 <div class="file-upload-text" id="fileNameDisplay">
                     must be in pdf format!
                 </div>
@@ -188,10 +188,14 @@
         </div>
 
 
-        <div class="mb-4">
-            <label for="coAuthor" class="form-label">Co-Author</label>
-            <input type="text" name="co_author" class="custom-input" id="coAuthor" placeholder="Enter co-author names">
-        </div>
+       <div class="mb-4">
+    <label for="coAuthor" class="form-label">Co-Authors</label>
+    <select name="paper_coauth" class="custom-input" id="coAuthor" multiple>
+        {% for user in all_users %}
+            <option value="{{ user.user_id }}">{{ user.fullname }} {{ user.email }}</option>
+        {% endfor %}
+    </select>
+</div>
 
 
 
