@@ -12,6 +12,8 @@ urlpatterns = [
     path('signin/', views.user_signin, name='signin'),
     path('profile/', views.profile_page, name='profile'),
     path('avatar_register/', views.user_avatar_register, name='avatar_register'),
+    path('update_profile/', views.update_profile, name='update_profile'),
+    path('logout/', views.user_logout, name='logout'),
     # End General URLs
 
     #researcher URLs

@@ -13,6 +13,7 @@ class User(models.Model):
      email = models.EmailField(unique=True , default='unknown@example.com')
      password = models.CharField(max_length=250 , default='password')
      role = models.CharField(max_length=50, default='student')
+     avatar = models.FileField(upload_to='profile/', blank=True, null=True)
      date_joined = models.DateTimeField(auto_now_add=True )
      
      def __str__(self):
