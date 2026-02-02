@@ -1,7 +1,7 @@
 
 from django.shortcuts import render, redirect
 from django.conf import settings
-from .models import Admin, User,Researcher , TermsAndConditions , Announcements
+from .models import Admin, ResearchPaper, Submissions, User,Researcher , TermsAndConditions , Announcements , Student
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from functools import wraps
@@ -140,7 +140,7 @@ def user_signup(request):
         if role == 'researcher':
             Researcher.objects.create(user_id=user) #
         elif role == 'student':
-            pass
+            Student.objects.create(user_id=user) #
 
        
         request.session['temp_user_email'] = email
@@ -161,9 +161,48 @@ def researcher_home(request, user_id):
 
 def researcher_upload_page(request, user_id):
     researcher = Researcher.objects.get(user_id=user_id)
+    all_users = User.objects.all().exclude(role='admin')
+
     context = {
-        'researcher': researcher
+        'researcher': researcher,
+        'all_users': all_users
     }
+
+
+
+        
+
+    if request.method == 'POST':
+        paper_title = request.POST.get('paper_title')
+        paper_abstract = request.POST.get('paper_abstract')
+        paper_file = request.FILES.get('paper_pdf')
+        paper_coauthor = request.POST.getlist('paper_coauth')
+
+
+
+        if paper_title and paper_abstract and paper_file:
+            new_paper = ResearchPaper(
+                researcher_id=researcher,
+                paper_title=paper_title,
+                paper_desc=paper_abstract,
+                paper_pdf=paper_file,
+                paper_status='pending'
+            )
+
+        
+            new_paper.save()
+
+
+            if paper_coauthor:
+                new_paper.paper_coauthor.set(paper_coauthor)
+
+            messages.success(request, 'Research paper uploaded successfully.')
+            return redirect('researcher_home', user_id=user_id)
+        else:
+            messages.error(request, 'All fields are required to upload a research paper.')
+
+
+       
 
     return render(request, 'researcher/researcher_upload_page.html', context)
 
@@ -177,61 +216,50 @@ def researcher_profile(request, user_id):
 #====================================Researcher Parts End ====================================#
 
 def user_signin(request):
-
     if request.method == 'POST':
         email = request.POST.get('email')
         password = request.POST.get('password')
 
-# Check for admin or user
-
-        admin = None
-        user = None
-        
-# try to get admin first , if not found then get user
-
-        try: 
-            admin = Admin.objects.get(email=email)
-
-        except Admin.DoesNotExist:
-
-# if not admin , get user
-
-            try: 
-              user = User.objects.get(email=email)
-
-            except User.DoesNotExist:
-                messages.error(request, "Invalid email or password. Please try again.")
+        # 1. Try to find an Admin first
+        admin = Admin.objects.filter(email=email).first()
+        if admin:
+            if admin.password == password:
+                request.session['user_name'] = admin.user_name
+                messages.success(request, 'Admin Signed in successfully.')
+                return redirect('admin_homepage')
+            else:
+                messages.error(request, "Invalid password.")
                 return render(request, 'signin.html')
-            
 
-        except User.DoesNotExist:
-            messages.error(request, "Invalid email or password. Please try again.")
-            return render(request, 'signin.html')
+        # 2. If not admin, try to find a User
+        user = User.objects.filter(email=email).first()
+        if user:
+            if user.password == password:
+                request.session['user_name'] = user.fullname
+                
+                if user.role == 'researcher':
+                    # Check if researcher profile exists
+                    try:
+                        researcher = Researcher.objects.get(user_id=user.user_id)
+                        messages.success(request, 'Researcher Signed in successfully.')
+                        # Redirect using the correct user_id field
+                        return redirect('researcher_home', user_id=user.user_id)
+                    except Researcher.DoesNotExist:
+                        messages.warning(request, "Researcher profile missing. Please contact admin.")
+                        return redirect('home')
 
+                elif user.role == 'student':
+                    messages.success(request, 'Student Signed in successfully.')
+                    return redirect('home')
+            else:
+                messages.error(request, "Invalid password.")
+                return render(request, 'signin.html')
 
-        if admin and admin.password == password:
-            request.session['user_name'] = admin.user_name
-            messages.success(request, 'Admin Signed in successfully.')
-            return redirect('admin_homepage')
-           
-       
-        
-        if user and user.password == password:
-            request.session['user_name'] = user.fullname
-            if user.role == 'researcher' :
-                messages.success(request, 'Researcher Signed in successfully.')
-                return redirect('researcher_home' , user.id)
-            
-            elif user.role == 'student':
-                messages.success(request, 'Student Signed in successfully.')
-                return redirect('home')
-        
-        messages.error(request , 'Invalid email or password. Please try again.')
-        return render(request , 'signin.html')
-            
-       
-    return render(request , 'signin.html')
+        # 3. If neither admin nor user found
+        messages.error(request, "Invalid email or password. Please try again.")
+        return render(request, 'signin.html')
 
+    return render(request, 'signin.html')
 
         
 
