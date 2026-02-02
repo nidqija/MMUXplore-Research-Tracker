@@ -153,11 +153,18 @@ def user_signup(request):
 #==================================== Researcher Parts ====================================#
 def researcher_home(request, user_id):
     researcher = Researcher.objects.get(user_id=user_id)
+    pending_count = ResearchPaper.objects.filter(researcher_id=researcher, paper_status='pending').count()
+    pending_papers = ResearchPaper.objects.filter(researcher_id=researcher, paper_status='pending')
+
+
     context = {
-        'researcher': researcher
+        'researcher': researcher ,
+        'pending_count': pending_count ,
+        'pending_papers': pending_papers
     }
 
     return render(request, 'researcher/researcher_home.html', context)
+
 
 def researcher_upload_page(request, user_id):
     researcher = Researcher.objects.get(user_id=user_id)
@@ -167,10 +174,6 @@ def researcher_upload_page(request, user_id):
         'researcher': researcher,
         'all_users': all_users
     }
-
-
-
-        
 
     if request.method == 'POST':
         paper_title = request.POST.get('paper_title')
@@ -208,12 +211,17 @@ def researcher_upload_page(request, user_id):
 
 def researcher_profile(request, user_id):
     researcher = Researcher.objects.get(user_id=user_id)
+    
+
     context = {
         'researcher': researcher
     }
 
     return render(request, 'researcher/researcher_profile.html', context)
 #====================================Researcher Parts End ====================================#
+
+
+
 
 def user_signin(request):
     if request.method == 'POST':
