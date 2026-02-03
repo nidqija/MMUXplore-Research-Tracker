@@ -1,36 +1,39 @@
-# MMU Xplore Research Paper Tracker Project 
+MMU Xplore Research Paper Tracker
+This guide details the steps to set up, configure, and run the MMU Xplore Research Paper Tracker project locally.
 
-This guide will help you set up and run the Django project. Make sure you follow the steps carefully to ensure the project works correctly.
+1. Clone the Repository
+Start by cloning the codebase to your local machine.
 
----
-
-## 1. Clone the Repository
-
-```bash
+Bash
 git clone <your-repo-url>
 cd <your-project-folder>
+2. Create & Activate Virtual Environment
+It is recommended to use a virtual environment to manage dependencies isolated from your system Python.
 
-```
-
-## 2. Set Up a Virtual Environment
-
-```bash
+Bash
+# Create the virtual environment
 python -m venv .venv
-source .venv/Scripts/activate  # On Windows
-# source .venv/bin/activate  # On macOS/Linux
 
-```
+# Activate the virtual environment
+# On Windows:
+source .venv/Scripts/activate
 
-## 3. Install Dependencies
+3. Install Dependencies
+Install the required Python packages listed in the requirements file.
 
-```bash
-
+Bash
 pip install -r requirements.txt
+4. Database Setup
+Before running the server, you must apply the database migrations. 
+Bash
+# Apply migrations to set up the database schema
+python manage.py migrate
 
-```
+Note: If you have made changes to the models.py files, run python manage.py makemigrations before running migrate.
 
-##4. Run server
+5. Run the Server
+Ensure you are in the directory containing manage.py and start the development server.
 
-(.venv) PS C:\Users\deter\MyProjects\SEProject\MMUXplore-Research-Tracker\myproject> python manage.py runserver
-
-
+Bash
+python manage.py runserver
+You can now access the project at http://127.0.0.1:8000/.
