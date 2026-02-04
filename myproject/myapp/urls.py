@@ -40,7 +40,7 @@ urlpatterns = [
     path('coordinator/coordinator_home/<int:user_id>/', views.coordinator_home, name='coordinator_home'),
     path('coordinator/researchpaper/', views.research_paper_page, name='research_paper_page'),
     path('coordinator/submissions/', views.submissions, name='coordinator_submissions'),
-    path('coordinator/submission_detail/<int:submission_id>/', views.submission_detail, name='submission_detail'),
+    path('coordinator/submission/submission_details/<int:submission_id>/', views.submission_detail, name='submission_detail'),
 
     
     #End Coordinator URLS

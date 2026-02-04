@@ -33,34 +33,68 @@
     <table class="table table-hover mt-4">
     <thead class="table-light">
         <tr>
-            <th>Submission ID</th> <th>Paper Title</th>
+            <th>Submission ID</th> <th>Paper Title</th> <th>Author</th>
             <th>Status</th>        <th>Submitted At</th>  <th>Action</th>
         </tr>
     </thead>
     <tbody>
-        {% for paper in submissions %}
-        <tr>
-            <td>{{ paper.paper_id }}</td>
-            <td>{{ paper.paper_title }}</td>
-            <td>
-                <span class="badge bg-warning text-dark">{{ paper.paper_status }}</span>
-            </td>
-            <td>{{ paper.last_updated|date:"d/m/Y H:i" }}</td>
-            <td>
-                <a href="{% url 'submission_detail' paper.paper_id %}" class="btn btn-sm btn-outline-primary">
-                    View Details
-                </a>
-            </td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="5" class="text-center py-4">No pending submissions found.</td>
-        </tr>
-        {% endfor %}
-    </tbody>
+    {% for submission in submissions %}
+    <tr>
+        <td>{{ submission.submission_id }}</td>
+        <td>{{ submission.paper_id.paper_title }}</td>
+        <td class="mb-1"><strong>Author:</strong> {{ submission.paper_id.researcher_id.user_id.fullname }}</td>
+        <td>
+            <span class="badge bg-warning text-dark">{{ submission.status }}</span>
+        </td>
+        <td>{{ submission.submitted_at|date:"d/m/Y H:i" }}</td>
+        <td>
+            <a href="{% url 'submission_detail' submission.submission_id %}" class="btn btn-sm btn-outline-primary">
+                View Details
+            </a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="5" class="text-center py-4">No pending submissions found.</td>
+    </tr>
+    {% endfor %}
+</tbody>
 </table>
 
 
+<h2 class="mb-4">Past Submissions</h2>
+<table class="table table-hover mt-4">
+    <thead class="table-light">
+        <tr>
+            <th>Submission ID</th> <th>Paper Title</th> <th>Author</th>
+            <th>Status</th>        <th>Last Updated</th>  <th>Action</th>
+        </tr>
+    </thead>
+    <tbody>
+    {% for submission in pastSubmissions %}
+    <tr>
+        <td>{{ submission.submission_id }}</td>
+        <td>{{ submission.paper_id.paper_title }}</td>
+        <td class="mb-1"><strong>Author:</strong> {{ submission.paper_id.researcher_id.user_id.fullname }}</td>
+        <td>
+            <span class="badge bg-warning text-dark">{{ submission.status }}</span>
+        </td>
+        <td>{{ submission.paper_id.last_updated }}</td>
+        <td>
+            <a href="{% url 'submission_detail' submission.submission_id %}" class="btn btn-sm btn-outline-primary">
+                View Details
+            </a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="5" class="text-center py-4">No past submissions found.</td>
+    </tr>
+    {% endfor %}
+</tbody>
+</table>
+
+</div>
 
 
 

@@ -122,23 +122,30 @@
                     </div>
 
                     <div class="tags mb-4">
-                        <span class="me-3">FCI</span>
-                        <span class="me-3">{{ paper.paper_category }}</span>
-                        <span class="me-3">Conference Paper</span>
+                        <span class="me-3">FACULTY PLACEHOLDER</span>
+                        <span class="me-3" >{{ paper.paper_category }}</span>
+                        
                     </div>
 
                     <div class="mb-5">
                         <span class="text-muted">Date Submitted</span><br>
                         <strong>{{ paper.last_updated|date:"d/m/Y" }}</strong>
+                        
                     </div>
-
+                    {% if submission.status == 'pending' %}
                     <form method="POST" class="d-flex justify-content-end align-items-end gap-3" style="margin-top: 20px;">
                         {% csrf_token %}
                         <button type="submit" name="action" value="approve" class="btn btn-custom btn-approve">Approve</button>
                         <button type="submit" name="action" value="revision" class="btn btn-custom btn-revision">Request for revision</button>
                         <button type="submit" name="action" value="reject" class="btn btn-custom btn-reject">Reject</button>
                     </form>
+                    {% endif %}
 
+                    {% if submission.status == 'rejected' %}
+                    <form method="POST" class="d-flex justify-content-end align-items-end gap-3" style="margin-top: 20px;">
+                        {% csrf_token %}
+                        <button type="submit" name="action" value="reopen" class="btn btn-custom btn-revision">Reopen for evaluation</button>
+                    {% endif %}
                 </div>
             </div>
         </div>

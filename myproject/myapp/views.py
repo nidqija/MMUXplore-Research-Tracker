@@ -404,37 +404,44 @@ def coordinator_home(request, user_id):
 def submissions(request):
     # Only get submissions with status 'under review'
     submission = Submissions.objects.filter(status='pending').select_related('paper_id')
+    pastSubmission = Submissions.objects.filter(status__in=['approved', 'rejected']).select_related('paper_id')
     context = {
-        'submissions': submission
+        'submissions': submission,
+        'pastSubmissions': pastSubmission
     }
     return render(request, 'coordinator/submissions.html', context)
 
    
     
-    context = {
-        'submissions': pending_submissions
-    }
-    return render(request, 'coordinator/submissions.html', context)
 
 
-def submission_detail(request, paper_id):
+
+def submission_detail(request, submission_id):
     # Get the paper and the specific submission entry linked to it
-    paper = get_object_or_404(Submissions, paper_id=paper_id)
+
     
     # Try to find the linked submission ID for display (if it exists)
-    submission = Submissions.objects.filter(paper_id=paper).first()
-    submission_id_display = submission.submission_id if submission else "N/A"
+    submission = get_object_or_404(Submissions, submission_id=submission_id)
+    paper = submission.paper_id   # get the related ResearchPaper
+   
 
     if request.method == 'POST':
         action = request.POST.get('action')
         
         if action == 'approve':
             paper.paper_status = 'approved'
+            submission.status = 'approved'
             messages.success(request, "Paper Approved! Submission entry removed.")
             
         elif action == 'reject':
             paper.paper_status = 'rejected'
+            submission.status = 'rejected'
             messages.error(request, "Paper Rejected. Submission entry removed.")
+
+        elif action == 'reopen':
+            paper.paper_status = 'pending'
+            submission.status = 'pending'
+            messages.success(request, "Paper reopened for evaluation.")
             
         elif action == 'revision':
             # You might want to keep the submission entry but change status
@@ -443,12 +450,14 @@ def submission_detail(request, paper_id):
             # Optional: paper.paper_status = 'revision_requested'
         
         paper.save() # The signal will handle deleting the submission entry if approved/rejected
+        submission.save()
+
         return redirect('coordinator_submissions')
 
     context = {
         'paper': paper,
-        'submission_id': submission_id_display,
-        
+        'submission_id': submission.submission_id,
+        'submission': submission
     }
     return render(request, 'coordinator/submission_detail.html', context)
 
