@@ -19,6 +19,18 @@
 <!---------------------------------------------------------------Home Page Content--------------------------------------------------------------------------------------->
 
 <section id="announcement">
+
+  {% if new_tc_update %}
+<div class="container mt-3">
+    <div class="alert alert-warning alert-dismissible fade show d-flex align-items-center" role="alert">
+        <div>
+            <strong>Notice:</strong> The Terms and Conditions have been updated. Please 
+            <a href="/term_condition_page" class="alert-link">review them here</a>.
+        </div>
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+</div>
+{% endif %}
 <div>
     <div class="container p-5 ">
         <div class="jumbotron">
