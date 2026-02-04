@@ -1,5 +1,5 @@
 /.venv
-
+database_dump.txt
 __pycache__/
 *.pyc
 *.pyo

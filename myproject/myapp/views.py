@@ -7,6 +7,7 @@ from .models import Admin, ResearchPaper, Submissions, User,Researcher , TermsAn
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from functools import wraps
+from django.utils import timezone
 
 
 
@@ -29,12 +30,131 @@ def index(request):
     user_name = request.session.get('user_name', 'Guest')
     announcements = Announcements.objects.all().order_by('-date_posted') 
 
+    latest_tc = TermsAndConditions.objects.order_by('-last_updated').first()
+    
+    # Check if the latest terms and conditions were updated within the last 7 days
+    new_tc_update = False
+
+    # if there is at least one terms and conditions entry 
+    if latest_tc:
+
+        # calculate the time limit
+        recent_limit = timezone.now() - timezone.timedelta(days=7)
+
+        # compare the last updated time with the limit
+        if latest_tc.last_updated >= recent_limit:
+
+            new_tc_update = True
+
     is_admin = False
 
-    if 'user_name' != 'Guest':
+    if user_name != 'Guest':
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
-    return render(request, 'home.html', {'user_name': user_name , 'announcements': announcements, 'is_admin': is_admin})
+    return render(request, 'home.html', {'user_name': user_name , 'announcements': announcements, 'is_admin': is_admin , 'new_tc_update': new_tc_update} )
+
+
+
+def user_signup(request):
+    if request.method == 'POST':
+        university_id = request.POST.get('university_id')
+        email = request.POST.get('email')
+        role = request.POST.get('role')
+        password = request.POST.get('password')
+
+        if not role:
+            messages.error(request, 'Please select a valid role.')
+            return render(request, 'signup.html')
+
+        # 1. Handle Admin Logic
+        if university_id.upper().startswith('MQA123'):
+            admin = Admin.objects.create(
+                user_name=email, 
+                email=email, 
+                password=password
+            )
+            # Store admin session immediately
+            request.session['user_name'] = admin.user_name
+            messages.success(request, 'Admin account created.')
+            return redirect('admin_homepage')
+
+        # 2. Check if user already exists to prevent crashes
+        if User.objects.filter(email=email).exists():
+            messages.error(request, 'Email already registered.')
+            return render(request, 'signup.html')
+
+        
+        user = User.objects.create(
+            fullname='', 
+            university_id=university_id, 
+            email=email, 
+            password=password, 
+            role=role
+        )
+
+      
+        if role == 'researcher':
+            Researcher.objects.create(user_id=user) #
+        elif role == 'student':
+            Student.objects.create(user_id=user) #
+
+       
+        request.session['temp_user_email'] = email
+
+        messages.success(request, 'Account created! Now let\'s set up your profile.')
+        return redirect('avatar_register')
+
+    return render(request, 'signup.html') 
+
+
+
+def user_signin(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+
+        # 1. Try to find an Admin first
+        admin = Admin.objects.filter(email=email).first()
+        if admin:
+            if admin.password == password:
+                request.session['user_name'] = admin.user_name
+                messages.success(request, 'Admin Signed in successfully.')
+                return redirect('admin_homepage')
+            else:
+                messages.error(request, "Invalid password.")
+                return render(request, 'signin.html')
+
+        # 2. If not admin, try to find a User
+        user = User.objects.filter(email=email).first()
+        if user:
+            if user.password == password:
+                request.session['user_name'] = user.fullname
+                
+                if user.role == 'researcher':
+                    # Check if researcher profile exists
+                    try:
+                        researcher = Researcher.objects.get(user_id=user.user_id)
+                        messages.success(request, 'Researcher Signed in successfully.')
+                        # Redirect using researcher_id
+                        return redirect('researcher_home', researcher_id=researcher.researcher_id)
+                    except Researcher.DoesNotExist:
+                        messages.warning(request, "Researcher profile missing. Please contact admin.")
+                        return redirect('home')
+
+                elif user.role == 'student':
+                    messages.success(request, 'Student Signed in successfully.')
+                    return redirect('home')
+            else:
+                messages.error(request, "Invalid password.")
+                return render(request, 'signin.html')
+
+        # 3. If neither admin nor user found
+        messages.error(request, "Invalid email or password. Please try again.")
+        return render(request, 'signin.html')
+
+    return render(request, 'signin.html')
+
+        
 
 
 def user_avatar_register(request):
@@ -162,23 +282,35 @@ def user_signup(request):
     return render(request, 'signup.html') 
 
 #==================================== Researcher Parts ====================================#
-def researcher_home(request, user_id):
-    researcher = Researcher.objects.get(user_id=user_id)
-    pending_count = ResearchPaper.objects.filter(researcher_id=researcher, paper_status='pending').count()
-    pending_papers = ResearchPaper.objects.filter(researcher_id=researcher, paper_status='pending')
-
+def researcher_home(request, researcher_id):
+    researcher = Researcher.objects.get(researcher_id=researcher_id)
+    
+    # Get all papers by this researcher
+    all_papers = ResearchPaper.objects.filter(researcher_id=researcher)
+    
+    # Count by status
+    pending_count = all_papers.filter(paper_status='pending').count()
+    revision_count = all_papers.filter(paper_status='rejected').count()
+    approved_count = all_papers.filter(paper_status='approved').count()
+    
+    # Get papers for display
+    pending_papers = all_papers.filter(paper_status='pending')
+    papers = all_papers  # All papers for the "Your Papers" section
 
     context = {
-        'researcher': researcher ,
-        'pending_count': pending_count ,
-        'pending_papers': pending_papers
+        'researcher': researcher,
+        'pending_count': pending_count,
+        'revision_count': revision_count,
+        'approved_count': approved_count,
+        'pending_papers': pending_papers,
+        'papers': papers
     }
 
     return render(request, 'researcher/researcher_home.html', context)
 
 
-def researcher_upload_page(request, user_id):
-    researcher = Researcher.objects.get(user_id=user_id)
+def researcher_upload_page(request, researcher_id):
+    researcher = Researcher.objects.get(researcher_id=researcher_id)
     all_users = User.objects.all().exclude(role='admin')
 
     context = {
@@ -218,7 +350,7 @@ def researcher_upload_page(request, user_id):
                 new_paper.paper_coauthor.set(paper_coauthor)
 
             messages.success(request, 'Research paper uploaded successfully.')
-            return redirect('researcher_home', user_id=user_id)
+            return redirect('researcher_home', researcher_id=researcher_id)
         else:
             messages.error(request, 'All fields are required to upload a research paper.')
 
@@ -227,9 +359,26 @@ def researcher_upload_page(request, user_id):
 
     return render(request, 'researcher/researcher_upload_page.html', context)
 
-def researcher_profile(request, user_id):
-    researcher = Researcher.objects.get(user_id=user_id)
+def researcher_profile(request, researcher_id):
+    researcher = Researcher.objects.get(researcher_id=researcher_id)
     
+    if request.method == 'POST':
+        # Update user fields
+        fullname = request.POST.get('fullname')
+        if fullname:
+            researcher.user_id.fullname = fullname
+            researcher.user_id.save()
+            # Update session
+            request.session['user_name'] = fullname
+        
+        # Update researcher fields
+        researcher.bio_description = request.POST.get('bio_description', '')
+        researcher.OCRID = request.POST.get('OCRID', '')
+        researcher.google_scholar_id = request.POST.get('google_scholar_id', '')
+        researcher.save()
+        
+        messages.success(request, 'Profile updated successfully.')
+        return redirect('researcher_profile', researcher_id=researcher_id)
 
     context = {
         'researcher': researcher
@@ -362,6 +511,7 @@ def user_signin(request):
 
     
 
+
 def research_paper_page(request):
     user_name = request.session.get('user_name', 'Guest')
     user_id = request.session.get('user_id')
@@ -386,30 +536,33 @@ def admin_page(request):
 
 #===================================== Terms and Conditions Page =====================================#
 
-@admin_required
 def term_condition_page(request):
-    user_name = request.session.get('user_name', 'Guest')
+    user_name_session = request.session.get('user_name', 'Guest')
     view_terms = TermsAndConditions.objects.all()
-
+    
+    is_admin = Admin.objects.filter(user_name=user_name_session).exists()
 
     if request.method == 'POST':
-          ruletitle = request.POST.get('ruletitle')
-          ruledescription = request.POST.get('ruledescription')
-
-          if ruletitle and ruledescription :
-            new_term = TermsAndConditions(title=ruletitle, content=ruledescription)
-            new_term.save()
-
-            messages.success(request, 'New term and condition added successfully.')
+        if not is_admin:
+            messages.error(request, 'You do not have permission to modify terms.')
             return redirect('term_condition_page')
-    
-          else :
-            messages.error(request , 'Failed to add new term and condition. Please try again.')
+            
+        ruletitle = request.POST.get('ruletitle')
+        ruledescription = request.POST.get('ruledescription')
 
-          return redirect('term_condition_page')
+        if ruletitle and ruledescription:
+            TermsAndConditions.objects.create(title=ruletitle, content=ruledescription)
+            messages.success(request, 'New term added successfully.')
+        else:
+            messages.error(request, 'Failed to add. Fields cannot be empty.')
+        return redirect('term_condition_page')
 
-    return render(request , 'adminguy/term_condition_page.html', {'user_name': user_name , 'view_terms': view_terms} )
-
+    context = {
+        'user_name': user_name_session,
+        'view_terms': view_terms,
+        'is_admin': is_admin  
+    }
+    return render(request, 'term_condition_page.html', context)
 
 @require_POST
 def delete_term_condition(request, term_id):
@@ -508,3 +661,16 @@ def profile_page(request):
     user_data = User.objects.filter(fullname=user_name).first()
 
     return render(request , 'profile_page.html', {'user_name': user_name, 'user_data': user_data} )
+
+
+
+def view_announcement_page(request , announcement_id):
+    user_name = request.session.get('user_name', 'Guest')
+    announcements = Announcements.objects.filter(announcement_id=announcement_id)
+
+    is_admin = False
+
+    if 'user_name' != 'Guest':
+        is_admin = Admin.objects.filter(user_name=user_name).exists()
+
+    return render(request, 'view_announcement.html', {'user_name': user_name , 'announcements': announcements, 'is_admin': is_admin})
