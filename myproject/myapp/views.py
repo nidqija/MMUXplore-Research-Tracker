@@ -1,7 +1,7 @@
 
 from django.shortcuts import render, redirect
 from django.conf import settings
-from .models import Admin, ResearchPaper, Submissions, User,Researcher , TermsAndConditions , Announcements , Student
+from .models import Admin, ResearchPaper, Submissions, User,Researcher , TermsAndConditions , Announcements , Student, ProgrammeCoordinator
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from functools import wraps
@@ -141,6 +141,8 @@ def user_signup(request):
             Researcher.objects.create(user_id=user) #
         elif role == 'student':
             Student.objects.create(user_id=user) #
+        elif role == 'program_coordinator':
+            ProgrammeCoordinator.objects.create(user_id=user) #
 
        
         request.session['temp_user_email'] = email
@@ -222,6 +224,17 @@ def researcher_profile(request, user_id):
 
 
 
+#programme coordinator
+def coordinator_home(request, user_id):
+    coordinator = User.objects.get(pro_coor_id=user_id)
+    context = {
+        'coordinator': coordinator
+    }
+    return render(request , 'coordinator/coordinator_home.html', context)
+
+
+
+
 
 def user_signin(request):
     if request.method == 'POST':
@@ -259,6 +272,16 @@ def user_signin(request):
                 elif user.role == 'student':
                     messages.success(request, 'Student Signed in successfully.')
                     return redirect('home')
+                
+
+                elif user.role == 'program_coordinator':
+                    try:
+                        coordinator = ProgrammeCoordinator.objects.get(user_id=user.user_id)
+                        messages.success(request, 'Programme Coordinator Signed in successfully.')
+                        return redirect('coordinator_home', user_id=user.user_id)
+                    except ProgrammeCoordinator.DoesNotExist:
+                        messages.warning(request, "Programme Coordinator profile missing. Please contact admin.")
+                        
             else:
                 messages.error(request, "Invalid password.")
                 return render(request, 'signin.html')

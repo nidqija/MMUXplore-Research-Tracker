@@ -33,7 +33,14 @@ urlpatterns = [
     path('adminguy/delete_announcement/<int:announcement_id>/', views.delete_announcement, name='delete_announcement' ),
     path('adminguy/manage_users/', views.manage_users, name='manage_users' ),
     # End Admin URLs
+
+
+    #Coordinator URLS
+    path('coordinator/coordinator_home/<int:userid>/', views.coordinator_home, name='coordinator_home' ),
+    path('researchpaper/', views.research_paper_page, name='researchpaper'),
+
     
+    #End Coordinator URLS
 ]
 
 if settings.DEBUG:
