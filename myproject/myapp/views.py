@@ -321,6 +321,7 @@ def researcher_upload_page(request, researcher_id):
 
     if request.method == 'POST':
         paper_title = request.POST.get('paper_title')
+        paper_category = request.POST.get('paper_category')
         paper_abstract = request.POST.get('paper_abstract')
         paper_file = request.FILES.get('paper_pdf')
         paper_coauthor = request.POST.getlist('paper_coauth')
@@ -331,6 +332,7 @@ def researcher_upload_page(request, researcher_id):
             new_paper = ResearchPaper(
                 researcher_id=researcher,
                 paper_title=paper_title,
+                paper_category=paper_category,
                 paper_desc=paper_abstract,
                 paper_pdf=paper_file,
                 paper_status='pending'
