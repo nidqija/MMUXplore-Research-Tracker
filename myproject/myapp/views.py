@@ -133,8 +133,8 @@ def user_signin(request):
                     try:
                         researcher = Researcher.objects.get(user_id=user.user_id)
                         messages.success(request, 'Researcher Signed in successfully.')
-                        # Redirect using the correct user_id field
-                        return redirect('researcher_home', user_id=user.user_id)
+                        # Redirect using researcher_id
+                        return redirect('researcher_home', researcher_id=researcher.researcher_id)
                     except Researcher.DoesNotExist:
                         messages.warning(request, "Researcher profile missing. Please contact admin.")
                         return redirect('home')
@@ -221,8 +221,8 @@ def update_profile(request):
 
 
 #==================================== Researcher Parts ====================================#
-def researcher_home(request, user_id):
-    researcher = Researcher.objects.get(user_id=user_id)
+def researcher_home(request, researcher_id):
+    researcher = Researcher.objects.get(researcher_id=researcher_id)
     
     # Get all papers by this researcher
     all_papers = ResearchPaper.objects.filter(researcher_id=researcher)
@@ -248,8 +248,8 @@ def researcher_home(request, user_id):
     return render(request, 'researcher/researcher_home.html', context)
 
 
-def researcher_upload_page(request, user_id):
-    researcher = Researcher.objects.get(user_id=user_id)
+def researcher_upload_page(request, researcher_id):
+    researcher = Researcher.objects.get(researcher_id=researcher_id)
     all_users = User.objects.all().exclude(role='admin')
 
     context = {
@@ -282,7 +282,7 @@ def researcher_upload_page(request, user_id):
                 new_paper.paper_coauthor.set(paper_coauthor)
 
             messages.success(request, 'Research paper uploaded successfully.')
-            return redirect('researcher_home', user_id=user_id)
+            return redirect('researcher_home', researcher_id=researcher_id)
         else:
             messages.error(request, 'All fields are required to upload a research paper.')
 
@@ -291,8 +291,8 @@ def researcher_upload_page(request, user_id):
 
     return render(request, 'researcher/researcher_upload_page.html', context)
 
-def researcher_profile(request, user_id):
-    researcher = Researcher.objects.get(user_id=user_id)
+def researcher_profile(request, researcher_id):
+    researcher = Researcher.objects.get(researcher_id=researcher_id)
     
     if request.method == 'POST':
         # Update user fields
@@ -310,7 +310,7 @@ def researcher_profile(request, user_id):
         researcher.save()
         
         messages.success(request, 'Profile updated successfully.')
-        return redirect('researcher_profile', user_id=user_id)
+        return redirect('researcher_profile', researcher_id=researcher_id)
 
     context = {
         'researcher': researcher

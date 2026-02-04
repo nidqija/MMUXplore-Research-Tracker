@@ -140,7 +140,7 @@
 
         <div class="col-md-8">
 
-            <form method="POST" action="{% url 'researcher_profile' user_id=researcher.user_id.user_id %}">
+            <form method="POST" action="{% url 'researcher_profile' researcher_id=researcher.researcher_id %}">
                 {% csrf_token %}
 
                 <div id="viewMode">

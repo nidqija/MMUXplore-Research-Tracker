@@ -1,7 +1,7 @@
 <!-- Researcher Navbar Component -->
 <nav class="navbar navbar-expand-lg" style="background-color: rgb(0, 0, 141);">
     <div class="container p-2">
-        <a class="navbar-brand text-white" href="{% url 'researcher_home' user_id=researcher.user_id.user_id %}">MMU
+        <a class="navbar-brand text-white" href="{% url 'researcher_home' researcher_id=researcher.researcher_id %}">MMU
             Xplore</a>
 
         <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#researcherNavbar">
@@ -12,19 +12,19 @@
             <ul class="navbar-nav me-auto mb-2 mb-lg-0">
                 <li class="nav-item">
                     <a class="nav-link text-white"
-                        href="{% url 'researcher_home' user_id=researcher.user_id.user_id %}">
+                        href="{% url 'researcher_home' researcher_id=researcher.researcher_id %}">
                         <i class="bi bi-house-door"></i> Home
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link text-white"
-                        href="{% url 'researcher_profile' user_id=researcher.user_id.user_id %}">
+                        href="{% url 'researcher_profile' researcher_id=researcher.researcher_id %}">
                         <i class="bi bi-person"></i> My Profile
                     </a>
                 </li>
                 <li class="nav-item">
                     <a class="nav-link text-white"
-                        href="{% url 'researcher_upload_page' user_id=researcher.user_id.user_id %}">
+                        href="{% url 'researcher_upload_page' researcher_id=researcher.researcher_id %}">
                         <i class="bi bi-upload"></i> Upload Paper
                     </a>
                 </li>
@@ -43,7 +43,7 @@
                     <ul class="dropdown-menu dropdown-menu-end">
                         <li>
                             <a class="dropdown-item"
-                                href="{% url 'researcher_profile' user_id=researcher.user_id.user_id %}">
+                                href="{% url 'researcher_profile' researcher_id=researcher.researcher_id %}">
                                 <i class="bi bi-gear"></i> Settings
                             </a>
                         </li>

@@ -19,9 +19,9 @@ urlpatterns = [
     # End General URLs
 
     #researcher URLs
-    path('researcher/researcher_profile/<int:user_id>/', views.researcher_profile, name='researcher_profile'),
-    path('researcher/researcher_home/<int:user_id>/', views.researcher_home, name='researcher_home'),
-    path('researcher/researcher_upload_page/<int:user_id>/', views.researcher_upload_page, name='researcher_upload_page'),
+    path('researcher/researcher_profile/<int:researcher_id>/', views.researcher_profile, name='researcher_profile'),
+    path('researcher/researcher_home/<int:researcher_id>/', views.researcher_home, name='researcher_home'),
+    path('researcher/researcher_upload_page/<int:researcher_id>/', views.researcher_upload_page, name='researcher_upload_page'),
     path('researchpaper/', views.research_paper_page, name='researchpaper'),
     #end researcher URLs
 

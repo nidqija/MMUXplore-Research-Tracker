@@ -337,12 +337,14 @@
             {% empty %}
             <div class="col-12">
                 <p class="text-muted text-center">No papers uploaded yet. <a
-                        href="{% url 'researcher_upload_page' user_id=researcher.user_id.user_id %}">Upload your first
+                        href="{% url 'researcher_upload_page' researcher_id=researcher.researcher_id %}">Upload your
+                        first
                         paper!</a></p>
             </div>
-            {% endfor %}
         </div>
+        {% endfor %}
     </div>
+</div>
 </div>
 </div>
 
