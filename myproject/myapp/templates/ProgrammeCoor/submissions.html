@@ -38,26 +38,26 @@
         </tr>
     </thead>
     <tbody>
-        {% for paper in submissions %}
-        <tr>
-            <td>{{ paper.paper_id }}</td>
-            <td>{{ paper.paper_title }}</td>
-            <td>
-                <span class="badge bg-warning text-dark">{{ paper.paper_status }}</span>
-            </td>
-            <td>{{ paper.last_updated|date:"d/m/Y H:i" }}</td>
-            <td>
-                <a href="{% url 'submission_detail' paper.paper_id %}" class="btn btn-sm btn-outline-primary">
-                    View Details
-                </a>
-            </td>
-        </tr>
-        {% empty %}
-        <tr>
-            <td colspan="5" class="text-center py-4">No pending submissions found.</td>
-        </tr>
-        {% endfor %}
-    </tbody>
+    {% for submission in Submissions %}
+    <tr>
+        <td>{{ submission.submission_id }}</td>
+        <td>{{ submission.paper_id.paper_title }}</td>
+        <td>
+            <span class="badge bg-warning text-dark">{{ submission.status }}</span>
+        </td>
+        <td>{{ submission.submitted_at|date:"d/m/Y H:i" }}</td>
+        <td>
+            <a href="" class="btn btn-sm btn-outline-primary">
+                View Details
+            </a>
+        </td>
+    </tr>
+    {% empty %}
+    <tr>
+        <td colspan="5" class="text-center py-4">No pending submissions found.</td>
+    </tr>
+    {% endfor %}
+</tbody>
 </table>
 
 

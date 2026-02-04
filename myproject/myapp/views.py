@@ -1,5 +1,6 @@
 
 import datetime
+from multiprocessing import context
 from django.shortcuts import get_object_or_404, render, redirect
 from django.conf import settings
 from pytz import timezone
@@ -258,20 +259,20 @@ def user_signup(request):
             role=role
         )
 
-        print("User profile created.")
+     
         if role == 'researcher':
             Researcher.objects.create(user_id=user) #
         elif role == 'student':
             Student.objects.create(user_id=user) #
         elif role == 'program_coordinator':
-            print("Programme Coordinator profile created2.")
+        
             ProgrammeCoordinator.objects.create(
                 user_id=user,
                 faculty_id='', 
                 prog_name='', 
                 faculty=''
             )
-            print("Programme Coordinator profile created2.")
+            
 
        
         request.session['temp_user_email'] = email
@@ -338,7 +339,7 @@ def researcher_upload_page(request, researcher_id):
             new_submission = Submissions(
                 paper_id=new_paper,
                 status='pending',
-                submitted_at= datetime.datetime.now(timezone('Asia/Kuala_Lumpur'))
+                submitted_at=timezone.now()
             )
 
             
@@ -346,6 +347,7 @@ def researcher_upload_page(request, researcher_id):
         
             new_paper.save()
             new_submission.save()
+
             if paper_coauthor:
                 new_paper.paper_coauthor.set(paper_coauthor)
 
@@ -400,12 +402,12 @@ def coordinator_home(request, user_id):
     return render(request , 'coordinator/coordinator_home.html', context)
 
 def submissions(request):
-    # Security: Ensure user is logged in (optional but recommended)
-    if not request.session.get('user_id'):
-        return redirect('signin')
-
-    # Fetch only papers that are 'pending'
-    pending_submissions = Submissions.objects.filter(status='pending')
+    # Only get submissions with status 'under review'
+    submission = Submissions.objects.filter(status='pending').select_related('paper_id')
+    context = {
+        'submissions': submission
+    }
+    return render(request, 'coordinator/submissions.html', context)
 
    
     

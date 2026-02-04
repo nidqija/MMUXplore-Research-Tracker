@@ -36,11 +36,12 @@ class Admin(models.Model):
 
 class ProgrammeCoordinator(models.Model):
     prog_coor_id = models.AutoField(primary_key=True)
-    # Add null=True, blank=True to make them optional
+    
     faculty_id = models.CharField(max_length=50, null=True, blank=True) 
     prog_name = models.CharField(max_length=150, null=True, blank=True)
     faculty = models.CharField(max_length=150, null=True, blank=True)
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE) 
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, null=True, blank=True) 
+    
 
     def __str__(self):
         # Update str to handle potential None values
