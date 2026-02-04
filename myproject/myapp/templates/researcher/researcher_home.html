@@ -9,7 +9,8 @@
         max-width: 1200px;
         margin: 0 auto;
         padding: 40px 20px;
-        font-family: 'Poppins', sans-serif; /* Assuming a clean sans-serif like the image */
+        font-family: 'Poppins', sans-serif;
+        /* Assuming a clean sans-serif like the image */
     }
 
     h1 {
@@ -19,10 +20,11 @@
     }
 
     /* --- Top Section: Profile & Stats --- */
-    
+
     /* Profile Card (Left) */
     .card-profile {
-        background-color: #c8c7fa; /* Lavender Purple */
+        background-color: #c8c7fa;
+        /* Lavender Purple */
         border: none;
         border-radius: 20px;
         padding: 40px 20px;
@@ -37,7 +39,8 @@
     .profile-initials {
         width: 100px;
         height: 100px;
-        background-color: #e6fcf5; /* Light mint/white mix */
+        background-color: #e6fcf5;
+        /* Light mint/white mix */
         color: #6c757d;
         border-radius: 50%;
         display: flex;
@@ -63,7 +66,8 @@
 
     /* Submissions Card (Right) */
     .card-submissions {
-        background-color: #e8fce8; /* Light Mint Green */
+        background-color: #e8fce8;
+        /* Light Mint Green */
         border: none;
         border-radius: 20px;
         padding: 40px;
@@ -90,9 +94,21 @@
         min-height: 180px;
     }
 
-    .status-revision { background-color: #f5bda5; } /* Salmon */
-    .status-pending { background-color: #f5dca5; } /* Sandy Yellow */
-    .status-accepted { background-color: #9ee3b4; } /* Green */
+    .status-revision {
+        background-color: #f5bda5;
+    }
+
+    /* Salmon */
+    .status-pending {
+        background-color: #f5dca5;
+    }
+
+    /* Sandy Yellow */
+    .status-accepted {
+        background-color: #9ee3b4;
+    }
+
+    /* Green */
 
     .status-label {
         font-size: 1.1rem;
@@ -127,7 +143,8 @@
 
     /* --- Bottom Section: Engagements --- */
     .engagements-section {
-        background-color: #f8f9fa; /* Very light gray bg for contrast */
+        background-color: #f8f9fa;
+        /* Very light gray bg for contrast */
         border-radius: 20px;
         padding: 40px;
         margin-top: 40px;
@@ -137,7 +154,7 @@
         background: #fff;
         border-radius: 15px;
         padding: 20px;
-        box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
         height: 100%;
         display: flex;
         flex-direction: column;
@@ -176,7 +193,7 @@
         margin-bottom: 8px;
         color: #555;
     }
-    
+
     .status-badge {
         font-size: 0.7rem;
         padding: 2px 8px;
@@ -184,34 +201,55 @@
         text-transform: uppercase;
         font-weight: bold;
     }
-    .badge-pending { background-color: #fff3cd; color: #856404; }
-    .badge-revision { background-color: #f8d7da; color: #721c24; }
-    .badge-published { background-color: #d4edda; color: #155724; }
+
+    .badge-pending {
+        background-color: #fff3cd;
+        color: #856404;
+    }
+
+    .badge-revision {
+        background-color: #f8d7da;
+        color: #721c24;
+    }
+
+    .badge-published {
+        background-color: #d4edda;
+        color: #155724;
+    }
 
     /* Modal Styling */
-    .modal-header { border-bottom: none; }
-    .modal-footer { border-top: none; }
-    .form-control-plaintext { font-weight: bold; font-size: 1.1rem; }
+    .modal-header {
+        border-bottom: none;
+    }
+
+    .modal-footer {
+        border-top: none;
+    }
+
+    .form-control-plaintext {
+        font-weight: bold;
+        font-size: 1.1rem;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="dashboard-container">
-    
-    <h1>Welcome back, {{ user.first_name|default:"Researcher" }}!</h1>
+
+    <h1>Welcome back, {{ researcher.user_id.fullname|default:"Researcher" }}!</h1>
 
     <div class="row g-4">
-        
+
         <div class="col-md-4">
             <div class="card-profile">
                 <div class="profile-header">
                     <p class="mb-2 text-start w-100" style="font-size: 0.9rem;">Your Profile:</p>
                 </div>
                 <div class="profile-initials">
-                    {{ user.first_name|slice:":1" }}{{ user.last_name|slice:":1" }}
+                    {{ researcher.user_id.fullname|slice:":1"|upper }}
                 </div>
-                <div class="profile-name">{{ user.fullname }}</div>
-                <div class="profile-role">Researcher at {{ user.institution|default:"Multimedia University" }}</div>
+                <div class="profile-name">{{ researcher.user_id.fullname }}</div>
+                <div class="profile-role">Researcher at Multimedia University</div>
             </div>
         </div>
 
@@ -230,7 +268,8 @@
                         <div class="status-card status-pending">
                             <div class="status-label">Pending</div>
                             <div class="status-count">{{ pending_count }}</div>
-                            <div><button class="btn-dark-blue btn-sm"  data-bs-toggle="modal" data-bs-target="#staticBackdrop2" >view more</button></div>
+                            <div><button class="btn-dark-blue btn-sm" data-bs-toggle="modal"
+                                    data-bs-target="#staticBackdrop2">view more</button></div>
                         </div>
 
                     </div>
@@ -248,13 +287,14 @@
 
     <div class="engagements-section">
         <h4 class="mb-4">Your Papers</h4>
-        
+
         <div class="row g-4">
             {% for paper in papers %}
             <div class="col-md-4">
                 <div class="paper-card">
                     <div class="paper-header">
-                        <img src="{{ paper.cover_image.url|default:'https://via.placeholder.com/80x100?text=PDF' }}" class="paper-thumb" alt="Cover">
+                        <img src="{{ paper.cover_image.url|default:'https://via.placeholder.com/80x100?text=PDF' }}"
+                            class="paper-thumb" alt="Cover">
                         <div class="paper-info">
                             <h5>{{ paper.title }}</h5>
                             <div class="paper-meta">
@@ -262,9 +302,9 @@
                                 {{ paper.publication_date|date:"jS F Y" }}
                                 <br>
                                 {% if paper.status == 'pending' %}
-                                    <span class="status-badge badge-pending">Pending Approval</span>
+                                <span class="status-badge badge-pending">Pending Approval</span>
                                 {% elif paper.status == 'revision' %}
-                                    <span class="status-badge badge-revision">Needs Revision</span>
+                                <span class="status-badge badge-revision">Needs Revision</span>
                                 {% endif %}
                             </div>
                         </div>
@@ -283,16 +323,15 @@
                             <span>bookmarked</span>
                             <strong>{{ paper.bookmarks }}</strong>
                         </div>
-                        
+
                         <div class="text-center mt-3">
                             {% if paper.status != 'accepted' %}
-                                <button type="button" 
-                                        class="btn-dark-blue w-100" 
-                                        onclick="openEditModal('{{ paper.id }}', '{{ paper.title|escapejs }}', '{{ paper.abstract|escapejs }}')">
-                                    Edit Paper
-                                </button>
+                            <button type="button" class="btn-dark-blue w-100"
+                                onclick="openEditModal('{{ paper.id }}', '{{ paper.title|escapejs }}', '{{ paper.abstract|escapejs }}')">
+                                Edit Paper
+                            </button>
                             {% else %}
-                                <button class="btn-dark-blue w-100">Update Paper</button>
+                            <button class="btn-dark-blue w-100">Update Paper</button>
                             {% endif %}
                         </div>
                     </div>
@@ -310,10 +349,10 @@
                 <h5 class="modal-title">Edit Paper Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="editPaperForm" method="POST" >
+            <form id="editPaperForm" method="POST">
                 {% csrf_token %}
                 <input type="hidden" name="paper_id" id="modalPaperId">
-                
+
                 <div class="modal-body">
                     <div class="mb-3">
                         <label for="modalPaperTitle" class="form-label">Title</label>
@@ -326,7 +365,8 @@
                     </div>
 
                     <div class="alert alert-warning">
-                        <small><i class="bi bi-info-circle"></i> Changing details for an unapproved paper may reset its position in the review queue.</small>
+                        <small><i class="bi bi-info-circle"></i> Changing details for an unapproved paper may reset its
+                            position in the review queue.</small>
                     </div>
                 </div>
                 <div class="modal-footer">
@@ -338,30 +378,31 @@
     </div>
 </div>
 
-<div class="modal fade" id="staticBackdrop2" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="staticBackdropLabel">Pending Submissions</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        {% for paper in pending_papers %}
-            <div class="mb-3">
-                <h5>{{ paper.paper_title }}</h5>
-                    <p>{{ paper.paper_desc}}</p>
-                <hr>
+<div class="modal fade" id="staticBackdrop2" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
+    aria-labelledby="staticBackdropLabel" aria-hidden="true">
+    <div class="modal-dialog">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h1 class="modal-title fs-5" id="staticBackdropLabel">Pending Submissions</h1>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-        {% empty %}
-            <p>No pending papers.</p>
-        {% endfor %}
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary">Understood</button>
-      </div>
+            <div class="modal-body">
+                {% for paper in pending_papers %}
+                <div class="mb-3">
+                    <h5>{{ paper.paper_title }}</h5>
+                    <p>{{ paper.paper_desc}}</p>
+                    <hr>
+                </div>
+                {% empty %}
+                <p>No pending papers.</p>
+                {% endfor %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                <button type="button" class="btn btn-primary">Understood</button>
+            </div>
+        </div>
     </div>
-  </div>
 </div>
 
 <script>
@@ -370,7 +411,7 @@
         document.getElementById('modalPaperId').value = id;
         document.getElementById('modalPaperTitle').value = title;
         document.getElementById('modalPaperAbstract').value = abstract;
-        
+
         // Show the modal
         var myModal = new bootstrap.Modal(document.getElementById('editPaperModal'));
         myModal.show();

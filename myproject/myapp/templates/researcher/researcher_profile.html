@@ -14,7 +14,8 @@
     .avatar-circle {
         width: 150px;
         height: 150px;
-        background-color: #e8fce8; /* Mint Green */
+        background-color: #e8fce8;
+        /* Mint Green */
         border-radius: 50%;
         display: flex;
         justify-content: center;
@@ -35,6 +36,7 @@
     .view-field {
         margin-bottom: 25px;
     }
+
     .view-label {
         font-size: 0.85rem;
         color: #888;
@@ -43,6 +45,7 @@
         font-weight: 600;
         margin-bottom: 5px;
     }
+
     .view-value {
         font-size: 1.1rem;
         color: #333;
@@ -50,6 +53,7 @@
         border-bottom: 1px solid #eee;
         padding-bottom: 5px;
     }
+
     .view-value a {
         color: #2a2a72;
         text-decoration: none;
@@ -61,9 +65,11 @@
         color: #444;
         margin-bottom: 8px;
     }
+
     .custom-input {
         background-color: #f8f9fa;
-        border: 1px solid #e0e0e0; /* Slight border for visibility */
+        border: 1px solid #e0e0e0;
+        /* Slight border for visibility */
         border-radius: 6px;
         padding: 10px 15px;
         width: 100%;
@@ -80,7 +86,11 @@
         font-weight: 500;
         transition: 0.2s;
     }
-    .btn-edit:hover { background-color: #1f1f58; color: #fff; }
+
+    .btn-edit:hover {
+        background-color: #1f1f58;
+        color: #fff;
+    }
 
     .btn-cancel {
         background-color: #e0e0e0;
@@ -91,93 +101,93 @@
         font-weight: 500;
         margin-right: 10px;
     }
+
     .btn-save {
-        background-color: #28a745; /* Green for save */
+        background-color: #28a745;
+        /* Green for save */
         color: white;
         padding: 8px 30px;
         border-radius: 20px;
         border: none;
         font-weight: 500;
     }
-    .btn-save:hover { background-color: #218838; }
 
+    .btn-save:hover {
+        background-color: #218838;
+    }
 </style>
 {% endblock %}
 
 {% block content %}
 <div class="profile-container">
-    
+
     <div class="d-flex justify-content-between align-items-center mb-4">
         <h1 class="m-0">My Profile</h1>
         <button id="editBtn" class="btn-edit" onclick="toggleEditMode(true)">
             <i class="bi bi-pencil-fill"></i> Edit Profile
         </button>
     </div>
-    
+
     <hr class="mb-5">
 
     <div class="row">
         <div class="col-md-4 text-center">
             <div class="avatar-circle">
-                {{ user.first_name|slice:":1" }}{{ user.last_name|slice:":1" }}
+                {{ researcher.user_id.fullname|slice:":1"|upper }}
             </div>
-            <p class="text-muted">{{ user.email }}</p>
+            <p class="text-muted">{{ researcher.user_id.email }}</p>
         </div>
 
         <div class="col-md-8">
-            
-            <form method="POST" >
+
+            <form method="POST" action="{% url 'researcher_profile' user_id=researcher.user_id.user_id %}">
                 {% csrf_token %}
 
                 <div id="viewMode">
                     <div class="view-field">
                         <div class="view-label">Full Name</div>
-                        <div class="view-value">{{ user.fullname|default:user.username }}</div>
+                        <div class="view-value">{{ researcher.user_id.fullname }}</div>
                     </div>
 
                     <div class="view-field">
                         <div class="view-label">Biography</div>
                         <div class="view-value">
-                            {{ user.researcherprofile.biography|default:"No biography added yet."|linebreaksbr }}
+                            {{ researcher.bio_description|default:"No biography added yet."|linebreaksbr }}
                         </div>
                     </div>
 
                     <div class="view-field">
-                        <div class="view-label">Field of Interest</div>
-                        <div class="view-value">{{ user.researcherprofile.field_of_interest|default:"-" }}</div>
+                        <div class="view-label">ORCID</div>
+                        <div class="view-value">{{ researcher.OCRID|default:"-" }}</div>
                     </div>
 
                     <div class="view-field">
-                        <div class="view-label">Links</div>
+                        <div class="view-label">Google Scholar ID</div>
                         <div class="view-value">
-                            {% if user.researcherprofile.google_scholar_link %}
-                                <a href="{{ user.researcherprofile.google_scholar_link }}" target="_blank">Google Scholar Profile</a>
+                            {% if researcher.google_scholar_id %}
+                            {{ researcher.google_scholar_id }}
                             {% else %}
-                                -
+                            -
                             {% endif %}
                         </div>
                     </div>
                 </div>
 
                 <div id="editMode" class="hidden">
-                    
-                    <label class="form-label">First Name</label>
-                    <input type="text" name="first_name" class="custom-input" value="{{ user.first_name }}">
-                    
-                    <label class="form-label">Last Name</label>
-                    <input type="text" name="last_name" class="custom-input" value="{{ user.last_name }}">
+
+                    <label class="form-label">Full Name</label>
+                    <input type="text" name="fullname" class="custom-input" value="{{ researcher.user_id.fullname }}">
 
                     <label class="form-label">Biography</label>
-                    <textarea name="biography" class="custom-input" rows="4">{{ user.researcherprofile.biography }}</textarea>
+                    <textarea name="bio_description" class="custom-input"
+                        rows="4">{{ researcher.bio_description }}</textarea>
 
-                    <label class="form-label">Field of Interest</label>
-                    <input type="text" name="field_of_interest" class="custom-input" value="{{ user.researcherprofile.field_of_interest }}">
-
-                    <label class="form-label">Google Scholar Link</label>
-                    <input type="url" name="google_scholar_link" class="custom-input" value="{{ user.researcherprofile.google_scholar_link }}">
-                    
                     <label class="form-label">ORCID</label>
-                    <input type="text" name="orcid" class="custom-input" value="{{ user.researcherprofile.orcid }}">
+                    <input type="text" name="OCRID" class="custom-input" value="{{ researcher.OCRID }}">
+
+                    <label class="form-label">Google Scholar ID</label>
+                    <input type="text" name="google_scholar_id" class="custom-input"
+                        value="{{ researcher.google_scholar_id }}">
 
                     <div class="mt-4 text-end">
                         <button type="button" class="btn-cancel" onclick="toggleEditMode(false)">Cancel</button>
@@ -186,7 +196,7 @@
                 </div>
 
             </form>
-            </div>
+        </div>
     </div>
 </div>
 

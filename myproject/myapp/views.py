@@ -282,6 +282,23 @@ def researcher_upload_page(request, user_id):
 def researcher_profile(request, user_id):
     researcher = Researcher.objects.get(user_id=user_id)
     
+    if request.method == 'POST':
+        # Update user fields
+        fullname = request.POST.get('fullname')
+        if fullname:
+            researcher.user_id.fullname = fullname
+            researcher.user_id.save()
+            # Update session
+            request.session['user_name'] = fullname
+        
+        # Update researcher fields
+        researcher.bio_description = request.POST.get('bio_description', '')
+        researcher.OCRID = request.POST.get('OCRID', '')
+        researcher.google_scholar_id = request.POST.get('google_scholar_id', '')
+        researcher.save()
+        
+        messages.success(request, 'Profile updated successfully.')
+        return redirect('researcher_profile', user_id=user_id)
 
     context = {
         'researcher': researcher
