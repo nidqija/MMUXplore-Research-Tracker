@@ -35,6 +35,109 @@ def index(request):
     return render(request, 'home.html', {'user_name': user_name , 'announcements': announcements, 'is_admin': is_admin})
 
 
+
+def user_signup(request):
+    if request.method == 'POST':
+        university_id = request.POST.get('university_id')
+        email = request.POST.get('email')
+        role = request.POST.get('role')
+        password = request.POST.get('password')
+
+        if not role:
+            messages.error(request, 'Please select a valid role.')
+            return render(request, 'signup.html')
+
+        # 1. Handle Admin Logic
+        if university_id.upper().startswith('MQA123'):
+            admin = Admin.objects.create(
+                user_name=email, 
+                email=email, 
+                password=password
+            )
+            # Store admin session immediately
+            request.session['user_name'] = admin.user_name
+            messages.success(request, 'Admin account created.')
+            return redirect('admin_homepage')
+
+        # 2. Check if user already exists to prevent crashes
+        if User.objects.filter(email=email).exists():
+            messages.error(request, 'Email already registered.')
+            return render(request, 'signup.html')
+
+        
+        user = User.objects.create(
+            fullname='', 
+            university_id=university_id, 
+            email=email, 
+            password=password, 
+            role=role
+        )
+
+      
+        if role == 'researcher':
+            Researcher.objects.create(user_id=user) #
+        elif role == 'student':
+            Student.objects.create(user_id=user) #
+
+       
+        request.session['temp_user_email'] = email
+
+        messages.success(request, 'Account created! Now let\'s set up your profile.')
+        return redirect('avatar_register')
+
+    return render(request, 'signup.html') 
+
+
+
+def user_signin(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+
+        # 1. Try to find an Admin first
+        admin = Admin.objects.filter(email=email).first()
+        if admin:
+            if admin.password == password:
+                request.session['user_name'] = admin.user_name
+                messages.success(request, 'Admin Signed in successfully.')
+                return redirect('admin_homepage')
+            else:
+                messages.error(request, "Invalid password.")
+                return render(request, 'signin.html')
+
+        # 2. If not admin, try to find a User
+        user = User.objects.filter(email=email).first()
+        if user:
+            if user.password == password:
+                request.session['user_name'] = user.fullname
+                
+                if user.role == 'researcher':
+                    # Check if researcher profile exists
+                    try:
+                        researcher = Researcher.objects.get(user_id=user.user_id)
+                        messages.success(request, 'Researcher Signed in successfully.')
+                        # Redirect using the correct user_id field
+                        return redirect('researcher_home', user_id=user.user_id)
+                    except Researcher.DoesNotExist:
+                        messages.warning(request, "Researcher profile missing. Please contact admin.")
+                        return redirect('home')
+
+                elif user.role == 'student':
+                    messages.success(request, 'Student Signed in successfully.')
+                    return redirect('home')
+            else:
+                messages.error(request, "Invalid password.")
+                return render(request, 'signin.html')
+
+        # 3. If neither admin nor user found
+        messages.error(request, "Invalid email or password. Please try again.")
+        return render(request, 'signin.html')
+
+    return render(request, 'signin.html')
+
+        
+
+
 def user_avatar_register(request):
     if request.method == 'POST':
         fullname = request.POST.get('fullname')
@@ -99,56 +202,6 @@ def update_profile(request):
     return render(request, 'update_profile.html')
 
 
-def user_signup(request):
-    if request.method == 'POST':
-        university_id = request.POST.get('university_id')
-        email = request.POST.get('email')
-        role = request.POST.get('role')
-        password = request.POST.get('password')
-
-        if not role:
-            messages.error(request, 'Please select a valid role.')
-            return render(request, 'signup.html')
-
-        # 1. Handle Admin Logic
-        if university_id.upper().startswith('MQA123'):
-            admin = Admin.objects.create(
-                user_name=email, 
-                email=email, 
-                password=password
-            )
-            # Store admin session immediately
-            request.session['user_name'] = admin.user_name
-            messages.success(request, 'Admin account created.')
-            return redirect('admin_homepage')
-
-        # 2. Check if user already exists to prevent crashes
-        if User.objects.filter(email=email).exists():
-            messages.error(request, 'Email already registered.')
-            return render(request, 'signup.html')
-
-        
-        user = User.objects.create(
-            fullname='', 
-            university_id=university_id, 
-            email=email, 
-            password=password, 
-            role=role
-        )
-
-      
-        if role == 'researcher':
-            Researcher.objects.create(user_id=user) #
-        elif role == 'student':
-            Student.objects.create(user_id=user) #
-
-       
-        request.session['temp_user_email'] = email
-
-        messages.success(request, 'Account created! Now let\'s set up your profile.')
-        return redirect('avatar_register')
-
-    return render(request, 'signup.html') 
 
 #==================================== Researcher Parts ====================================#
 def researcher_home(request, user_id):
@@ -223,53 +276,6 @@ def researcher_profile(request, user_id):
 
 
 
-def user_signin(request):
-    if request.method == 'POST':
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-
-        # 1. Try to find an Admin first
-        admin = Admin.objects.filter(email=email).first()
-        if admin:
-            if admin.password == password:
-                request.session['user_name'] = admin.user_name
-                messages.success(request, 'Admin Signed in successfully.')
-                return redirect('admin_homepage')
-            else:
-                messages.error(request, "Invalid password.")
-                return render(request, 'signin.html')
-
-        # 2. If not admin, try to find a User
-        user = User.objects.filter(email=email).first()
-        if user:
-            if user.password == password:
-                request.session['user_name'] = user.fullname
-                
-                if user.role == 'researcher':
-                    # Check if researcher profile exists
-                    try:
-                        researcher = Researcher.objects.get(user_id=user.user_id)
-                        messages.success(request, 'Researcher Signed in successfully.')
-                        # Redirect using the correct user_id field
-                        return redirect('researcher_home', user_id=user.user_id)
-                    except Researcher.DoesNotExist:
-                        messages.warning(request, "Researcher profile missing. Please contact admin.")
-                        return redirect('home')
-
-                elif user.role == 'student':
-                    messages.success(request, 'Student Signed in successfully.')
-                    return redirect('home')
-            else:
-                messages.error(request, "Invalid password.")
-                return render(request, 'signin.html')
-
-        # 3. If neither admin nor user found
-        messages.error(request, "Invalid email or password. Please try again.")
-        return render(request, 'signin.html')
-
-    return render(request, 'signin.html')
-
-        
 
 def research_paper_page(request):
     user_name = request.session.get('user_name', 'Guest')
@@ -412,3 +418,16 @@ def profile_page(request):
     user_data = User.objects.filter(fullname=user_name).first()
 
     return render(request , 'profile_page.html', {'user_name': user_name, 'user_data': user_data} )
+
+
+
+def view_announcement_page(request , announcement_id):
+    user_name = request.session.get('user_name', 'Guest')
+    announcements = Announcements.objects.filter(announcement_id=announcement_id)
+
+    is_admin = False
+
+    if 'user_name' != 'Guest':
+        is_admin = Admin.objects.filter(user_name=user_name).exists()
+
+    return render(request, 'view_announcement.html', {'user_name': user_name , 'announcements': announcements, 'is_admin': is_admin})
