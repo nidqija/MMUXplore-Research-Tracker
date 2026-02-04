@@ -13,6 +13,7 @@ urlpatterns = [
     path('profile/', views.profile_page, name='profile'),
     path('avatar_register/', views.user_avatar_register, name='avatar_register'),
     path('update_profile/', views.update_profile, name='update_profile'),
+    path('view_announcements/<int:announcement_id>/', views.view_announcement_page, name='view_announcements'),
     path('logout/', views.user_logout, name='logout'),
     # End General URLs
 
