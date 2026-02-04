@@ -260,7 +260,7 @@
                     <div class="col-md-4">
                         <div class="status-card status-revision">
                             <div class="status-label">Revision</div>
-                            <div class="status-count">{{ counts.revision }}</div>
+                            <div class="status-count">{{ revision_count }}</div>
                             <div><button class="btn-dark-blue btn-sm">view more</button></div>
                         </div>
                     </div>
@@ -276,7 +276,7 @@
                     <div class="col-md-4">
                         <div class="status-card status-accepted">
                             <div class="status-label">Accepted</div>
-                            <div class="status-count">{{ counts.accepted }}</div>
+                            <div class="status-count">{{ approved_count }}</div>
                             <div><button class="btn-dark-blue btn-sm">view more</button></div>
                         </div>
                     </div>
@@ -293,18 +293,19 @@
             <div class="col-md-4">
                 <div class="paper-card">
                     <div class="paper-header">
-                        <img src="{{ paper.cover_image.url|default:'https://via.placeholder.com/80x100?text=PDF' }}"
-                            class="paper-thumb" alt="Cover">
+                        <img src="https://via.placeholder.com/80x100?text=PDF" class="paper-thumb" alt="Cover">
                         <div class="paper-info">
-                            <h5>{{ paper.title }}</h5>
+                            <h5>{{ paper.paper_title }}</h5>
                             <div class="paper-meta">
                                 published: <br>
-                                {{ paper.publication_date|date:"jS F Y" }}
+                                {{ paper.published_date|date:"jS F Y"|default:"Not published" }}
                                 <br>
-                                {% if paper.status == 'pending' %}
+                                {% if paper.paper_status == 'pending' %}
                                 <span class="status-badge badge-pending">Pending Approval</span>
-                                {% elif paper.status == 'revision' %}
+                                {% elif paper.paper_status == 'rejected' %}
                                 <span class="status-badge badge-revision">Needs Revision</span>
+                                {% elif paper.paper_status == 'approved' %}
+                                <span class="status-badge badge-published">Published</span>
                                 {% endif %}
                             </div>
                         </div>
@@ -312,34 +313,37 @@
 
                     <div class="mt-auto">
                         <div class="stat-row">
-                            <span>downloads</span>
-                            <strong>{{ paper.downloads }}</strong>
-                        </div>
-                        <div class="stat-row">
                             <span>likes</span>
-                            <strong>{{ paper.likes }}</strong>
+                            <strong>{{ paper.total_likes }}</strong>
                         </div>
                         <div class="stat-row">
                             <span>bookmarked</span>
-                            <strong>{{ paper.bookmarks }}</strong>
+                            <strong>{{ paper.total_bookmarked }}</strong>
                         </div>
 
                         <div class="text-center mt-3">
-                            {% if paper.status != 'accepted' %}
+                            {% if paper.paper_status != 'approved' %}
                             <button type="button" class="btn-dark-blue w-100"
-                                onclick="openEditModal('{{ paper.id }}', '{{ paper.title|escapejs }}', '{{ paper.abstract|escapejs }}')">
+                                onclick="openEditModal('{{ paper.paper_id }}', '{{ paper.paper_title|escapejs }}', '{{ paper.paper_desc|escapejs }}')">
                                 Edit Paper
                             </button>
                             {% else %}
-                            <button class="btn-dark-blue w-100">Update Paper</button>
+                            <button class="btn-dark-blue w-100">View Paper</button>
                             {% endif %}
                         </div>
                     </div>
                 </div>
             </div>
+            {% empty %}
+            <div class="col-12">
+                <p class="text-muted text-center">No papers uploaded yet. <a
+                        href="{% url 'researcher_upload_page' user_id=researcher.user_id.user_id %}">Upload your first
+                        paper!</a></p>
+            </div>
             {% endfor %}
         </div>
     </div>
+</div>
 </div>
 
 <div class="modal fade" id="editPaperModal" tabindex="-1" aria-hidden="true">

@@ -223,14 +223,26 @@ def update_profile(request):
 #==================================== Researcher Parts ====================================#
 def researcher_home(request, user_id):
     researcher = Researcher.objects.get(user_id=user_id)
-    pending_count = ResearchPaper.objects.filter(researcher_id=researcher, paper_status='pending').count()
-    pending_papers = ResearchPaper.objects.filter(researcher_id=researcher, paper_status='pending')
-
+    
+    # Get all papers by this researcher
+    all_papers = ResearchPaper.objects.filter(researcher_id=researcher)
+    
+    # Count by status
+    pending_count = all_papers.filter(paper_status='pending').count()
+    revision_count = all_papers.filter(paper_status='rejected').count()
+    approved_count = all_papers.filter(paper_status='approved').count()
+    
+    # Get papers for display
+    pending_papers = all_papers.filter(paper_status='pending')
+    papers = all_papers  # All papers for the "Your Papers" section
 
     context = {
-        'researcher': researcher ,
-        'pending_count': pending_count ,
-        'pending_papers': pending_papers
+        'researcher': researcher,
+        'pending_count': pending_count,
+        'revision_count': revision_count,
+        'approved_count': approved_count,
+        'pending_papers': pending_papers,
+        'papers': papers
     }
 
     return render(request, 'researcher/researcher_home.html', context)
