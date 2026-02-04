@@ -111,11 +111,13 @@
                             <p class="mb-1"><strong>Author:</strong> {{ paper.researcher_id.user_id.fullname }}</p>
                             <p class="mb-1"><strong>Researcher ID:</strong> {{ paper.researcher_id.pk }}</p>
                             <p class="mb-1"><strong>Submission ID:</strong> {{ submission_id }}</p>
+                            <p class="mb-1"><strong>Paper ID:</strong> {{ paper.paper_id }}</p>
+                            
                         </div>
                     </div>
 
                     <div class="mb-4">
-                        <a href="#" class="action-link">Read</a>
+                        
                         {% if paper.paper_pdf %}
                             <a href="{{ paper.paper_pdf.url }}" download class="action-link">Download paper</a>
                         {% endif %}

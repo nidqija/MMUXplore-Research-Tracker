@@ -42,7 +42,7 @@
     <tr>
         <td>{{ submission.submission_id }}</td>
         <td>{{ submission.paper_id.paper_title }}</td>
-        <td class="mb-1"><strong>Author:</strong> {{ submission.paper_id.researcher_id.user_id.fullname }}</td>
+        <td class="mb-1"> {{ submission.paper_id.researcher_id.user_id.fullname }}</td>
         <td>
             <span class="badge bg-warning text-dark">{{ submission.status }}</span>
         </td>
