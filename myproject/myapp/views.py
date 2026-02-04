@@ -5,6 +5,7 @@ from .models import Admin, ResearchPaper, Submissions, User,Researcher , TermsAn
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from functools import wraps
+from django.utils import timezone
 
 
 
@@ -27,12 +28,28 @@ def index(request):
     user_name = request.session.get('user_name', 'Guest')
     announcements = Announcements.objects.all().order_by('-date_posted') 
 
+    latest_tc = TermsAndConditions.objects.order_by('-last_updated').first()
+    
+    # Check if the latest terms and conditions were updated within the last 7 days
+    new_tc_update = False
+
+    # if there is at least one terms and conditions entry 
+    if latest_tc:
+
+        # calculate the time limit
+        recent_limit = timezone.now() - timezone.timedelta(days=7)
+
+        # compare the last updated time with the limit
+        if latest_tc.last_updated >= recent_limit:
+
+            new_tc_update = True
+
     is_admin = False
 
-    if 'user_name' != 'Guest':
+    if user_name != 'Guest':
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
-    return render(request, 'home.html', {'user_name': user_name , 'announcements': announcements, 'is_admin': is_admin})
+    return render(request, 'home.html', {'user_name': user_name , 'announcements': announcements, 'is_admin': is_admin , 'new_tc_update': new_tc_update} )
 
 
 
@@ -296,30 +313,33 @@ def admin_page(request):
 
 #===================================== Terms and Conditions Page =====================================#
 
-@admin_required
 def term_condition_page(request):
-    user_name = request.session.get('user_name', 'Guest')
+    user_name_session = request.session.get('user_name', 'Guest')
     view_terms = TermsAndConditions.objects.all()
-
+    
+    is_admin = Admin.objects.filter(user_name=user_name_session).exists()
 
     if request.method == 'POST':
-          ruletitle = request.POST.get('ruletitle')
-          ruledescription = request.POST.get('ruledescription')
-
-          if ruletitle and ruledescription :
-            new_term = TermsAndConditions(title=ruletitle, content=ruledescription)
-            new_term.save()
-
-            messages.success(request, 'New term and condition added successfully.')
+        if not is_admin:
+            messages.error(request, 'You do not have permission to modify terms.')
             return redirect('term_condition_page')
-    
-          else :
-            messages.error(request , 'Failed to add new term and condition. Please try again.')
+            
+        ruletitle = request.POST.get('ruletitle')
+        ruledescription = request.POST.get('ruledescription')
 
-          return redirect('term_condition_page')
+        if ruletitle and ruledescription:
+            TermsAndConditions.objects.create(title=ruletitle, content=ruledescription)
+            messages.success(request, 'New term added successfully.')
+        else:
+            messages.error(request, 'Failed to add. Fields cannot be empty.')
+        return redirect('term_condition_page')
 
-    return render(request , 'adminguy/term_condition_page.html', {'user_name': user_name , 'view_terms': view_terms} )
-
+    context = {
+        'user_name': user_name_session,
+        'view_terms': view_terms,
+        'is_admin': is_admin  
+    }
+    return render(request, 'term_condition_page.html', context)
 
 @require_POST
 def delete_term_condition(request, term_id):
