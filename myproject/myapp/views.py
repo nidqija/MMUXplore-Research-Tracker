@@ -223,6 +223,28 @@ def update_profile(request):
 #==================================== Researcher Parts ====================================#
 def researcher_home(request, researcher_id):
     researcher = Researcher.objects.get(researcher_id=researcher_id)
+
+    if request.method == 'POST':
+        paper_id = request.POST.get('paper_id')
+        title = request.POST.get('title')
+        abstract = request.POST.get('abstract')
+        category = request.POST.get('category')
+        doi = request.POST.get('doi')
+        
+        if paper_id:
+            try:
+                paper = ResearchPaper.objects.get(paper_id=paper_id)
+                paper.paper_title = title
+                paper.paper_desc = abstract
+                if category:
+                    paper.paper_category = category
+                if doi:
+                    paper.paper_doi = doi
+                paper.save()
+                messages.success(request, 'Paper updated successfully.')
+            except ResearchPaper.DoesNotExist:
+                messages.error(request, 'Paper not found.')
+        return redirect('researcher_home', researcher_id=researcher_id)
     
     # Get all papers by this researcher
     all_papers = ResearchPaper.objects.filter(researcher_id=researcher)
