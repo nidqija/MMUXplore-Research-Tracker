@@ -342,18 +342,31 @@ def researcher_profile(request, researcher_id):
 #====================================Researcher Parts End ====================================#
 
 
+def view_research_paper(request, paper_id):
+    research_papers = ResearchPaper.objects.get(paper_id=paper_id)
+    researcher = research_papers.researcher_id
+    researchname = researcher.user_id.fullname
+    user_name = request.session.get('user_name', 'Guest')
 
+    is_admin = False
+
+    if user_name != 'Guest':
+        is_admin = Admin.objects.filter(user_name=user_name).exists()
+
+
+    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_admin': is_admin ,'researchname': researchname} )
 
 
 def research_paper_page(request):
     user_name = request.session.get('user_name', 'Guest')
+    researchpapers = ResearchPaper.objects.filter(paper_status='approved')
     is_admin = False
 
-    if 'user_name' != 'Guest':
+    if user_name != 'Guest':
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
 
-    return render(request , 'researchpaper.html', {'user_name': user_name , 'is_admin': is_admin} )      
+    return render(request , 'researchpaper.html', {'user_name': user_name , 'is_admin': is_admin , 'researchpapers': researchpapers} )      
 
 
 @admin_required
