@@ -105,6 +105,10 @@ def user_signup(request):
             Researcher.objects.create(user_id=user) #
         elif role == 'student':
             Student.objects.create(user_id=user) #
+        elif role == 'program_coordinator': 
+            ProgrammeCoordinator.objects.create(user_id=user)
+            request.session['user_id'] = user.user_id  #  store ID for URL redirects
+       
 
        
         request.session['temp_user_email'] = email
@@ -116,52 +120,7 @@ def user_signup(request):
 
 
 
-def user_signin(request):
-    if request.method == 'POST':
-        email = request.POST.get('email')
-        password = request.POST.get('password')
 
-        # 1. Try to find an Admin first
-        admin = Admin.objects.filter(email=email).first()
-        if admin:
-            if admin.password == password:
-                request.session['user_name'] = admin.user_name
-                messages.success(request, 'Admin Signed in successfully.')
-                return redirect('admin_homepage')
-            else:
-                messages.error(request, "Invalid password.")
-                return render(request, 'signin.html')
-
-        user = User.objects.filter(email=email).first()
-        if user:
-            if user.password == password:
-                request.session['user_id'] = user.user_id  
-                request.session['user_name'] = user.fullname
-              
-                
-                if user.role == 'researcher':
-                    # Check if researcher profile exists
-                    try:
-                        researcher = Researcher.objects.get(user_id=user.user_id)
-                        messages.success(request, 'Researcher Signed in successfully.')
-                        # Redirect using researcher_id
-                        return redirect('researcher_home', researcher_id=researcher.researcher_id)
-                    except Researcher.DoesNotExist:
-                        messages.warning(request, "Researcher profile missing. Please contact admin.")
-                        return redirect('home')
-
-                elif user.role == 'student':
-                    messages.success(request, 'Student Signed in successfully.')
-                    return redirect('home')
-            else:
-                messages.error(request, "Invalid password.")
-                return render(request, 'signin.html')
-
-        # 3. If neither admin nor user found
-        messages.error(request, "Invalid email or password. Please try again.")
-        return render(request, 'signin.html')
-
-    return render(request, 'signin.html')
 
         
 
@@ -187,6 +146,9 @@ def user_avatar_register(request):
             del request.session['temp_user_email']
             
             messages.success(request, 'Profile updated successfully.')
+            if user.role == 'program_coordinator':
+                return redirect('coordinator_home', user_id=user.user_id)
+            
             return redirect('home')
         else:
             messages.error(request, 'Session expired. Please sign up again.')
@@ -406,24 +368,20 @@ def submissions(request):
     # Only get submissions with status 'under review'
     user_id = request.session.get('user_id')
     
-    if not user_id:
-        return redirect('signin')
+
 
     # 2. Correctly query the coordinator using the user_id
     # We use user_id__user_id because the field in ProgrammeCoordinator is named 'user_id'
     # and it points to the User model's 'user_id' field.
-    try:
-        coordinator = ProgrammeCoordinator.objects.get(user_id__user_id=user_id)
-    except ProgrammeCoordinator.DoesNotExist:
-        messages.error(request, "Coordinator profile not found.")
-        return redirect('home')
-    
+    user_id = request.session.get('user_id')
+    coordinator = ProgrammeCoordinator.objects.filter(user_id__user_id=user_id).first()
     submission = Submissions.objects.filter(status='pending').select_related('paper_id')
     pastSubmission = Submissions.objects.filter(status__in=['approved', 'rejected']).select_related('paper_id')
     context = {
         'coordinator': coordinator,
         'submissions': submission,
-        'pastSubmissions': pastSubmission
+        'pastSubmissions': pastSubmission,
+        'user_name': request.session.get('user_name')
     }
     return render(request, 'coordinator/submissions.html', context)
 
