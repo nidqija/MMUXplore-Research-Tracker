@@ -157,6 +157,8 @@ def user_avatar_register(request):
     return render(request, 'user_avatar_register.html')
 
 
+
+
 def user_logout(request):
     request.session.flush()
     messages.success(request, 'You have been logged out successfully.')
@@ -371,6 +373,7 @@ def submissions(request):
     # We use user_id__user_id because the field in ProgrammeCoordinator is named 'user_id'
     # and it points to the User model's 'user_id' field.
     user_id = request.session.get('user_id')
+    user_name = request.session.get('user_name')
     coordinator = ProgrammeCoordinator.objects.filter(user_id__user_id=user_id).first()
     submission = Submissions.objects.filter(status='pending').select_related('paper_id')
     pastSubmission = Submissions.objects.filter(status__in=['approved', 'rejected']).select_related('paper_id')
@@ -378,7 +381,7 @@ def submissions(request):
         'coordinator': coordinator,
         'submissions': submission,
         'pastSubmissions': pastSubmission,
-        'user_name': request.session.get('user_name')
+        'user_name': user_name
     }
     return render(request, 'coordinator/submissions.html', context)
 
@@ -456,20 +459,20 @@ def coordinator_research_paper_page(request):
     return render(request, 'coordinator/researchpaper.html', context)
 
 def coordinator_view_research_paper(request, paper_id):
-    # 1. Get the paper safely
+    #  Get the paper safely
     research_paper = get_object_or_404(ResearchPaper, paper_id=paper_id)
 
-    # 2. Get related researcher info
+    # Get related researcher info
     researcher = research_paper.researcher_id
     researchname = researcher.user_id.fullname
 
-    # 3. Get comments for this paper
+    #  Get comments for this paper
     comments = Comment.objects.filter(paper_id=research_paper)
 
-    # 4. Get logged-in user from session
+    #  Get logged-in user from session
     user_name = request.session.get('user_name', 'Guest')
 
-    # 5. Coordinator check
+    #. Coordinator check
     is_coordinator = False
     coordinator = None
 
@@ -491,6 +494,25 @@ def coordinator_view_research_paper(request, paper_id):
     }
 
     return render(request, 'coordinator/view_research_paper.html', context)
+
+
+def reportpage(request):
+
+    user_id = request.session.get('user_id')
+    user_name = request.session.get('user_name')
+    coordinator = ProgrammeCoordinator.objects.get(user_id__user_id=user_id)
+    researchpapers = ResearchPaper.objects.filter(paper_status='approved').order_by('-published_date')
+
+    context = {
+        'coordinator' : coordinator,
+        'researchpapers' : researchpapers,
+        'user_name': user_name
+
+
+    }
+
+    return render(request, 'coordinator/reportpage.html', context)
+
 
 
 
