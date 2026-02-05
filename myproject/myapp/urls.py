@@ -17,6 +17,8 @@ urlpatterns = [
     path('term_condition_page/', views.term_condition_page, name='term_condition_page' ),
     path('logout/', views.user_logout, name='logout'),
     path('view_research_paper/<int:paper_id>/', views.view_research_paper, name='view_research_paper'),
+    path('add_comment/<int:paper_id>/', views.add_comment, name='add_comment'),
+    path('delete_comment/<int:comment_id>/<int:paper_id>', views.delete_comment, name='delete_comment'),
     # End General URLs
 
     #researcher URLs
