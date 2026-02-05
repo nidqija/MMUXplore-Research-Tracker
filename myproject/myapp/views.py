@@ -433,20 +433,48 @@ def view_research_paper(request, paper_id):
     return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_admin': is_admin ,'researchname': researchname, 'comments': comments  } )
 
 #programme coordinator
+def get_logged_in_coordinator(request): #id and role retrieval
+    user_id = request.session.get('user_id')
+    user_role = request.session.get('user_role')
+
+    if not user_id or user_role != 'program_coordinator':
+        return None
+
+    try:
+        return ProgrammeCoordinator.objects.get(user_id=user_id)
+    except ProgrammeCoordinator.DoesNotExist:
+        return None
+
 def coordinator_home(request, user_id):
-    # Correct query
-    coordinator = ProgrammeCoordinator.objects.get(user_id=user_id)
+    # Fetch the coordinator associated with the user_id passed in the URL
+    # use user_id__user_id because the model field is named 'user_id' (FK) 
+    # and we are looking for the 'user_id' field on the User model.
+    coordinator = get_object_or_404(ProgrammeCoordinator, user_id__user_id=user_id)
     
-    context = {
+    return render(request, 'coordinator/coordinator_home.html', {
         'coordinator': coordinator
-    }
-    return render(request , 'coordinator/coordinator_home.html', context)
+    })
 
 def submissions(request):
     # Only get submissions with status 'under review'
+    user_id = request.session.get('user_id')
+    
+    if not user_id:
+        return redirect('signin')
+
+    # 2. Correctly query the coordinator using the user_id
+    # We use user_id__user_id because the field in ProgrammeCoordinator is named 'user_id'
+    # and it points to the User model's 'user_id' field.
+    try:
+        coordinator = ProgrammeCoordinator.objects.get(user_id__user_id=user_id)
+    except ProgrammeCoordinator.DoesNotExist:
+        messages.error(request, "Coordinator profile not found.")
+        return redirect('home')
+    
     submission = Submissions.objects.filter(status='pending').select_related('paper_id')
     pastSubmission = Submissions.objects.filter(status__in=['approved', 'rejected']).select_related('paper_id')
     context = {
+        'coordinator': coordinator,
         'submissions': submission,
         'pastSubmissions': pastSubmission
     }
@@ -459,8 +487,8 @@ def submissions(request):
 
 def submission_detail(request, submission_id):
     # Get the paper and the specific submission entry linked to it
-
-    
+    user_id = request.session.get('user_id')
+    coordinator = ProgrammeCoordinator.objects.get(user_id__user_id=user_id)
     # Try to find the linked submission ID for display (if it exists)
     submission = get_object_or_404(Submissions, submission_id=submission_id)
     paper = submission.paper_id   # get the related ResearchPaper
@@ -496,11 +524,76 @@ def submission_detail(request, submission_id):
         return redirect('coordinator_submissions')
 
     context = {
+        'coordinator':coordinator,
         'paper': paper,
         'submission_id': submission.submission_id,
         'submission': submission
     }
     return render(request, 'coordinator/submission_detail.html', context)
+
+
+def coordinator_research_paper_page(request):
+    # 1. Get user info from session
+    user_name = request.session.get('user_name', 'Guest')
+    user_id = request.session.get('user_id')
+
+    # 2. If not logged in, redirect to sign in
+    if not user_id:
+        return redirect('signin')
+
+    # 3. Get coordinator object
+    coordinator = get_logged_in_coordinator(request)
+
+    # 4. Get all approved research papers
+    research_papers = ResearchPaper.objects.filter(paper_status='approved')
+
+    # 5. Pass context to template
+    context = {
+        'user_name': user_name,
+        'user_id': user_id,
+        'coordinator': coordinator,
+        'is_coordinator': True,
+        'research_papers': research_papers,
+    }
+
+    return render(request, 'coordinator/researchpaper.html', context)
+
+def coordinator_view_research_paper(request, paper_id):
+    # 1. Get the paper safely
+    research_paper = get_object_or_404(ResearchPaper, paper_id=paper_id)
+
+    # 2. Get related researcher info
+    researcher = research_paper.researcher_id
+    researchname = researcher.user_id.fullname
+
+    # 3. Get comments for this paper
+    comments = Comment.objects.filter(paper_id=research_paper)
+
+    # 4. Get logged-in user from session
+    user_name = request.session.get('user_name', 'Guest')
+
+    # 5. Coordinator check
+    is_coordinator = False
+    coordinator = None
+
+    if user_name != 'Guest':
+        coordinator = ProgrammeCoordinator.objects.filter(
+            user_id__fullname=user_name
+        ).first()
+        is_coordinator = coordinator is not None
+
+    # 6. Pass everything to template
+    context = {
+        'user_name': user_name,
+        'research_paper': research_paper,
+        'researcher': researcher,
+        'researchname': researchname,
+        'comments': comments,
+        'is_coordinator': is_coordinator,
+        'coordinator': coordinator,
+    }
+
+    return render(request, 'coordinator/view_research_paper.html', context)
 
 
 
@@ -544,12 +637,19 @@ def user_signin(request):
                 
 
                 elif user.role == 'program_coordinator':
-                    try:
-                        coordinator = ProgrammeCoordinator.objects.get(user_id=user.user_id)
-                        messages.success(request, 'Programme Coordinator Signed in successfully.')
-                        return redirect('coordinator_home', user_id=user.user_id)
-                    except ProgrammeCoordinator.DoesNotExist:
-                        messages.warning(request, "Programme Coordinator profile missing. Please contact admin.")
+                        try:
+                            # We need the coordinator object to verify they exist, 
+                            # but for the redirect, we pass the User's ID
+                            coordinator_profile = ProgrammeCoordinator.objects.get(user_id=user)
+                            
+                            messages.success(request, 'Programme Coordinator Signed in successfully.')
+                            
+                            # Redirect passes the INTEGER user_id
+                            return redirect('coordinator_home', user_id=user.user_id)
+        
+                        except ProgrammeCoordinator.DoesNotExist:
+                            messages.warning(request, "Coordinator profile missing.")
+                            return redirect('home')
                         
             else:
                 messages.error(request, "Invalid password.")

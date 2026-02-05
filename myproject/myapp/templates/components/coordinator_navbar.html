@@ -9,10 +9,10 @@
   <ul class="nav justify-content-center">
 
   <li class="nav-item">
-    <a class="nav-link text-white" href="{% url 'coordinator_home' user_id=request.session.user_id %}">Home</a>
+    <a class="nav-link text-white" href="{% url 'coordinator_home' coordinator.user_id.user_id %}">Home</a>
   </li>
   <li class="nav-item">
-    <a class="nav-link text-white" href="{% url 'research_paper_page' %}">Papers</a>
+    <a class="nav-link text-white" href="{% url 'coorresearchpaper' %}">Papers</a>
   </li>
    <li class="nav-item">
     <a class="nav-link text-white" href="">Researchers</a>
