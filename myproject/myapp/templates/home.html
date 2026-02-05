@@ -112,54 +112,27 @@
     </div>
     <div class="container mb-5 mt-5">
     <div class="row row-cols-1 row-cols-md-4 g-4">
+         {% if research_papers %}
+    {% for paper in research_papers %}
   <div class="col">
+ 
     <div class="card h-100">
-      <img src="..." class="card-img-top" alt="...">
+      <embed src="{{ paper.paper_file.url }}#page=1&toolbar=0&navpanes=0" 
+               type="application/pdf" 
+               width="100%" 
+               height="300px" />
       <div class="card-body">
-        <h5 class="card-title">Card title</h5>
-        <p class="card-text">This is a longer card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
+        <h5 class="card-title">{{ paper.paper_title }}</h5>
+        <p class="card-text mt-4 mb-4">{{ paper.paper_desc }}</p>
         <div class="text-center">
-        <button class="btn btn-danger">View More</button>
+       <a href="{% url 'view_research_paper' paper_id=paper.paper_id %}"><button class="btn btn-danger">View More</button></a> 
        </div>
     </div>
     </div>
   </div>
-  <div class="col">
-    <div class="card h-100">
-      <img src="..." class="card-img-top" alt="...">
-      <div class="card-body">
-        <h5 class="card-title">Card title</h5>
-        <p class="card-text">This is a short card.</p>
-          <div class="text-center">
-        <button class="btn btn-danger">View More</button>
-       </div>
-      </div>
-    </div>
-  </div>
-  <div class="col">
-    <div class="card h-100">
-      <img src="..." class="card-img-top" alt="...">
-      <div class="card-body">
-        <h5 class="card-title">Card title</h5>
-        <p class="card-text">This is a longer card with supporting text below as a natural lead-in to additional content.</p>
-          <div class="text-center">
-        <button class="btn btn-danger">View More</button>
-       </div>  
-    </div>
-    </div>
-  </div>
-  <div class="col">
-    <div class="card h-100">
-      <img src="..." class="card-img-top" alt="...">
-      <div class="card-body">
-        <h5 class="card-title">Card title</h5>
-        <p class="card-text">This is a longer card with supporting text below as a natural lead-in to additional content. This content is a little bit longer.</p>
-       <div class="text-center">
-        <button class="btn btn-danger">View More</button>
-       </div>
-    </div>
-    </div>
-  </div>
+   {% endfor %}
+   {% endif %}
+
 </div>
 </div>
 </div>

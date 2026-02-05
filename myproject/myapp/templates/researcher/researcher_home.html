@@ -153,37 +153,67 @@
     .paper-card {
         background: #fff;
         border-radius: 15px;
-        padding: 20px;
-        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        padding: 25px;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.08);
         height: 100%;
         display: flex;
         flex-direction: column;
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
+    }
+
+    .paper-card:hover {
+        transform: translateY(-3px);
+        box-shadow: 0 6px 20px rgba(0, 0, 0, 0.12);
     }
 
     .paper-header {
-        display: flex;
-        gap: 15px;
         margin-bottom: 20px;
     }
 
-    .paper-thumb {
-        width: 80px;
-        height: 100px;
-        background-color: #ccc;
-        object-fit: cover;
-        border-radius: 5px;
-    }
-
     .paper-info h5 {
-        font-size: 1rem;
+        font-size: 1.1rem;
         font-weight: 700;
-        margin-bottom: 5px;
+        margin-bottom: 8px;
+        color: #2c2c2c;
     }
 
     .paper-meta {
-        font-size: 0.75rem;
+        font-size: 0.8rem;
         color: #666;
-        line-height: 1.4;
+        line-height: 1.6;
+    }
+
+    .paper-meta strong {
+        color: #444;
+    }
+
+    /* Modal enhancements */
+    .modal-content {
+        border-radius: 15px;
+        border: none;
+    }
+
+    .paper-list-item {
+        background: #f8f9fa;
+        border-radius: 10px;
+        padding: 15px;
+        margin-bottom: 15px;
+    }
+
+    .paper-list-item:last-child {
+        margin-bottom: 0;
+    }
+
+    .paper-list-item h6 {
+        color: #2c2c2c;
+        font-weight: 600;
+        margin-bottom: 8px;
+    }
+
+    .paper-list-item p {
+        color: #666;
+        font-size: 0.9rem;
+        margin-bottom: 0;
     }
 
     .stat-row {
@@ -219,16 +249,34 @@
 
     /* Modal Styling */
     .modal-header {
-        border-bottom: none;
+        border-bottom: 1px solid #eee;
+        padding: 20px 25px;
     }
 
     .modal-footer {
-        border-top: none;
+        border-top: 1px solid #eee;
+        padding: 15px 25px;
     }
 
     .form-control-plaintext {
         font-weight: bold;
         font-size: 1.1rem;
+    }
+
+    .btn-upload-link {
+        background-color: #28a745;
+        color: white;
+        border-radius: 20px;
+        padding: 8px 20px;
+        border: none;
+        text-decoration: none;
+        font-size: 0.9rem;
+        transition: background-color 0.2s;
+    }
+
+    .btn-upload-link:hover {
+        background-color: #218838;
+        color: white;
     }
 </style>
 {% endblock %}
@@ -261,7 +309,8 @@
                         <div class="status-card status-revision">
                             <div class="status-label">Revision</div>
                             <div class="status-count">{{ revision_count }}</div>
-                            <div><button class="btn-dark-blue btn-sm">view more</button></div>
+                            <div><button class="btn-dark-blue btn-sm" data-bs-toggle="modal"
+                                    data-bs-target="#revisionModal">View More</button></div>
                         </div>
                     </div>
                     <div class="col-md-4">
@@ -269,7 +318,7 @@
                             <div class="status-label">Pending</div>
                             <div class="status-count">{{ pending_count }}</div>
                             <div><button class="btn-dark-blue btn-sm" data-bs-toggle="modal"
-                                    data-bs-target="#staticBackdrop2">view more</button></div>
+                                    data-bs-target="#pendingModal">View More</button></div>
                         </div>
 
                     </div>
@@ -277,7 +326,8 @@
                         <div class="status-card status-accepted">
                             <div class="status-label">Accepted</div>
                             <div class="status-count">{{ approved_count }}</div>
-                            <div><button class="btn-dark-blue btn-sm">view more</button></div>
+                            <div><button class="btn-dark-blue btn-sm" data-bs-toggle="modal"
+                                    data-bs-target="#acceptedModal">View More</button></div>
                         </div>
                     </div>
                 </div>
@@ -293,42 +343,48 @@
             <div class="col-md-4">
                 <div class="paper-card">
                     <div class="paper-header">
-                        <img src="https://via.placeholder.com/80x100?text=PDF" class="paper-thumb" alt="Cover">
                         <div class="paper-info">
                             <h5>{{ paper.paper_title }}</h5>
                             <div class="paper-meta">
-                                published: <br>
-                                {{ paper.published_date|date:"jS F Y"|default:"Not published" }}
+                                {% if paper.published_date %}
+                                <strong>Published:</strong> {{ paper.published_date|date:"jS F Y" }}
                                 <br>
-                                {% if paper.paper_status == 'pending' %}
-                                <span class="status-badge badge-pending">Pending Approval</span>
-                                {% elif paper.paper_status == 'rejected' %}
-                                <span class="status-badge badge-revision">Needs Revision</span>
-                                {% elif paper.paper_status == 'approved' %}
-                                <span class="status-badge badge-published">Published</span>
                                 {% endif %}
+                                <strong>Category:</strong> {{ paper.paper_category|default:"Uncategorized" }}
+                                <br>
+                                <div class="mt-2">
+                                    {% if paper.paper_status == 'pending' %}
+                                    <span class="status-badge badge-pending">Pending Approval</span>
+                                    {% elif paper.paper_status == 'rejected' %}
+                                    <span class="status-badge badge-revision">Needs Revision</span>
+                                    {% elif paper.paper_status == 'approved' %}
+                                    <span class="status-badge badge-published">Published</span>
+                                    {% endif %}
+                                </div>
                             </div>
                         </div>
                     </div>
 
                     <div class="mt-auto">
                         <div class="stat-row">
-                            <span>likes</span>
+                            <span>Likes</span>
                             <strong>{{ paper.total_likes }}</strong>
                         </div>
                         <div class="stat-row">
-                            <span>bookmarked</span>
+                            <span>Bookmarked</span>
                             <strong>{{ paper.total_bookmarked }}</strong>
                         </div>
 
                         <div class="text-center mt-3">
                             {% if paper.paper_status != 'approved' %}
                             <button type="button" class="btn-dark-blue w-100"
-                                onclick="openEditModal('{{ paper.paper_id }}', '{{ paper.paper_title|escapejs }}', '{{ paper.paper_desc|escapejs }}')">
+                                onclick="openEditModal('{{ paper.paper_id }}', '{{ paper.paper_title|escapejs }}', '{{ paper.paper_desc|escapejs }}', '{{ paper.paper_category|escapejs }}', '{{ paper.paper_doi|escapejs }}')">
                                 Edit Paper
                             </button>
                             {% else %}
-                            <button class="btn-dark-blue w-100">View Paper</button>
+                            <a href="{% url 'view_research_paper' paper.paper_id %}" class="btn-dark-blue btn-sm">
+                                View Paper
+                            </a>
                             {% endif %}
                         </div>
                     </div>
@@ -361,13 +417,37 @@
 
                 <div class="modal-body">
                     <div class="mb-3">
-                        <label for="modalPaperTitle" class="form-label">Title</label>
-                        <input type="text" class="form-control" name="title" id="modalPaperTitle">
+                        <label for="modalPaperTitle" class="form-label">Paper Title</label>
+                        <input type="text" class="form-control" name="title" id="modalPaperTitle"
+                            placeholder="Enter paper title">
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="modalPaperCategory" class="form-label">Category</label>
+                        <select class="form-control" name="category" id="modalPaperCategory">
+                            <option value="">Select a category</option>
+                            <option value="Computer Science">Computer Science</option>
+                            <option value="Engineering">Engineering</option>
+                            <option value="Mathematics">Mathematics</option>
+                            <option value="Physics">Physics</option>
+                            <option value="Biology">Biology</option>
+                            <option value="Chemistry">Chemistry</option>
+                            <option value="Social Sciences">Social Sciences</option>
+                            <option value="Business">Business</option>
+                            <option value="Other">Other</option>
+                        </select>
+                    </div>
+
+                    <div class="mb-3">
+                        <label for="modalPaperDOI" class="form-label">DOI (Digital Object Identifier)</label>
+                        <input type="text" class="form-control" name="doi" id="modalPaperDOI"
+                            placeholder="e.g., 10.1000/xyz123">
                     </div>
 
                     <div class="mb-3">
                         <label for="modalPaperAbstract" class="form-label">Abstract</label>
-                        <textarea class="form-control" name="abstract" id="modalPaperAbstract" rows="5"></textarea>
+                        <textarea class="form-control" name="abstract" id="modalPaperAbstract" rows="5"
+                            placeholder="Enter paper abstract"></textarea>
                     </div>
 
                     <div class="alert alert-warning">
@@ -384,39 +464,111 @@
     </div>
 </div>
 
-<div class="modal fade" id="staticBackdrop2" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1"
-    aria-labelledby="staticBackdropLabel" aria-hidden="true">
-    <div class="modal-dialog">
+<!-- Pending Papers Modal -->
+<div class="modal fade" id="pendingModal" tabindex="-1" aria-labelledby="pendingModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
         <div class="modal-content">
             <div class="modal-header">
-                <h1 class="modal-title fs-5" id="staticBackdropLabel">Pending Submissions</h1>
+                <h5 class="modal-title" id="pendingModalLabel">Pending Submissions</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
                 {% for paper in pending_papers %}
-                <div class="mb-3">
-                    <h5>{{ paper.paper_title }}</h5>
-                    <p>{{ paper.paper_desc}}</p>
-                    <hr>
+                <div class="paper-list-item">
+                    <h6>{{ paper.paper_title }}</h6>
+                    <p>{{ paper.paper_desc|truncatewords:30 }}</p>
+                    <small class="text-muted">Submitted: {{ paper.last_updated|date:"jS F Y" }}</small>
                 </div>
                 {% empty %}
-                <p>No pending papers.</p>
+                <p class="text-muted text-center">No pending papers at the moment.</p>
                 {% endfor %}
             </div>
             <div class="modal-footer">
                 <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-                <button type="button" class="btn btn-primary">Understood</button>
+                <a href="{% url 'researcher_upload_page' researcher_id=researcher.researcher_id %}"
+                    class="btn-upload-link">Upload New Paper</a>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Revision Papers Modal -->
+<div class="modal fade" id="revisionModal" tabindex="-1" aria-labelledby="revisionModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="revisionModalLabel">Papers Needing Revision</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% for paper in papers %}
+                {% if paper.paper_status == 'rejected' %}
+                <div class="paper-list-item">
+                    <h6>{{ paper.paper_title }}</h6>
+                    <p>{{ paper.paper_desc|truncatewords:30 }}</p>
+                    <small class="text-muted">Last Updated: {{ paper.last_updated|date:"jS F Y" }}</small>
+                    <div class="mt-2">
+                        <button type="button" class="btn-dark-blue btn-sm"
+                            onclick="openEditModal('{{ paper.paper_id }}', '{{ paper.paper_title|escapejs }}', '{{ paper.paper_desc|escapejs }}', '{{ paper.paper_category|escapejs }}', '{{ paper.paper_doi|escapejs }}')"
+                            data-bs-dismiss="modal">Edit Paper</button>
+                    </div>
+                </div>
+                {% endif %}
+                {% empty %}
+                <p class="text-muted text-center">No papers need revision.</p>
+                {% endfor %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Accepted Papers Modal -->
+<div class="modal fade" id="acceptedModal" tabindex="-1" aria-labelledby="acceptedModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-lg">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="acceptedModalLabel">Accepted & Published Papers</h5>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            <div class="modal-body">
+                {% for paper in papers %}
+                {% if paper.paper_status == 'approved' %}
+                <div class="paper-list-item">
+                    <h6>{{ paper.paper_title }}</h6>
+                    <p>{{ paper.paper_desc|truncatewords:30 }}</p>
+                    <small class="text-muted">Published: {{ paper.published_date|date:"jS F Y"|default:"Date pending"
+                        }}</small>
+                    <div class="mt-2">
+                        {% if paper.paper_pdf %}
+                        <a href="{{ paper.paper_pdf.url }}" target="_blank" class="btn-dark-blue btn-sm">View Paper</a>
+                        {% else %}
+                        <button class="btn-dark-blue btn-sm" disabled>No PDF</button>
+                        {% endif %}
+                    </div>
+                </div>
+                {% endif %}
+                {% empty %}
+                <p class="text-muted text-center">No accepted papers yet.</p>
+                {% endfor %}
+            </div>
+            <div class="modal-footer">
+                <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
             </div>
         </div>
     </div>
 </div>
 
 <script>
-    function openEditModal(id, title, abstract) {
+    function openEditModal(id, title, abstract, category, doi) {
         // Set values in the modal
         document.getElementById('modalPaperId').value = id;
         document.getElementById('modalPaperTitle').value = title;
         document.getElementById('modalPaperAbstract').value = abstract;
+        document.getElementById('modalPaperCategory').value = category || '';
+        document.getElementById('modalPaperDOI').value = doi || '';
 
         // Show the modal
         var myModal = new bootstrap.Modal(document.getElementById('editPaperModal'));
