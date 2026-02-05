@@ -1,59 +1,53 @@
-<nav class="navbar navbar-expand-lg" style="background-color: rgb(0, 0, 141);">
-    <div class="container p-2" >
-    <nav class="navbar " style="background-color: rgb(0, 0, 141);" >
-  <div class="container-fluid">
-    <a class="navbar-brand text-white"  href="#">MMU Xplore</a>
-  </div>
-</nav>
-  <ul class="nav justify-content-center">
+<nav class="navbar navbar-expand-lg " style="background-color: rgb(0, 0, 141);">
+    <div class="container p-2">
+        <a class="navbar-brand fw-bold text-white" href="/">MMU Xplore</a>
 
-  <li class="nav-item">
-    <a class="nav-link text-white" href="/" >Home </a>
-  </li>
-  <li class="nav-item">
-    <a class="nav-link text-white" href="/researchpaper">Papers</a>
-  </li>
-   <li class="nav-item">
-    <a class="nav-link text-white" href="#">Inventory</a>
-  </li>
-  <li class="nav-item">
-{% if user_name != 'Guest' %}
-  <a class="nav-link text-white"  data-bs-toggle="modal" data-bs-target="#staticBackdrop" href="#">{{ user_name }}</a>
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
 
-  <!-- Modal -->
-<div class="modal fade" id="staticBackdrop" data-bs-backdrop="static" data-bs-keyboard="false" tabindex="-1" aria-labelledby="staticBackdropLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="staticBackdropLabel">Profile Card</h1>
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-      </div>
-      <div class="modal-body">
-        Welcome back, {{ user_name }}!
-        <br>
-        Would you like to edit your profile?
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <a href="/profile/"><button type="button" class="btn btn-primary">Go to Profile Page</button></a>
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="/">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="/researchpaper">Papers</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="#">Inventory</a>
+                </li>
+                <li class="nav-item">
+                    {% if user_name != 'Guest' %}
+                        <a class="nav-link text-white" data-bs-toggle="modal" data-bs-target="#staticBackdrop" href="#">{{ user_name }}</a>
+                    {% else %}
+                        <a class="nav-link text-white" href="/signup">Sign Up</a>
+                    {% endif %}
+                </li>
+                 <li class="nav-item">
+                    <a class="nav-link text-white" href="{% url 'notification_page' %}">Notifications</a>
+                </li>
 
-        {% if is_admin %}
-        <a href="/adminguy/admin_page/"><button class="btn btn-primary" href="/adminguy/admin_homepage/">Go to Admin Home Page</button></a>
-        {% endif %}
-      </div>
+               
+            </ul>
+
+            <form class="d-flex"  method="GET" action="{% url 'search_paper' %}">
+              <input class="form-control me-2" type="search" name="search_query" value="{{ search_query|default:'' }}" placeholder="Search papers..." aria-label="Search">
+                <button class="btn btn-success" type="submit">Search</button>
+            </form>
+        </div>
     </div>
-  </div>
-</div>
-{% else %}
-  <a class="nav-link text-white" href="/signup">Sign Up</a>
-{% endif %}
-  </li>
-</ul>
-  <form class="d-flex" role="search">
-      <input class="form-control me-2" type="search" placeholder="What are you looking for?" aria-label="Search">
-      <button class="btn btn-success" type="submit">Search</button>
-    </form>
-    
-     
-</div>
 </nav>
+
+<div class="container mt-5">
+    {% if search_query %}
+        <div class="d-flex justify-content-between align-items-center mb-4">
+            <h3>Showing results for: <span class="text-primary">"{{ search_query }}"</span></h3>
+            <a href="{% url 'researchpaper' %}" class="btn btn-outline-secondary btn-sm">Clear Search</a>
+        </div>
+    {% endif %}
+
+    <div class="row">
+        ...
+    </div>
+</div>

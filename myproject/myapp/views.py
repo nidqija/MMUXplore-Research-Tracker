@@ -4,7 +4,7 @@ from multiprocessing import context
 from django.shortcuts import get_object_or_404, render, redirect
 from django.conf import settings
 from pytz import timezone
-from .models import Admin, ResearchPaper, Submissions, User,Researcher , TermsAndConditions , Announcements , Student, ProgrammeCoordinator
+from .models import Admin, ResearchPaper, Submissions, User,Researcher , TermsAndConditions , Announcements , Student, ProgrammeCoordinator , Violations , Comment , Notification
 
 from django.shortcuts import render, redirect
 from django.conf import settings
@@ -13,6 +13,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 from functools import wraps
 from django.utils import timezone
+from django.db.models import Q
 
 
 
@@ -37,7 +38,8 @@ def index(request):
     research_papers = ResearchPaper.objects.filter(paper_status='approved')
 
     latest_tc = TermsAndConditions.objects.order_by('-last_updated').first()
-    
+    user = User.objects.filter(fullname=user_name).first()
+    notifications = Notification.objects.filter(user_id=user).order_by('-created_at') if user else []       
     # Check if the latest terms and conditions were updated within the last 7 days
     new_tc_update = False
 
@@ -57,7 +59,7 @@ def index(request):
     if user_name != 'Guest':
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
-    return render(request, 'home.html', {'user_name': user_name , 'announcements': announcements, 'is_admin': is_admin , 'new_tc_update': new_tc_update, 'research_papers': research_papers} )
+    return render(request, 'home.html', {'user_name': user_name , 'announcements': announcements, 'is_admin': is_admin , 'new_tc_update': new_tc_update, 'research_papers': research_papers } )
 
 
 
@@ -130,11 +132,12 @@ def user_signin(request):
                 messages.error(request, "Invalid password.")
                 return render(request, 'signin.html')
 
-        # 2. If not admin, try to find a User
         user = User.objects.filter(email=email).first()
         if user:
             if user.password == password:
+                request.session['user_id'] = user.user_id  
                 request.session['user_name'] = user.fullname
+              
                 
                 if user.role == 'researcher':
                     # Check if researcher profile exists
@@ -227,65 +230,6 @@ def update_profile(request):
     return render(request, 'update_profile.html')
 
 
-def user_signup(request):
-    if request.method == 'POST':
-        university_id = request.POST.get('university_id')
-        email = request.POST.get('email')
-        role = request.POST.get('role')
-        password = request.POST.get('password')
-
-        if not role:
-            messages.error(request, 'Please select a valid role.')
-            return render(request, 'signup.html')
-
-        # 1. Handle Admin Logic
-        if university_id.upper().startswith('MQA123'):
-            admin = Admin.objects.create(
-                user_name=email, 
-                email=email, 
-                password=password
-            )
-            # Store admin session immediately
-            request.session['user_name'] = admin.user_name
-            messages.success(request, 'Admin account created.')
-            return redirect('admin_homepage')
-
-        # 2. Check if user already exists to prevent crashes
-        if User.objects.filter(email=email).exists():
-            messages.error(request, 'Email already registered.')
-            return render(request, 'signup.html')
-
-        
-        user = User.objects.create(
-            fullname='', 
-            university_id=university_id, 
-            email=email, 
-            password=password, 
-            role=role
-        )
-
-     
-        if role == 'researcher':
-            Researcher.objects.create(user_id=user) #
-        elif role == 'student':
-            Student.objects.create(user_id=user) #
-        elif role == 'program_coordinator':
-        
-            ProgrammeCoordinator.objects.create(
-                user_id=user,
-                faculty_id='', 
-                prog_name='', 
-                faculty=''
-            )
-            
-
-       
-        request.session['temp_user_email'] = email
-
-        messages.success(request, 'Account created! Now let\'s set up your profile.')
-        return redirect('avatar_register')
-
-    return render(request, 'signup.html') 
 
 #==================================== Researcher Parts ====================================#
 def researcher_home(request, researcher_id):
@@ -425,12 +369,13 @@ def view_research_paper(request, paper_id):
     researchname = researcher.user_id.fullname
     comments = Comment.objects.filter(paper_id=research_papers)
     user_name = request.session.get('user_name', 'Guest')
+    notifications = Notification.objects.filter(user_id__fullname=user_name).order_by('-created_at') if user_name != 'Guest' else []
 
 
     if user_name != 'Guest':
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
-    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_admin': is_admin ,'researchname': researchname, 'comments': comments  } )
+    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_admin': is_admin ,'researchname': researchname, 'comments': comments , 'notifications': notifications } )
 
 #programme coordinator
 def coordinator_home(request, user_id):
@@ -504,69 +449,11 @@ def submission_detail(request, submission_id):
 
 
 
-def user_signin(request):
-    if request.method == 'POST':
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-
-        # 1. Try to find an Admin first
-        admin = Admin.objects.filter(email=email).first()
-        if admin:
-            if admin.password == password:
-                request.session['user_name'] = admin.user_name
-                messages.success(request, 'Admin Signed in successfully.')
-                return redirect('admin_homepage')
-            else:
-                messages.error(request, "Invalid password.")
-                return render(request, 'signin.html')
-
-        # 2. If not admin, try to find a User
-        user = User.objects.filter(email=email).first()
-        if user:
-            if user.password == password:
-                request.session['user_name'] = user.fullname
-                request.session['user_id'] = user.user_id  
-
-                if user.role == 'researcher':
-                    # Check if researcher profile exists
-                    try:
-                        researcher = Researcher.objects.get(user_id=user.user_id)
-                        messages.success(request, 'Researcher Signed in successfully.')
-                        # Redirect using the correct user_id field
-                        return redirect('researcher_home', researcher_id=researcher.researcher_id)
-                    except Researcher.DoesNotExist:
-                        messages.warning(request, "Researcher profile missing. Please contact admin.")
-                        return redirect('home')
-
-                elif user.role == 'student':
-                    messages.success(request, 'Student Signed in successfully.')
-                    return redirect('home')
-                
-
-                elif user.role == 'program_coordinator':
-                    try:
-                        coordinator = ProgrammeCoordinator.objects.get(user_id=user.user_id)
-                        messages.success(request, 'Programme Coordinator Signed in successfully.')
-                        return redirect('coordinator_home', user_id=user.user_id)
-                    except ProgrammeCoordinator.DoesNotExist:
-                        messages.warning(request, "Programme Coordinator profile missing. Please contact admin.")
-                        
-            else:
-                messages.error(request, "Invalid password.")
-                return render(request, 'signin.html')
-
-        # 3. If neither admin nor user found
-        messages.error(request, "Invalid email or password. Please try again.")
-        return render(request, 'signin.html')
-
-    return render(request, 'signin.html')
-
-
-
 
 def research_paper_page(request):
     user_name = request.session.get('user_name', 'Guest')
     user_id = request.session.get('user_id')
+    researchpaper = ResearchPaper.objects.filter(paper_status='approved')
 
     researchpapers = ResearchPaper.objects.filter(paper_status='approved')
     is_admin = False
@@ -574,14 +461,10 @@ def research_paper_page(request):
     if user_name != 'Guest':
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
-    if not user_id:
-        return redirect('signin')    
+   
 
-
-    return render(request , 'researchpaper.html', {'user_name': user_name , 'is_admin': is_admin, 'user_id': user_id})      
-    return render(request , 'researchpaper.html', {'user_name': user_name , 'is_admin': is_admin , 'researchpapers': researchpapers} )      
-
-
+    return render(request , 'researchpaper.html', {'user_name': user_name , 'is_admin': is_admin, 'user_id': user_id , 'researchpapers': researchpapers} )
+    
 @admin_required
 def admin_page(request):
     user_name = request.session.get('user_name', 'Guest')
@@ -735,38 +618,48 @@ def view_announcement_page(request , announcement_id):
 @require_POST
 def add_comment(request, paper_id):
     user_name = request.session.get('user_name', 'Guest')
+    
+    # 1. Use get_object_or_404 to prevent crashes
+    research_paper = get_object_or_404(ResearchPaper, paper_id=paper_id)
+    
+    # 2. Identify the commenter (User or Admin)
     user = User.objects.filter(fullname=user_name).first()
-    research_paper = ResearchPaper.objects.get(paper_id=paper_id)
     current_admin = Admin.objects.filter(user_name=user_name).first()
 
-    
-    
-    
+    message_desc = request.POST.get('message_desc')
 
-    if request.method == 'POST':
-        message_desc = request.POST.get('message_desc')
+    # Check if we have a valid commenter and a message
+    if (user or current_admin) and message_desc:
+        new_comment = Comment(
+            paper_id=research_paper,
+            user_id=user, # Will be None if Admin is commenting
+            message_desc=message_desc,
+            admin_id=current_admin # Will be None if Student is commenting
+        )
+        new_comment.save()
 
-        if user and research_paper and message_desc:
-            new_comment = Comment(
-                paper_id=research_paper,
-                user_id=user,
-                message_desc=message_desc,
-                admin_id=current_admin
+        # 3. Trigger Notification for the Paper Author
+        # Logic: Don't notify the author if they are the one commenting
+        author_user = research_paper.researcher_id.user_id
+        if user != author_user:
+            Notification.objects.create(
+                user_id=author_user,
+                notify_title="New Comment",
+                notify_message=f"{user_name} commented on your paper: '{research_paper.paper_title}'",
+                created_at=timezone.now()
             )
 
-            new_comment.save()
-            messages.success(request, 'Comment added successfully.')
-        else:
-            messages.error(request, 'Failed to add comment. Please try again.')
+        messages.success(request, 'Comment added successfully.')
+    else:
+        messages.error(request, 'Failed to add comment. Message cannot be empty.')
 
     return redirect('view_research_paper', paper_id=paper_id)
-
 
 def delete_comment(request, comment_id, paper_id):
     user_name = request.session.get('user_name', 'Guest')
     
     try:
-        comment = Comment.objects.get(comment_id=comment_id)
+        comment = get_object_or_404(Comment, comment_id=comment_id) 
         is_admin = Admin.objects.filter(user_name=user_name).exists()
         
         # Security Check: Is the user an admin OR the owner of the comment?
@@ -780,3 +673,108 @@ def delete_comment(request, comment_id, paper_id):
         messages.error(request, 'Comment not found.')
 
     return redirect('view_research_paper', paper_id=paper_id)
+
+
+
+def search_paper(request):
+    user_name = request.session.get('user_name', 'Guest')
+    query = request.GET.get('search_query', '').strip() # Added strip() to clean whitespace
+
+    # Base queryset
+    base_results = ResearchPaper.objects.filter(paper_status='approved')
+
+    if query:
+        # Search within the approved results
+        researchpapers = base_results.filter(
+            Q(paper_title__icontains=query) |
+            Q(paper_desc__icontains=query) | 
+            Q(researcher_id__user_id__fullname__icontains=query)
+        ).distinct() # distinct() prevents duplicates if multiple Q conditions hit
+    else:
+        researchpapers = base_results
+
+    is_admin = False
+    if user_name != 'Guest':
+        is_admin = Admin.objects.filter(user_name=user_name).exists()
+
+    context = {
+        'user_name': user_name,
+        'is_admin': is_admin,
+        'researchpapers': researchpapers,
+        'search_query': query
+    }
+    
+    return render(request, 'researchpaper.html', context)
+
+
+
+@require_POST
+def report_comment(request):
+    comment_id = request.POST.get('comment_id')
+    paper_id = request.POST.get('paper_id')
+    reason = request.POST.get('reason')
+    
+    session_user_name = request.session.get('user_name', 'Guest')
+    reporter_user = User.objects.filter(fullname=session_user_name).first()
+    
+    comment_obj = Comment.objects.get(comment_id=comment_id)
+    reported_user = comment_obj.user_id 
+
+   
+    violations = Violations(
+        comment=comment_obj,       
+        user=reported_user,        
+        reporter=reporter_user,    
+        violation_type=reason,
+        date_reported=timezone.now()
+    )
+    violations.save()
+
+   
+    notification = Notification(
+        user_id=reported_user, 
+        notify_title="Comment Reported",
+        notify_message=f"Your comment on paper {paper_id} was reported for {reason}. Please follow community guidelines.",
+        created_at=timezone.now()
+    )
+    notification.save()
+
+    messages.success(request, f"Comment reported successfully.")
+    return redirect('view_research_paper', paper_id=paper_id )
+
+
+def your_view_name(request):
+    user_name = request.session.get('user_name')
+    notifications = Notification.objects.filter(user_id__fullname=user_name).order_by('-created_at')
+    
+    context = {
+        'user_name': user_name,
+        'notifications': notifications,
+    }
+    return render(request, 'your_template.html', context)
+
+
+
+
+def notification_page(request):
+    user_name = request.session.get('user_name', 'Guest')
+    user_id = User.objects.filter(fullname=user_name).values_list('user_id', flat=True).first()
+    
+    # Filter using the field name 'user_id' directly with the ID from session
+    # We use user_id=user_id because Django accepts the ID integer for FK fields
+    notifications = Notification.objects.filter(user_id=user_id).order_by('-created_at')
+    
+    return render(request, 'notification_page.html', {
+        'user_name': user_name, 
+        'notifications': notifications
+    })
+
+
+def notification_context(request):
+    user_name = request.session.get('user_name', 'Guest')
+    user_id = User.objects.filter(fullname=user_name).values_list('user_id', flat=True).first()
+    if user_id:
+        notifications = Notification.objects.filter(user_id=user_id).order_by('-created_at')
+        return {'notifications': notifications}
+    return {'notifications': []}
+

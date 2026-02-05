@@ -19,6 +19,11 @@ urlpatterns = [
     path('view_research_paper/<int:paper_id>/', views.view_research_paper, name='view_research_paper'),
     path('add_comment/<int:paper_id>/', views.add_comment, name='add_comment'),
     path('delete_comment/<int:comment_id>/<int:paper_id>', views.delete_comment, name='delete_comment'),
+    path('search_paper/', views.search_paper, name='search_paper'),
+    path('report_comment/', views.report_comment, name='report_comment'),
+    path('notifications_page/', views.notification_page, name='notification_page'),
+    
+
     # End General URLs
 
     #researcher URLs
@@ -36,6 +41,7 @@ urlpatterns = [
     path('adminguy/announcement_page/', views.announcement_page, name='announcement_page' ),
     path('adminguy/delete_announcement/<int:announcement_id>/', views.delete_announcement, name='delete_announcement' ),
     path('adminguy/manage_users/', views.manage_users, name='manage_users' ),
+    path('term_condition_page/', views.term_condition_page, name='term_condition_page' ),
     # End Admin URLs
 
 
