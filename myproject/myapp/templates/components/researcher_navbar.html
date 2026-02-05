@@ -43,6 +43,7 @@
                 </li>
 
                 <!-- Notification Trigger (Offcanvas) -->
+                <!-- Notification Trigger (Offcanvas) -->
                 <li class="nav-item me-3">
                     <a class="nav-link text-white position-relative" href="#" data-bs-toggle="offcanvas"
                         data-bs-target="#notificationOffcanvas" aria-controls="notificationOffcanvas">
@@ -50,7 +51,7 @@
                         {% if notifications %}
                         <span class="position-absolute top-0 start-100 translate-middle badge rounded-pill bg-danger"
                             style="font-size: 0.6rem; transform: translate(-50%, 50%) !important;">
-                            {{ notifications.count }}
+                            {{ notifications|length }}
                             <span class="visually-hidden">unread messages</span>
                         </span>
                         {% endif %}
@@ -88,21 +89,28 @@
     aria-labelledby="notificationOffcanvasLabel">
     <div class="offcanvas-header bg-light">
         <h5 class="offcanvas-title" id="notificationOffcanvasLabel">
-            <i class="bi bi-bell me-2"></i> Notifications
+            <i class="bi bi-bell me-2"></i> Unread Notifications
         </h5>
         <button type="button" class="btn-close" data-bs-dismiss="offcanvas" aria-label="Close"></button>
     </div>
     <div class="offcanvas-body p-0">
         <div class="list-group list-group-flush">
             {% for notification in notifications %}
-            <a href="#" class="list-group-item list-group-item-action p-3 border-start-0 border-end-0 border-top-0">
+            <div class="list-group-item list-group-item-action p-3 border-start-0 border-end-0 border-top-0">
                 <div class="d-flex w-100 justify-content-between mb-1">
                     <h6 class="mb-1 fw-bold text-primary">{{ notification.notify_title }}</h6>
-                    <small class="text-muted" style="font-size: 0.75rem;">{{ notification.created_at|timesince }}
-                        ago</small>
+                    <div class="d-flex align-items-center">
+                        <small class="text-muted me-2" style="font-size: 0.75rem;">{{ notification.created_at|timesince
+                            }}
+                            ago</small>
+                        <a href="{% url 'mark_notification_read' notification.notify_id %}" class="text-secondary"
+                            title="Mark as Read">
+                            <i class="bi bi-check-circle fs-5"></i>
+                        </a>
+                    </div>
                 </div>
                 <p class="mb-1 text-secondary small">{{ notification.notify_message }}</p>
-            </a>
+            </div>
             {% empty %}
             <div class="text-center p-5 text-muted">
                 <i class="bi bi-bell-slash fs-1 mb-3"></i>
@@ -111,10 +119,8 @@
             {% endfor %}
         </div>
 
-        {% if notifications %}
         <div class="p-3 text-center bg-light border-top">
-            <a href="{% url 'notification_page' %}" class="btn btn-outline-primary btn-sm w-100">View All In Page</a>
+            <a href="{% url 'notification_page' %}" class="btn btn-outline-primary btn-sm w-100">View History</a>
         </div>
-        {% endif %}
     </div>
 </div>
