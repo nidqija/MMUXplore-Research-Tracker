@@ -205,6 +205,34 @@ class Likes(models.Model):
         return f"Like {self.like_id} by {self.user_id.fullname} for {self.paper_id.paper_title}"
     
 
+class Report(models.Model):
+    REPORT_TYPE = [
+            ('faculty', 'Faculty KPI'),
+            ('individual', 'Individual Summary'),
+        ]
+
+   
+    report_id = models.AutoField(primary_key=True)
+    title = models.CharField(max_length=255)
+    report_type = models.CharField(max_length=20, choices=REPORT_TYPE)
+    faculty_name = models.CharField(max_length=255, default="Faculty of Computing")
+    user = models.ForeignKey(User,on_delete=models.SET_NULL,null=True,blank=True,related_name='individual_reports')
+    generated_by = models.ForeignKey(User,on_delete=models.SET_NULL,null=True,related_name='reports_generated')
+    date_generated = models.DateTimeField(auto_now_add=True)
+    file = models.FileField(upload_to='report/', null=True, blank=True)
+    description = models.TextField(blank=True, null=True)
+
+
+    def __str__(self):
+        if self.report_type == 'individual' and self.user:
+            return f"{self.title} - {self.user.fullname} ({self.date_generated.date()})"
+        
+        return f"{self.title} - {self.faculty_name} ({self.date_generated.date()})"
+
+
+
+
+
 
 
 
