@@ -538,7 +538,7 @@ def user_signin(request):
                         researcher = Researcher.objects.get(user_id=user.user_id)
                         messages.success(request, 'Researcher Signed in successfully.')
                         # Redirect using the correct user_id field
-                        return redirect('researcher_home', user_id=user.user_id)
+                        return redirect('researcher_home', researcher_id=researcher.researcher_id)
                     except Researcher.DoesNotExist:
                         messages.warning(request, "Researcher profile missing. Please contact admin.")
                         return redirect('home')
