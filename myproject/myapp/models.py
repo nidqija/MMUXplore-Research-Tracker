@@ -117,10 +117,8 @@ class Comment(models.Model):
 class Notification(models.Model):
     notify_id = models.AutoField(primary_key=True)
     user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
-    paper_id = models.ForeignKey(ResearchPaper, on_delete=models.CASCADE, null=True, blank=True)
     notify_title = models.CharField(max_length=100)
     notify_message = models.TextField()
-    is_read = models.BooleanField(default=False)
     created_at = models.DateTimeField(auto_now_add=True)
 
     def __str__(self):
@@ -176,17 +174,17 @@ class Submissions(models.Model):
      
 
 class Violations(models.Model):
-     violation_id = models.AutoField(primary_key=True)
-     user = models.ForeignKey(User, on_delete=models.CASCADE)
-     violation_type = models.TextField()
-     date_reported = models.DateTimeField(auto_now_add=True)
+    violation_id = models.AutoField(primary_key=True)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, related_name='violations_received')
+    reporter = models.ForeignKey(User, on_delete=models.SET_NULL, null=True, related_name='violations_filed')
+    comment = models.ForeignKey(Comment, on_delete=models.CASCADE , null=True , blank=True) 
+    violation_type = models.TextField() 
+    date_reported = models.DateTimeField(auto_now_add=True)
 
-     def __str__(self):
-          return f"Violation {self.violation_id} by {self.user.fullname}"
+    def __str__(self):
+        return f"Report on {self.user.fullname} - Reason: {self.violation_type}"
      
 
-
-     
 class Bookmarks(models.Model):
     bookmark_id = models.AutoField(primary_key=True)
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -206,5 +204,7 @@ class Likes(models.Model):
     def __str__(self):
         return f"Like {self.like_id} by {self.user_id.fullname} for {self.paper_id.paper_title}"
     
+
+
 
 
