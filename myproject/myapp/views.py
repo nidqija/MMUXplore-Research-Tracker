@@ -105,6 +105,9 @@ def user_signup(request):
             Researcher.objects.create(user_id=user) #
         elif role == 'student':
             Student.objects.create(user_id=user) #
+        elif role == 'program_coordinator': 
+            ProgrammeCoordinator.objects.create(user_id=user)
+            request.session['user_id'] = user.user_id  #  store ID for URL redirects
        
 
        
@@ -370,18 +373,15 @@ def submissions(request):
     # 2. Correctly query the coordinator using the user_id
     # We use user_id__user_id because the field in ProgrammeCoordinator is named 'user_id'
     # and it points to the User model's 'user_id' field.
-    try:
-        coordinator = ProgrammeCoordinator.objects.get(user_id__user_id=user_id)
-    except ProgrammeCoordinator.DoesNotExist:
-        messages.error(request, "Coordinator profile not found.")
-        return redirect('home')
-    
+    user_id = request.session.get('user_id')
+    coordinator = ProgrammeCoordinator.objects.filter(user_id__user_id=user_id).first()
     submission = Submissions.objects.filter(status='pending').select_related('paper_id')
     pastSubmission = Submissions.objects.filter(status__in=['approved', 'rejected']).select_related('paper_id')
     context = {
         'coordinator': coordinator,
         'submissions': submission,
-        'pastSubmissions': pastSubmission
+        'pastSubmissions': pastSubmission,
+        'user_name': request.session.get('user_name')
     }
     return render(request, 'coordinator/submissions.html', context)
 
