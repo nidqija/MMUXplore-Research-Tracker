@@ -457,11 +457,33 @@ def research_paper_page(request):
 
     researchpapers = ResearchPaper.objects.filter(paper_status='approved')
     is_admin = False
+    researcher = None
+    role = None
 
     if user_name != 'Guest':
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
-   
+    if not user_id:
+        return redirect('signin')
+    
+    # Fetch user to check role
+    user = User.objects.filter(user_id=user_id).first()
+    if user:
+        role = user.role
+        if role == 'researcher':
+            researcher = Researcher.objects.filter(user_id=user_id).first()
+
+    context = {
+        'user_name': user_name,
+        'is_admin': is_admin, 
+        'user_id': user_id,
+        'researchpapers': researchpapers,
+        'role': role,
+        'researcher': researcher
+    }
+
+    return render(request , 'researchpaper.html', context)      
+
 
     return render(request , 'researchpaper.html', {'user_name': user_name , 'is_admin': is_admin, 'user_id': user_id , 'researchpapers': researchpapers} )
     
