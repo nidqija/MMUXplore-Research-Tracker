@@ -13,6 +13,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 from functools import wraps
 from django.utils import timezone
+from django.db.models import Q
 
 
 
@@ -781,3 +782,35 @@ def delete_comment(request, comment_id, paper_id):
         messages.error(request, 'Comment not found.')
 
     return redirect('view_research_paper', paper_id=paper_id)
+
+
+
+def search_paper(request):
+    user_name = request.session.get('user_name', 'Guest')
+    query = request.GET.get('search_query', '').strip() # Added strip() to clean whitespace
+
+    # Base queryset
+    base_results = ResearchPaper.objects.filter(paper_status='approved')
+
+    if query:
+        # Search within the approved results
+        researchpapers = base_results.filter(
+            Q(paper_title__icontains=query) |
+            Q(paper_desc__icontains=query) | 
+            Q(researcher_id__user_id__fullname__icontains=query)
+        ).distinct() # distinct() prevents duplicates if multiple Q conditions hit
+    else:
+        researchpapers = base_results
+
+    is_admin = False
+    if user_name != 'Guest':
+        is_admin = Admin.objects.filter(user_name=user_name).exists()
+
+    context = {
+        'user_name': user_name,
+        'is_admin': is_admin,
+        'researchpapers': researchpapers,
+        'search_query': query
+    }
+    
+    return render(request, 'researchpaper.html', context)

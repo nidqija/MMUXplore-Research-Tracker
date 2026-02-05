@@ -19,6 +19,8 @@ urlpatterns = [
     path('view_research_paper/<int:paper_id>/', views.view_research_paper, name='view_research_paper'),
     path('add_comment/<int:paper_id>/', views.add_comment, name='add_comment'),
     path('delete_comment/<int:comment_id>/<int:paper_id>', views.delete_comment, name='delete_comment'),
+    path('search_paper/', views.search_paper, name='search_paper'),
+
     # End General URLs
 
     #researcher URLs
