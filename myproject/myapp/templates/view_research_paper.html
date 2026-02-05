@@ -128,9 +128,8 @@
             {% if comment.user_id.fullname == user_name or is_admin %}
                 {% if is_admin %}
                     <li>
-                        <a class="dropdown-item text-danger" href="{% url 'delete_comment' comment.comment_id %}" 
-                           onclick="return confirm('Delete for violating T&C?')">
-                            <i class="bi bi-trash me-2"></i>Delete
+                       <a class="dropdown-item text-danger" href="{% url 'delete_comment' comment.comment_id research_papers.paper_id %}" onclick="return confirm('Delete for violating T&C?')">
+                            Delete Comment
                         </a>
                     </li>
                     <li>

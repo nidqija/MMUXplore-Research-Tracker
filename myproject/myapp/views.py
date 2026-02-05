@@ -132,11 +132,10 @@ def user_signin(request):
                 messages.error(request, "Invalid password.")
                 return render(request, 'signin.html')
 
-        # 2. If not admin, try to find a User
         user = User.objects.filter(email=email).first()
         if user:
             if user.password == password:
-                request.session['user_id'] = user.user_id  # Make sure this matches your User model PK
+                request.session['user_id'] = user.user_id  
                 request.session['user_name'] = user.fullname
               
                 
@@ -231,65 +230,6 @@ def update_profile(request):
     return render(request, 'update_profile.html')
 
 
-def user_signup(request):
-    if request.method == 'POST':
-        university_id = request.POST.get('university_id')
-        email = request.POST.get('email')
-        role = request.POST.get('role')
-        password = request.POST.get('password')
-
-        if not role:
-            messages.error(request, 'Please select a valid role.')
-            return render(request, 'signup.html')
-
-        # 1. Handle Admin Logic
-        if university_id.upper().startswith('MQA123'):
-            admin = Admin.objects.create(
-                user_name=email, 
-                email=email, 
-                password=password
-            )
-            # Store admin session immediately
-            request.session['user_name'] = admin.user_name
-            messages.success(request, 'Admin account created.')
-            return redirect('admin_homepage')
-
-        # 2. Check if user already exists to prevent crashes
-        if User.objects.filter(email=email).exists():
-            messages.error(request, 'Email already registered.')
-            return render(request, 'signup.html')
-
-        
-        user = User.objects.create(
-            fullname='', 
-            university_id=university_id, 
-            email=email, 
-            password=password, 
-            role=role
-        )
-
-     
-        if role == 'researcher':
-            Researcher.objects.create(user_id=user) #
-        elif role == 'student':
-            Student.objects.create(user_id=user) #
-        elif role == 'program_coordinator':
-        
-            ProgrammeCoordinator.objects.create(
-                user_id=user,
-                faculty_id='', 
-                prog_name='', 
-                faculty=''
-            )
-            
-
-       
-        request.session['temp_user_email'] = email
-
-        messages.success(request, 'Account created! Now let\'s set up your profile.')
-        return redirect('avatar_register')
-
-    return render(request, 'signup.html') 
 
 #==================================== Researcher Parts ====================================#
 def researcher_home(request, researcher_id):
@@ -509,62 +449,6 @@ def submission_detail(request, submission_id):
 
 
 
-def user_signin(request):
-    if request.method == 'POST':
-        email = request.POST.get('email')
-        password = request.POST.get('password')
-
-        # 1. Try to find an Admin first
-        admin = Admin.objects.filter(email=email).first()
-        if admin:
-            if admin.password == password:
-                request.session['user_name'] = admin.user_name
-                messages.success(request, 'Admin Signed in successfully.')
-                return redirect('admin_homepage')
-            else:
-                messages.error(request, "Invalid password.")
-                return render(request, 'signin.html')
-
-        # 2. If not admin, try to find a User
-        user = User.objects.filter(email=email).first()
-        if user:
-            if user.password == password:
-                request.session['user_name'] = user.fullname
-                request.session['user_id'] = user.user_id  
-
-                if user.role == 'researcher':
-                    # Check if researcher profile exists
-                    try:
-                        researcher = Researcher.objects.get(user_id=user.user_id)
-                        messages.success(request, 'Researcher Signed in successfully.')
-                        # Redirect using the correct user_id field
-                        return redirect('researcher_home', researcher_id=researcher.researcher_id)
-                    except Researcher.DoesNotExist:
-                        messages.warning(request, "Researcher profile missing. Please contact admin.")
-                        return redirect('home')
-
-                elif user.role == 'student':
-                    messages.success(request, 'Student Signed in successfully.')
-                    return redirect('home')
-                
-
-                elif user.role == 'program_coordinator':
-                    try:
-                        coordinator = ProgrammeCoordinator.objects.get(user_id=user.user_id)
-                        messages.success(request, 'Programme Coordinator Signed in successfully.')
-                        return redirect('coordinator_home', user_id=user.user_id)
-                    except ProgrammeCoordinator.DoesNotExist:
-                        messages.warning(request, "Programme Coordinator profile missing. Please contact admin.")
-                        
-            else:
-                messages.error(request, "Invalid password.")
-                return render(request, 'signin.html')
-
-        # 3. If neither admin nor user found
-        messages.error(request, "Invalid email or password. Please try again.")
-        return render(request, 'signin.html')
-
-    return render(request, 'signin.html')
 
 def research_paper_page(request):
     user_name = request.session.get('user_name', 'Guest')
@@ -775,7 +659,7 @@ def delete_comment(request, comment_id, paper_id):
     user_name = request.session.get('user_name', 'Guest')
     
     try:
-        comment = Comment.objects.get(comment_id=comment_id)
+        comment = get_object_or_404(Comment, comment_id=comment_id) 
         is_admin = Admin.objects.filter(user_name=user_name).exists()
         
         # Security Check: Is the user an admin OR the owner of the comment?
@@ -893,3 +777,4 @@ def notification_context(request):
         notifications = Notification.objects.filter(user_id=user_id).order_by('-created_at')
         return {'notifications': notifications}
     return {'notifications': []}
+
