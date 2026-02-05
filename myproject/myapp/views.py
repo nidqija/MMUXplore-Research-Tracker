@@ -1,4 +1,10 @@
 
+import datetime
+from multiprocessing import context
+from django.shortcuts import get_object_or_404, render, redirect
+from django.conf import settings
+from pytz import timezone
+from .models import Admin, ResearchPaper, Submissions, User,Researcher , TermsAndConditions , Announcements , Student, ProgrammeCoordinator
 
 from django.shortcuts import render, redirect
 from django.conf import settings
@@ -221,6 +227,65 @@ def update_profile(request):
     return render(request, 'update_profile.html')
 
 
+def user_signup(request):
+    if request.method == 'POST':
+        university_id = request.POST.get('university_id')
+        email = request.POST.get('email')
+        role = request.POST.get('role')
+        password = request.POST.get('password')
+
+        if not role:
+            messages.error(request, 'Please select a valid role.')
+            return render(request, 'signup.html')
+
+        # 1. Handle Admin Logic
+        if university_id.upper().startswith('MQA123'):
+            admin = Admin.objects.create(
+                user_name=email, 
+                email=email, 
+                password=password
+            )
+            # Store admin session immediately
+            request.session['user_name'] = admin.user_name
+            messages.success(request, 'Admin account created.')
+            return redirect('admin_homepage')
+
+        # 2. Check if user already exists to prevent crashes
+        if User.objects.filter(email=email).exists():
+            messages.error(request, 'Email already registered.')
+            return render(request, 'signup.html')
+
+        
+        user = User.objects.create(
+            fullname='', 
+            university_id=university_id, 
+            email=email, 
+            password=password, 
+            role=role
+        )
+
+     
+        if role == 'researcher':
+            Researcher.objects.create(user_id=user) #
+        elif role == 'student':
+            Student.objects.create(user_id=user) #
+        elif role == 'program_coordinator':
+        
+            ProgrammeCoordinator.objects.create(
+                user_id=user,
+                faculty_id='', 
+                prog_name='', 
+                faculty=''
+            )
+            
+
+       
+        request.session['temp_user_email'] = email
+
+        messages.success(request, 'Account created! Now let\'s set up your profile.')
+        return redirect('avatar_register')
+
+    return render(request, 'signup.html') 
 
 #==================================== Researcher Parts ====================================#
 def researcher_home(request, researcher_id):
@@ -283,6 +348,7 @@ def researcher_upload_page(request, researcher_id):
 
     if request.method == 'POST':
         paper_title = request.POST.get('paper_title')
+        paper_category = request.POST.get('paper_category')
         paper_abstract = request.POST.get('paper_abstract')
         paper_file = request.FILES.get('paper_pdf')
         paper_coauthor = request.POST.getlist('paper_coauth')
@@ -293,14 +359,23 @@ def researcher_upload_page(request, researcher_id):
             new_paper = ResearchPaper(
                 researcher_id=researcher,
                 paper_title=paper_title,
+                paper_category=paper_category,
                 paper_desc=paper_abstract,
                 paper_pdf=paper_file,
                 paper_status='pending'
             )
 
+            new_submission = Submissions(
+                paper_id=new_paper,
+                status='pending',
+                submitted_at=timezone.now()
+            )
+
+            
+
         
             new_paper.save()
-
+            new_submission.save()
 
             if paper_coauthor:
                 new_paper.paper_coauthor.set(paper_coauthor)
@@ -351,6 +426,136 @@ def view_research_paper(request, paper_id):
     comments = Comment.objects.filter(paper_id=research_papers)
     user_name = request.session.get('user_name', 'Guest')
 
+#programme coordinator
+def coordinator_home(request, user_id):
+    # Correct query
+    coordinator = ProgrammeCoordinator.objects.get(user_id=user_id)
+    
+    context = {
+        'coordinator': coordinator
+    }
+    return render(request , 'coordinator/coordinator_home.html', context)
+
+def submissions(request):
+    # Only get submissions with status 'under review'
+    submission = Submissions.objects.filter(status='pending').select_related('paper_id')
+    pastSubmission = Submissions.objects.filter(status__in=['approved', 'rejected']).select_related('paper_id')
+    context = {
+        'submissions': submission,
+        'pastSubmissions': pastSubmission
+    }
+    return render(request, 'coordinator/submissions.html', context)
+
+   
+    
+
+
+
+def submission_detail(request, submission_id):
+    # Get the paper and the specific submission entry linked to it
+
+    
+    # Try to find the linked submission ID for display (if it exists)
+    submission = get_object_or_404(Submissions, submission_id=submission_id)
+    paper = submission.paper_id   # get the related ResearchPaper
+   
+
+    if request.method == 'POST':
+        action = request.POST.get('action')
+        
+        if action == 'approve':
+            paper.paper_status = 'approved'
+            submission.status = 'approved'
+            messages.success(request, "Paper Approved! Submission entry removed.")
+            
+        elif action == 'reject':
+            paper.paper_status = 'rejected'
+            submission.status = 'rejected'
+            messages.error(request, "Paper Rejected. Submission entry removed.")
+
+        elif action == 'reopen':
+            paper.paper_status = 'pending'
+            submission.status = 'pending'
+            messages.success(request, "Paper reopened for evaluation.")
+            
+        elif action == 'revision':
+            # You might want to keep the submission entry but change status
+            # For now, let's keep it pending but notify user
+            messages.warning(request, "Revision requested from the researcher.")
+            # Optional: paper.paper_status = 'revision_requested'
+        
+        paper.save() # The signal will handle deleting the submission entry if approved/rejected
+        submission.save()
+
+        return redirect('coordinator_submissions')
+
+    context = {
+        'paper': paper,
+        'submission_id': submission.submission_id,
+        'submission': submission
+    }
+    return render(request, 'coordinator/submission_detail.html', context)
+
+
+
+def user_signin(request):
+    if request.method == 'POST':
+        email = request.POST.get('email')
+        password = request.POST.get('password')
+
+        # 1. Try to find an Admin first
+        admin = Admin.objects.filter(email=email).first()
+        if admin:
+            if admin.password == password:
+                request.session['user_name'] = admin.user_name
+                messages.success(request, 'Admin Signed in successfully.')
+                return redirect('admin_homepage')
+            else:
+                messages.error(request, "Invalid password.")
+                return render(request, 'signin.html')
+
+        # 2. If not admin, try to find a User
+        user = User.objects.filter(email=email).first()
+        if user:
+            if user.password == password:
+                request.session['user_name'] = user.fullname
+                request.session['user_id'] = user.user_id  
+
+                if user.role == 'researcher':
+                    # Check if researcher profile exists
+                    try:
+                        researcher = Researcher.objects.get(user_id=user.user_id)
+                        messages.success(request, 'Researcher Signed in successfully.')
+                        # Redirect using the correct user_id field
+                        return redirect('researcher_home', user_id=user.user_id)
+                    except Researcher.DoesNotExist:
+                        messages.warning(request, "Researcher profile missing. Please contact admin.")
+                        return redirect('home')
+
+                elif user.role == 'student':
+                    messages.success(request, 'Student Signed in successfully.')
+                    return redirect('home')
+                
+
+                elif user.role == 'program_coordinator':
+                    try:
+                        coordinator = ProgrammeCoordinator.objects.get(user_id=user.user_id)
+                        messages.success(request, 'Programme Coordinator Signed in successfully.')
+                        return redirect('coordinator_home', user_id=user.user_id)
+                    except ProgrammeCoordinator.DoesNotExist:
+                        messages.warning(request, "Programme Coordinator profile missing. Please contact admin.")
+                        
+            else:
+                messages.error(request, "Invalid password.")
+                return render(request, 'signin.html')
+
+        # 3. If neither admin nor user found
+        messages.error(request, "Invalid email or password. Please try again.")
+        return render(request, 'signin.html')
+
+    return render(request, 'signin.html')
+
+    
     is_admin = False
 
     if user_name != 'Guest':
@@ -362,13 +567,19 @@ def view_research_paper(request, paper_id):
 
 def research_paper_page(request):
     user_name = request.session.get('user_name', 'Guest')
+    user_id = request.session.get('user_id')
+
     researchpapers = ResearchPaper.objects.filter(paper_status='approved')
     is_admin = False
 
     if user_name != 'Guest':
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
+    if not user_id:
+        return redirect('signin')    
 
+
+    return render(request , 'researchpaper.html', {'user_name': user_name , 'is_admin': is_admin, 'user_id': user_id})      
     return render(request , 'researchpaper.html', {'user_name': user_name , 'is_admin': is_admin , 'researchpapers': researchpapers} )      
 
 
