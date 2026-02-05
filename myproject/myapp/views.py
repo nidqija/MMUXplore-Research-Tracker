@@ -426,6 +426,12 @@ def view_research_paper(request, paper_id):
     comments = Comment.objects.filter(paper_id=research_papers)
     user_name = request.session.get('user_name', 'Guest')
 
+
+    if user_name != 'Guest':
+        is_admin = Admin.objects.filter(user_name=user_name).exists()
+
+    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_admin': is_admin ,'researchname': researchname, 'comments': comments  } )
+
 #programme coordinator
 def coordinator_home(request, user_id):
     # Correct query
@@ -555,14 +561,7 @@ def user_signin(request):
 
     return render(request, 'signin.html')
 
-    
-    is_admin = False
 
-    if user_name != 'Guest':
-        is_admin = Admin.objects.filter(user_name=user_name).exists()
-
-
-    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_admin': is_admin ,'researchname': researchname, 'comments': comments  } )
 
 
 def research_paper_page(request):
