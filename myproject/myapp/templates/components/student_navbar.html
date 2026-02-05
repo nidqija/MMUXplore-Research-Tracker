@@ -24,6 +24,11 @@
                         <a class="nav-link text-white" href="/signup">Sign Up</a>
                     {% endif %}
                 </li>
+                 <li class="nav-item">
+                    <a class="nav-link text-white" href="{% url 'notification_page' %}">Notifications</a>
+                </li>
+
+               
             </ul>
 
             <form class="d-flex"  method="GET" action="{% url 'search_paper' %}">
