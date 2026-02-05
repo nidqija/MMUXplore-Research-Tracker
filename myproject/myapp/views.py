@@ -1,7 +1,8 @@
 
+
 from django.shortcuts import render, redirect
 from django.conf import settings
-from .models import Admin, ResearchPaper, Submissions, User,Researcher , TermsAndConditions , Announcements , Student
+from .models import Admin, ResearchPaper, Submissions, User,Researcher , TermsAndConditions , Announcements , Student , Comment
 from django.contrib import messages
 from django.views.decorators.http import require_POST
 from functools import wraps
@@ -27,6 +28,7 @@ def admin_required(view_func):
 def index(request):
     user_name = request.session.get('user_name', 'Guest')
     announcements = Announcements.objects.all().order_by('-date_posted') 
+    research_papers = ResearchPaper.objects.filter(paper_status='approved')
 
     latest_tc = TermsAndConditions.objects.order_by('-last_updated').first()
     
@@ -49,7 +51,7 @@ def index(request):
     if user_name != 'Guest':
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
-    return render(request, 'home.html', {'user_name': user_name , 'announcements': announcements, 'is_admin': is_admin , 'new_tc_update': new_tc_update} )
+    return render(request, 'home.html', {'user_name': user_name , 'announcements': announcements, 'is_admin': is_admin , 'new_tc_update': new_tc_update, 'research_papers': research_papers} )
 
 
 
@@ -346,6 +348,7 @@ def view_research_paper(request, paper_id):
     research_papers = ResearchPaper.objects.get(paper_id=paper_id)
     researcher = research_papers.researcher_id
     researchname = researcher.user_id.fullname
+    comments = Comment.objects.filter(paper_id=research_papers)
     user_name = request.session.get('user_name', 'Guest')
 
     is_admin = False
@@ -354,7 +357,7 @@ def view_research_paper(request, paper_id):
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
 
-    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_admin': is_admin ,'researchname': researchname} )
+    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_admin': is_admin ,'researchname': researchname, 'comments': comments  } )
 
 
 def research_paper_page(request):
@@ -515,3 +518,55 @@ def view_announcement_page(request , announcement_id):
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
     return render(request, 'view_announcement.html', {'user_name': user_name , 'announcements': announcements, 'is_admin': is_admin})
+
+
+# add comment to research paper 
+
+@require_POST
+def add_comment(request, paper_id):
+    user_name = request.session.get('user_name', 'Guest')
+    user = User.objects.filter(fullname=user_name).first()
+    research_paper = ResearchPaper.objects.get(paper_id=paper_id)
+    current_admin = Admin.objects.filter(user_name=user_name).first()
+
+    
+    
+    
+
+    if request.method == 'POST':
+        message_desc = request.POST.get('message_desc')
+
+        if user and research_paper and message_desc:
+            new_comment = Comment(
+                paper_id=research_paper,
+                user_id=user,
+                message_desc=message_desc,
+                admin_id=current_admin
+            )
+
+            new_comment.save()
+            messages.success(request, 'Comment added successfully.')
+        else:
+            messages.error(request, 'Failed to add comment. Please try again.')
+
+    return redirect('view_research_paper', paper_id=paper_id)
+
+
+def delete_comment(request, comment_id, paper_id):
+    user_name = request.session.get('user_name', 'Guest')
+    
+    try:
+        comment = Comment.objects.get(comment_id=comment_id)
+        is_admin = Admin.objects.filter(user_name=user_name).exists()
+        
+        # Security Check: Is the user an admin OR the owner of the comment?
+        if is_admin or comment.user_id.fullname == user_name:
+            comment.delete()
+            messages.success(request, 'Comment deleted successfully.')
+        else:
+            messages.error(request, 'You do not have permission to delete this comment.')
+            
+    except Comment.DoesNotExist:
+        messages.error(request, 'Comment not found.')
+
+    return redirect('view_research_paper', paper_id=paper_id)
