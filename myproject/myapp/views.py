@@ -915,37 +915,59 @@ def your_view_name(request):
 def notification_page(request):
     user_name = request.session.get('user_name', 'Guest')
     user_id = request.session.get('user_id')
+    read_ids = request.session.get('read_notifications', [])
+    
+    unread_notifications = []
+    read_notifications = []
     
     if user_id:
-        # Use user_id_id to match the DB column directly since the FK is named 'user_id'
-        notifications = Notification.objects.filter(user_id_id=user_id).order_by('-created_at')
-    else:
-        notifications = []
+        # Get ALL notifications first to sort/split
+        all_notifications = Notification.objects.filter(user_id_id=user_id).order_by('-created_at')
+        
+        unread_notifications = [n for n in all_notifications if n.notify_id not in read_ids]
+        read_notifications = [n for n in all_notifications if n.notify_id in read_ids]
     
     return render(request, 'notification_page.html', {
         'user_name': user_name, 
-        'notifications': notifications
+        'unread_notifications': unread_notifications,
+        'read_notifications': read_notifications
     })
 
 
 def notification_context(request):
     user_name = request.session.get('user_name', 'Guest')
     user_id = request.session.get('user_id')
+    read_ids = request.session.get('read_notifications', [])
     
-    notifications = []
+    notifications = [] # This will essentially be "unread_notifications" for the navbar
     
     if user_id:
         # Use user_id_id to match the DB column directly since the FK is named 'user_id'
-        notifications = Notification.objects.filter(user_id_id=user_id).order_by('-created_at')
-        print(f"DEBUG: Context - User ID: {user_id} | Notifications Found: {notifications.count()}")
+        all_notifs = Notification.objects.filter(user_id_id=user_id).order_by('-created_at')
+        # Filter out read ones
+        notifications = [n for n in all_notifs if n.notify_id not in read_ids]
+        
     elif user_name != 'Guest':
          # Fallback to name if id not in session
          user = User.objects.filter(fullname=user_name).first()
          if user:
-             notifications = Notification.objects.filter(user_id=user).order_by('-created_at')
-             print(f"DEBUG: Context - Fallback User {user_name} | Notifications Found: {notifications.count()}")
+             all_notifs = Notification.objects.filter(user_id=user).order_by('-created_at')
+             notifications = [n for n in all_notifs if n.notify_id not in read_ids]
 
     return {'notifications': notifications}
+
+def mark_notification_read(request, notify_id):
+    if not request.session.get('user_id'):
+         return redirect('signin')
+         
+    read_list = request.session.get('read_notifications', [])
+    if notify_id not in read_list:
+        read_list.append(notify_id)
+        request.session['read_notifications'] = read_list
+        request.session.modified = True
+        
+    # Redirect back to where the user came from, or home
+    return redirect(request.META.get('HTTP_REFERER', 'researcher_home'))
 
 @admin_required
 def inspect_profile(request, user_id):

@@ -22,6 +22,8 @@ urlpatterns = [
     path('search_paper/', views.search_paper, name='search_paper'),
     path('report_comment/', views.report_comment, name='report_comment'),
     path('notifications_page/', views.notification_page, name='notification_page'),
+    path('mark_notification_read/<int:notify_id>/', views.mark_notification_read, name='mark_notification_read'),
+    
     
 
     # End General URLs
