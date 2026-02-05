@@ -54,7 +54,9 @@ urlpatterns = [
     path('coordinator/submission/<int:submission_id>/', views.submission_detail, name='submission_detail'),
     path('coordinator/researchpaper/', views.coordinator_research_paper_page, name='coorresearchpaper'),
     path('coordinator/paper/<int:paper_id>/',views.coordinator_view_research_paper,name='coordinator_view_research_paper'),
-    path('coordinator/reportpage/', views.reportpage, name ='reportpage')
+    path('coordinator/analytics/', views.reportpage, name ='analyticspage'),
+    path('coordinator/generatereport/', views.generatereport, name ='generatereport'),
+    path('coordinator/researcherpage/', views.researcherpage, name ='researcherpage')
 
 
     

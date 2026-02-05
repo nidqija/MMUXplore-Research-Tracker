@@ -511,7 +511,57 @@ def reportpage(request):
 
     }
 
-    return render(request, 'coordinator/reportpage.html', context)
+    return render(request, 'coordinator/analyticspage.html', context)
+
+def generatereport(request) :
+
+    user_id = request.session.get('user_id')
+    user_name = request.session.get('user_name')
+    coordinator = ProgrammeCoordinator.objects.get(user_id__user_id=user_id)
+    researchers = Researcher.objects.all()
+
+    if request.method == "POST" and request.POST.get("generate"):
+        res_id = request.POST.get("researcher_id")
+
+        researcher = Researcher.objects.get(researcher_id=res_id)
+
+        bio_desc = researcher.bio_description
+        orcid = researcher.OCRID
+        google_sch = researcher.google_scholar_id
+        publication_count = ResearchPaper.objects.filter(researcher_id=researcher).count()
+
+    
+
+            
+
+    context = {
+        'coordinator' : coordinator,
+        'user_name': user_name,
+        'researchers': researchers,
+
+    }
+    
+
+    return render(request, 'coordinator/generatereport.html', context)
+
+
+def researcherpage(request):
+
+    user_id = request.session.get('user_id')
+    user_name = request.session.get('user_name')
+    coordinator = ProgrammeCoordinator.objects.get(user_id__user_id=user_id)
+    researchers = Researcher.objects.all()
+
+    context = {
+        'coordinator' : coordinator,
+        'user_name': user_name,
+        'researchers': researchers,
+
+    }
+
+
+
+    return render(request, 'coordinator/researcherpage.html', context)
 
 
 
