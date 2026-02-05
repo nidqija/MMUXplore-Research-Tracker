@@ -16,8 +16,12 @@
 
 
 
-  {% if role == 'researcher' and researcher %}
+  {% if is_admin %}
+  {% include 'components/admin_navbar.html' %}
+  {% elif role == 'researcher' and researcher %}
   {% include 'components/researcher_navbar.html' %}
+  {% elif role == 'program_coordinator' and coordinator %}
+  {% include 'components/coordinator_navbar.html' %}
   {% else %}
   {% include 'components/student_navbar.html' %}
   {% endif %}

@@ -160,10 +160,7 @@ def user_avatar_register(request):
 
 
 def user_logout(request):
-    try:
-        del request.session['user_name']
-    except KeyError:
-        pass
+    request.session.flush()
     messages.success(request, 'You have been logged out successfully.')
     return redirect('home')
 
@@ -599,15 +596,18 @@ def research_paper_page(request):
     if user_name != 'Guest':
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
-    if not user_id:
+    if not user_id and not is_admin:
         return redirect('signin')
     
     # Fetch user to check role
-    user = User.objects.filter(user_id=user_id).first()
-    if user:
-        role = user.role
-        if role == 'researcher':
-            researcher = Researcher.objects.filter(user_id=user_id).first()
+    if user_id:
+        user = User.objects.filter(user_id=user_id).first()
+        if user:
+            role = user.role
+            if role == 'researcher':
+                researcher = Researcher.objects.filter(user_id=user).first()
+            elif role == 'program_coordinator':
+                coordinator = ProgrammeCoordinator.objects.filter(user_id=user).first()
 
     context = {
         'user_name': user_name,
@@ -615,13 +615,11 @@ def research_paper_page(request):
         'user_id': user_id,
         'researchpapers': researchpapers,
         'role': role,
-        'researcher': researcher
+        'researcher': researcher,
+        'coordinator': coordinator if 'coordinator' in locals() else None
     }
 
-    return render(request , 'researchpaper.html', context)      
-
-
-    return render(request , 'researchpaper.html', {'user_name': user_name , 'is_admin': is_admin, 'user_id': user_id , 'researchpapers': researchpapers} )
+    return render(request , 'researchpaper.html', context)
     
 @admin_required
 def admin_page(request):
@@ -916,11 +914,13 @@ def your_view_name(request):
 
 def notification_page(request):
     user_name = request.session.get('user_name', 'Guest')
-    user_id = User.objects.filter(fullname=user_name).values_list('user_id', flat=True).first()
+    user_id = request.session.get('user_id')
     
-    # Filter using the field name 'user_id' directly with the ID from session
-    # We use user_id=user_id because Django accepts the ID integer for FK fields
-    notifications = Notification.objects.filter(user_id=user_id).order_by('-created_at')
+    if user_id:
+        # Use user_id_id to match the DB column directly since the FK is named 'user_id'
+        notifications = Notification.objects.filter(user_id_id=user_id).order_by('-created_at')
+    else:
+        notifications = []
     
     return render(request, 'notification_page.html', {
         'user_name': user_name, 
@@ -930,20 +930,30 @@ def notification_page(request):
 
 def notification_context(request):
     user_name = request.session.get('user_name', 'Guest')
-    user_id = User.objects.filter(fullname=user_name).values_list('user_id', flat=True).first()
+    user_id = request.session.get('user_id')
+    
+    notifications = []
+    
     if user_id:
-        notifications = Notification.objects.filter(user_id=user_id).order_by('-created_at')
-        return {'notifications': notifications}
-    return {'notifications': []}
+        # Use user_id_id to match the DB column directly since the FK is named 'user_id'
+        notifications = Notification.objects.filter(user_id_id=user_id).order_by('-created_at')
+        print(f"DEBUG: Context - User ID: {user_id} | Notifications Found: {notifications.count()}")
+    elif user_name != 'Guest':
+         # Fallback to name if id not in session
+         user = User.objects.filter(fullname=user_name).first()
+         if user:
+             notifications = Notification.objects.filter(user_id=user).order_by('-created_at')
+             print(f"DEBUG: Context - Fallback User {user_name} | Notifications Found: {notifications.count()}")
 
+    return {'notifications': notifications}
 
-
+@admin_required
 def inspect_profile(request, user_id):
     user_name = request.session.get('user_name', 'Guest')
-    user_data = User.objects.filter(user_id=user_id).first()
-    violations_count = Violations.objects.filter(user=user_data).count()
-
-    return render(request , 'adminguy/inspect_profile.html', {'user_name': user_name, 'user_data': user_data , 'violations_count': violations_count} )
-
-
-
+    # Use get_object_or_404 to ensure safe retrieval
+    user_data = get_object_or_404(User, user_id=user_id)
+    
+    return render(request, 'profile_page.html', {
+        'user_name': user_name, 
+        'user_data': user_data
+    })
