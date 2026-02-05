@@ -450,9 +450,11 @@ def coordinator_home(request, user_id):
     # use user_id__user_id because the model field is named 'user_id' (FK) 
     # and we are looking for the 'user_id' field on the User model.
     coordinator = get_object_or_404(ProgrammeCoordinator, user_id__user_id=user_id)
+    user_name = request.session.get('user_name')
     
     return render(request, 'coordinator/coordinator_home.html', {
-        'coordinator': coordinator
+        'coordinator': coordinator,
+        'user_name': user_name,
     })
 
 def submissions(request):
@@ -533,29 +535,24 @@ def submission_detail(request, submission_id):
 
 
 def coordinator_research_paper_page(request):
-    # 1. Get user info from session
-    user_name = request.session.get('user_name', 'Guest')
+    # Get user_id from session
     user_id = request.session.get('user_id')
+    
+    # Fetch the coordinator object (don't leave it as None!)
+    try:
+        coordinator = ProgrammeCoordinator.objects.get(user_id__user_id=user_id)
+    except ProgrammeCoordinator.DoesNotExist:
+        coordinator = None 
 
-    # 2. If not logged in, redirect to sign in
-    if not user_id:
-        return redirect('signin')
-
-    # 3. Get coordinator object
-    coordinator = get_logged_in_coordinator(request)
-
-    # 4. Get all approved research papers
-    research_papers = ResearchPaper.objects.filter(paper_status='approved')
-
-    # 5. Pass context to template
+    research_papers = ResearchPaper.objects.all()
+    
     context = {
-        'user_name': user_name,
-        'user_id': user_id,
         'coordinator': coordinator,
-        'is_coordinator': True,
         'research_papers': research_papers,
+        'user_id': user_id,
+        'user_name': request.session.get('user_name'),
+        'is_coordinator': True,
     }
-
     return render(request, 'coordinator/researchpaper.html', context)
 
 def coordinator_view_research_paper(request, paper_id):

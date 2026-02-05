@@ -26,10 +26,6 @@
   </li>
   <li class="nav-item">
 
-    <li class="nav-item">
-    <a class="nav-link text-white" href="#">{{ user_name }}</a>
-  </li>
-  <li class="nav-item">
     
 {% if user_name != 'Guest' %}
   <a class="nav-link text-white"  data-bs-toggle="modal" data-bs-target="#staticBackdrop" href="#">{{ user_name }}</a>
@@ -48,9 +44,14 @@
         Would you like to edit your profile?
       </div>
       <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <button type="button" class="btn btn-primary">Go to Profile Page</button>
-        <button class="btn btn-primary">Logout</button>
+        
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+            
+            <a href="{% url 'profile' %}" class="btn btn-primary">Go to Profile Page</a>
+            
+            <a href="{% url 'logout' %}" class="btn btn-danger">Logout</a>
+        </div>
       </div>
     </div>
   </div>
