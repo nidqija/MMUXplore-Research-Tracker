@@ -382,12 +382,9 @@
                                 Edit Paper
                             </button>
                             {% else %}
-                            {% if paper.paper_pdf %}
-                            <a href="{{ paper.paper_pdf.url }}" target="_blank" class="btn-dark-blue btn-sm">View
-                                Paper</a>
-                            {% else %}
-                            <button class="btn-dark-blue btn-sm" disabled>No PDF</button>
-                            {% endif %}
+                            <a href="{% url 'view_research_paper' paper.paper_id %}" class="btn-dark-blue btn-sm">
+                                View Paper
+                            </a>
                             {% endif %}
                         </div>
                     </div>
