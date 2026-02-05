@@ -800,3 +800,14 @@ def notification_context(request):
         return {'notifications': notifications}
     return {'notifications': []}
 
+
+
+def inspect_profile(request, user_id):
+    user_name = request.session.get('user_name', 'Guest')
+    user_data = User.objects.filter(user_id=user_id).first()
+    violations_count = Violations.objects.filter(user=user_data).count()
+
+    return render(request , 'adminguy/inspect_profile.html', {'user_name': user_name, 'user_data': user_data , 'violations_count': violations_count} )
+
+
+

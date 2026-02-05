@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Inspect Profile Page</title>
+        <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
+
+
+</head>
+<body>
+    
+
+    {% include 'components/admin_navbar.html' %}
+
+    <div class="container mt-5">
+        <a class="btn btn-primary mb-5" onclick="window.history.back()">Back</a>
+        <h3 class="mb-4">User Profile: {{ user_data.fullname }}</h3>
+        <table class="table table-bordered mb-5 ">
+            <tr>
+                <th>User ID</th>
+                <td>{{ user_data.user_id }}</td>
+            </tr>
+            <tr>
+                <th>Full Name</th>
+                <td>{{ user_data.fullname }}</td>
+            </tr>
+            <tr>
+                <th>Email</th>
+                <td>{{ user_data.email }}</td>
+            </tr>
+            <tr>
+                <th>Faculty</th>
+                <td>{{ user_data.faculty }}</td>
+            </tr>
+            <tr>
+                <th>Joined At</th>
+                <td>{{ user_data.date_joined|date:"F j, Y, g:i a" }}</td>
+            </tr>
+
+            {% if violations_count %}
+              <tr>
+                <th>Violations</th>
+                <td>{{ violations_count }}</td>
+            </tr>
+            {% endif %}
+        </table>
+    </div>
+
+    {% include 'components/footer.html' %}
+</body>
+</html>
