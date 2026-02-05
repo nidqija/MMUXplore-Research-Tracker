@@ -42,6 +42,7 @@ urlpatterns = [
     path('adminguy/delete_announcement/<int:announcement_id>/', views.delete_announcement, name='delete_announcement' ),
     path('adminguy/manage_users/', views.manage_users, name='manage_users' ),
     path('term_condition_page/', views.term_condition_page, name='term_condition_page' ),
+    path('adminguy/inspect_profile/<int:user_id>/', views.inspect_profile, name='inspect_profile' ),
     # End Admin URLs
 
 
