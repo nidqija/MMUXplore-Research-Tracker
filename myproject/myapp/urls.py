@@ -46,11 +46,13 @@ urlpatterns = [
     # End Admin URLs
 
 
-    #Coordinator URLS
-    path('coordinator/coordinator_home/<int:user_id>/', views.coordinator_home, name='coordinator_home'),
-    path('coordinator/researchpaper/', views.research_paper_page, name='research_paper_page'),
+   # Coordinator URLs
+    path('coordinator/home/<int:user_id>/', views.coordinator_home, name='coordinator_home'),
     path('coordinator/submissions/', views.submissions, name='coordinator_submissions'),
-    path('coordinator/submission/submission_details/<int:submission_id>/', views.submission_detail, name='submission_detail'),
+    path('coordinator/submission/<int:submission_id>/', views.submission_detail, name='submission_detail'),
+    path('coordinator/researchpaper/', views.coordinator_research_paper_page, name='coorresearchpaper'),
+    path('coordinator/paper/<int:paper_id>/',views.coordinator_view_research_paper,name='coordinator_view_research_paper'
+)
 
     
     #End Coordinator URLS
