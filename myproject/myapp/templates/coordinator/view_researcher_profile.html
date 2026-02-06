@@ -184,21 +184,14 @@
             background-color: #218838;
         }
 
-        .back-btn {
+        .back-link {
+            text-decoration: none;
+            color: #333;
+            font-weight: 500;
             display: inline-flex;
             align-items: center;
-            gap: .4rem;
-            padding: .4rem .6rem;
-            border-radius: 6px;
-            color: #111;
-            text-decoration: none;
-            cursor: pointer;
         }
-
-        .back-btn:hover {
-            background: rgba(0, 0, 0, 0.05);
-        }
-
+        .back-link:hover { color: #000; }
        
     </style>
 
@@ -208,7 +201,9 @@
 <!--------------------------------------------------------------------------------------------------------------------------------------------------------------------->
 
 <div class="page-wrapper">
-        <a class="back-btn" href="{% url 'researcher_directory' %}">Back</a>
+        <a href="{% url 'researcher_directory' %}" class="back-link mb-4">
+            <span class="me-2">&larr;</span> back
+        </a>
         <div class="profile-container">
 
         <div class="d-flex justify-content-between align-items-center mb-4">

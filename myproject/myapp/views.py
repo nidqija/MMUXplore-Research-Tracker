@@ -361,7 +361,7 @@ def coordinator_home(request, user_id):
     user_name = request.session.get('user_name')
 
 
-    submission = Submissions.objects.filter(status='pending').select_related('paper_id')
+    submission = Submissions.objects.filter(status__in=['approved', 'revision']).select_related('paper_id')
     pastSubmission = Submissions.objects.filter(status__in=['approved', 'rejected']).select_related('paper_id')
     
     return render(request, 'coordinator/coordinator_home.html', {
@@ -383,7 +383,7 @@ def submissions(request):
     user_id = request.session.get('user_id')
     user_name = request.session.get('user_name')
     coordinator = ProgrammeCoordinator.objects.filter(user_id__user_id=user_id).first()
-    submission = Submissions.objects.filter(status='pending').select_related('paper_id')
+    submission = Submissions.objects.filter(status__in=['pending', 'revision']).select_related('paper_id')
     pastSubmission = Submissions.objects.filter(status__in=['approved', 'rejected']).select_related('paper_id')
     context = {
         'coordinator': coordinator,
@@ -409,11 +409,20 @@ def submission_detail(request, submission_id):
 
     if request.method == 'POST':
         action = request.POST.get('action')
+        reason = request.POST.get('reason', 'No specific reason provided.')
         
         if action == 'approve':
             paper.paper_status = 'approved'
             paper.published_date = timezone.now()
             submission.status = 'approved'
+
+            Notification.objects.create(
+                user_id=paper.researcher_id.user_id,
+                notify_title="Paper Approval",
+                notify_message=f"{coordinator.user_id.fullname} approved your paper: '{paper.paper_title}'",
+                created_at=timezone.now(),
+                sender_id = coordinator.user_id 
+            )
             messages.success(request, "Paper Approved! Submission entry removed.")
             
         elif action == 'reject':
@@ -421,14 +430,40 @@ def submission_detail(request, submission_id):
             submission.status = 'rejected'
             messages.error(request, "Paper Rejected. Submission entry removed.")
 
+            Notification.objects.create(
+                user_id=paper.researcher_id.user_id,
+                notify_title="Paper Rejected",
+                notify_message=f"{coordinator.user_id.fullname} rejected your paper: '{paper.paper_title}' \n Reason:",
+                created_at=timezone.now(),
+                sender_id = coordinator.user_id 
+            )
+
         elif action == 'reopen':
             paper.paper_status = 'pending'
             submission.status = 'pending'
+
+            Notification.objects.create(
+                user_id=paper.researcher_id.user_id,
+                notify_title="Paper reopened for evaluation",
+                notify_message=f"{coordinator.user_id.fullname} has reopened your paper submission: '{paper.paper_title}' for evaluation again.",
+                created_at=timezone.now(),
+                sender_id = coordinator.user_id 
+            )
             messages.success(request, "Paper reopened for evaluation.")
             
         elif action == 'revision':
-            # You might want to keep the submission entry but change status
-            # For now, let's keep it pending but notify user
+
+            paper.paper_status = 'revision'
+            submission.status = 'revision'
+
+            Notification.objects.create(
+                user_id=paper.researcher_id.user_id,
+                notify_title="Revision Requested",
+                # We inject the reason here
+                notify_message=f"{coordinator.user_id.fullname} requested a revision for: '{paper.paper_title}'.\nComments: {reason}",
+                created_at=timezone.now(),
+                sender_id=coordinator.user_id
+            )
             messages.warning(request, "Revision requested from the researcher.")
             # Optional: paper.paper_status = 'revision_requested'
         
@@ -599,7 +634,6 @@ def view_researcher_profile(request, researcher_id) :
 
 
     context = {
-
         'coordinator' : coordinator,
         'user_name' : user_name,
         'researcher' : researcher,
