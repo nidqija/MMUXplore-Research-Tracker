@@ -685,9 +685,8 @@ def user_signin(request):
 def research_paper_page(request):
     user_name = request.session.get('user_name', 'Guest')
     user_id = request.session.get('user_id')
-    researchpaper = ResearchPaper.objects.filter(paper_status='approved')
 
-    researchpapers = ResearchPaper.objects.filter(paper_status='approved')
+    researchpapers = ResearchPaper.objects.filter(paper_status='approved').order_by('-published_date')
     is_admin = False
     researcher = None
     role = None
