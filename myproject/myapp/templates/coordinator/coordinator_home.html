@@ -63,7 +63,11 @@
         <tr>
             <td>{{ submission.submission_id }}</td>
             <td>{{ submission.paper_id.paper_title }}</td>
-            <td class="mb-1"><strong>Author:</strong> {{ submission.paper_id.researcher_id.user_id.fullname }}</td>
+            {% if submission.paper_id.researcher_id %}
+            <td class="mb-1"> {{ submission.paper_id.researcher_id.user_id.fullname }}</td>
+            {% elif submission.paper_id.student_id %}
+            <td class="mb-1"> {{ submission.paper_id.student_id.user_id.fullname }}</td>
+            {% endif %}
             <td>
                 <span class="badge bg-warning text-dark">{{ submission.status }}</span>
             </td>
@@ -86,7 +90,7 @@
 
 
     <div class="container mt-5">
-    <h2 class="mb-4">Reports</h2>
+
     </div>
 </div>
 
