@@ -1,8 +1,9 @@
-<nav class="navbar navbar-expand-lg " style="background-color: rgb(0, 0, 141);">
+<nav class="navbar navbar-expand-lg" style="background-color: rgb(0, 0, 141);">
     <div class="container p-2">
         <a class="navbar-brand fw-bold text-white" href="/">MMU Xplore</a>
 
-        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent" 
+                aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
             <span class="navbar-toggler-icon"></span>
         </button>
 
@@ -18,26 +19,65 @@
                     <a class="nav-link text-white" href="/inventory_page">Inventory</a>
                 </li>
                 <li class="nav-item">
+                    <a class="nav-link text-white" href="{% url 'notification_page' %}">Notifications</a>
+                </li>
+                <li class="nav-item">
                     {% if user_name != 'Guest' %}
-                        <a class="nav-link text-white" data-bs-toggle="modal" data-bs-target="#staticBackdrop" href="#">{{ user_name }}</a>
+                        <a class="nav-link text-white fw-semibold" href="#" data-bs-toggle="modal" data-bs-target="#profileModal">
+                            <i class="bi bi-person-circle me-1"></i> {{ user_name }}
+                        </a>
                     {% else %}
                         <a class="nav-link text-white" href="/signup">Sign Up</a>
                     {% endif %}
                 </li>
-                 <li class="nav-item">
-                    <a class="nav-link text-white" href="{% url 'notification_page' %}">Notifications</a>
-                </li>
-
-               
             </ul>
 
-            <form class="d-flex"  method="GET" action="{% url 'search_paper' %}">
-              <input class="form-control me-2" type="search" name="search_query" value="{{ search_query|default:'' }}" placeholder="Search papers..." aria-label="Search">
+            <form class="d-flex" method="GET" action="{% url 'search_paper' %}">
+                <input class="form-control me-2" type="search" name="search_query" 
+                       value="{{ search_query|default:'' }}" placeholder="Search papers..." aria-label="Search">
                 <button class="btn btn-success" type="submit">Search</button>
             </form>
         </div>
     </div>
 </nav>
+<div class="modal fade" id="profileModal" tabindex="-1" aria-labelledby="profileModalLabel" aria-hidden="true">
+    <div class="modal-dialog modal-dialog-centered">
+        <div class="modal-content border-0 shadow">
+            <div class="modal-header text-white" style="background-color: rgb(0, 0, 141);">
+                <h5 class="modal-title" id="profileModalLabel">My Account</h5>
+                <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+            </div>
+            
+            <div class="modal-body text-center p-4">
+                <div class="mb-3">
+                    <i class="bi bi-person-circle" style="font-size: 5rem; color: rgb(0, 0, 141);"></i>
+                </div>
+                <h3 class="fw-bold mb-1">{{ user_name }}</h3>
+                <p class="text-muted small mb-4">Student </p>
+                
+                <div class="list-group">
+                    <a href="{% url 'inventory_page' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center">
+                        <i class="bi bi-journal-bookmark me-3 text-primary"></i> My Inventory
+                    </a>
+                      <a href="{% url 'submit_fyp' user_id=user_id %}"  class="list-group-item list-group-item-action border-0 d-flex align-items-center">
+                        <i class="bi bi-journal-bookmark me-3 text-primary"></i> Submit My FYP
+                    </a>
+                    <a href="{% url 'notification_page' %}" class="list-group-item list-group-item-action border-0 d-flex align-items-center">
+                        <i class="bi bi-bell me-3 text-primary"></i> Notifications
+                    </a>
+                    <hr class="my-2">
+                    <a href="/signout" class="list-group-item list-group-item-action border-0 d-flex align-items-center text-danger">
+                        <i class="bi bi-box-arrow-right me-3"></i> Log Out
+                    </a>
+                </div>
+            </div>
+            
+            <div class="modal-footer bg-light">
+                <button type="button" class="btn btn-secondary w-100" data-bs-dismiss="modal">Close</button>
+            </div>
+        </div>
+    </div>
+</div>
 
 <div class="container mt-5">
     {% if search_query %}
