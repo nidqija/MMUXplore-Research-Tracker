@@ -55,14 +55,27 @@
             <input class="form-check-input custom-radio" type="radio" name="reportType" id="radioFaculty" onclick="toggleReportView('faculty')">
             <label class="form-check-label fw-semibold" for="radioFaculty">Faculty</label>
         </div>
+
+        
     </div>
 
+    
+    
+
     <div id="viewIndividual">
-        <h4 class="fw-bold mb-3">Search by individual</h4>
-        <div class="position-relative mb-4" style="max-width: 300px;">
-            <input type="text" class="form-control form-control-sm pe-5" placeholder="Search by Name or ID">
-            <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-3 text-muted"></i>
-        </div>
+        <form method="get">
+        {% csrf_token %}
+            <h4 class="fw-bold mb-3">Search by individual</h4>
+
+            <div class="position-relative mb-4" style="max-width: 300px;">
+                <input type="text"
+                    name="q"
+                    class="form-control form-control-sm pe-5 search-box"
+                    placeholder="Search by Name or ID">
+                <i class="bi bi-search position-absolute top-50 end-0 translate-middle-y me-3 text-muted"></i>
+            </div>
+
+        </form>
 
         <div class="table-responsive">
             <table class="table align-middle">
@@ -82,19 +95,31 @@
                         <td> {{researcher.user_id.fullname}}</td>
                         <td class="text-primary">Faculty of Informatics</td>
                         <td class="text-end align-middle">
-                        <form method="POST" action="{% url 'generatereport' %}" class="d-inline">
+                        <form method="POST" action="{% url 'generate_report' %}" class="d-inline">
                         {% csrf_token %}
 
                         <input type="hidden" name="researcher_id" value="{{ researcher.researcher_id }}">
+                    
+                            <select name="format">
+                                <option value="csv">CSV</option>
+                                <option value="pdf">PDF</option>
+                            </select>
+                      
                         <button type="submit"name="generate" value="generate" class="btn btn-custom btn-reject btn-sm">
                             Generate Report
                         </button>
                         </form>
 
                     </td>
-
+                        
                     </tr>
-                    {%endfor%}
+                    {% empty %}
+                        <tr>
+                         <td colspan="5" class="text-center py-4">No matching researcher found.</td>
+                        </tr>
+                    {% endfor %}
+
+                    
 
                 </tbody>
             </table>
@@ -102,6 +127,8 @@
     </div>
 
     <div id="viewFaculty" style="display: none;">
+        <form method="POST" action="{% url 'generate_report' %}">
+        {% csrf_token %}
         <div class="mb-4">
             <h4 class="fw-bold mb-3">Select Faculty</h4>
             <select class="form-select form-select-sm" style="max-width: 250px;">
@@ -110,56 +137,10 @@
         </div>
 
         <div class="mb-4">
-            <h5 class="fw-bold mb-3">Report parameters</h5>
-            <div class="row mb-2 align-items-center">
-                <label class="col-sm-2 col-form-label col-form-label-sm text-secondary">Paper Type</label>
-                <div class="col-sm-2">
-                    <select class="form-select form-select-sm">
-                        <option value="journal">Journal Article</option>
-                        <option value="conference">Conference Paper</option>
-                        <option value="thesis">Thesis</option>
-                        <option value="book_chapter">Book Chapter</option>
-                    </select>
-                </div>
-            </div>
-            <div class="row mb-2 align-items-center">
-                <label class="col-sm-2 col-form-label col-form-label-sm text-secondary">Track topic</label>
-                <div class="col-sm-2">
-                    <select class="form-select form-select-sm"><option>Biology</option></select>
-                </div>
-            </div>
-            <div class="row mb-3 align-items-center">
-                <label class="col-sm-2 col-form-label col-form-label-sm text-secondary">Submission Status</label>
-                <div class="col-sm-4 d-flex gap-3">
-                    <div class="form-check">
-                        <input class="form-check-input custom-check" type="checkbox" id="statusAcc" checked>
-                        <label class="form-check-label small" for="statusAcc">Accepted</label>
-                    </div>
-                    <div class="form-check">
-                        <input class="form-check-input custom-check" type="checkbox" id="statusRej" checked>
-                        <label class="form-check-label small" for="statusRej">Rejected</label>
-                    </div>
-                </div>
-            </div>
-        </div>
-
-        <div class="mb-4">
-            <h5 class="fw-bold mb-3">Report Content</h5>
-            <div class="form-check mb-1">
-                <input class="form-check-input custom-check" type="checkbox" id="content1" checked>
-                <label class="form-check-label small" for="content1">List of Titles</label>
-            </div>
-            <div class="form-check mb-1">
-                <input class="form-check-input custom-check" type="checkbox" id="content2" checked>
-                <label class="form-check-label small" for="content2">Submission Count</label>
-            </div>
-            <div class="form-check mb-4">
-                <input class="form-check-input custom-check" type="checkbox" id="content3" checked>
-                <label class="form-check-label small" for="content3">Acceptance Rate (%)</label>
-            </div>
-            <button class="btn btn-mmu btn-sm px-4 py-2">Generate Report</button>
+            <button type="submit" class="btn btn-mmu btn-sm px-4 py-2" name="faculty_gen" value="faculty_gen">Generate Report</button>
         </div>
     </div>
+    </form>
 </div>
 
 
