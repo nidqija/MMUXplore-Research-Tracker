@@ -27,9 +27,18 @@
         <h3 class="mb-3">{{ research_papers.paper_title }}</h3>
         <h6 class="text-muted mb-3">By {{ researchname }}</h6>
         <h6 class="text-muted mb-5">{{ research_papers.published_date }}</h6>
-        <a class=" btn btn-primary mb-3"> Likes: {{ research_papers.total_likes }}</a>
-        <a class=" btn btn-primary mb-3"> Bookmarked: {{ research_papers.total_bookmarked }}</a>
- 
+      
+        {% if has_liked %}
+        <a href="{% url 'unlike_paper' paper_id=research_papers.paper_id %}" class=" btn btn-danger mb-3"> Unlike Paper: {{ research_papers.total_likes }}</a>
+        {% else %}
+        <a href="{% url 'like_paper' paper_id=research_papers.paper_id %}" class=" btn btn-primary mb-3"> Likes: {{ research_papers.total_likes }}</a>
+        {% endif %}
+
+        {% if has_bookmarked %}
+        <a href="{% url 'remove_bookmark' paper_id=research_papers.paper_id %}" class=" btn btn-danger mb-3"> Unbookmark: {{ research_papers.total_bookmarked }}</a>
+        {% else %}
+        <a href="{% url 'bookmark_paper' paper_id=research_papers.paper_id %}" class=" btn btn-primary mb-3"> Bookmarked: {{ research_papers.total_bookmarked }}</a>
+        {% endif %}
 </a>
 {% if research_papers.paper_pdf %}
     <a href="{{ research_papers.paper_pdf.url }}" target="_blank" class="btn btn-danger mb-3">
@@ -52,8 +61,6 @@
                         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
                     </div>
                     <div class="modal-body">
-                        
-
                     </div>
                 </div>
             </div>

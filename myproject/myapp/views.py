@@ -4,7 +4,7 @@ from multiprocessing import context
 from django.shortcuts import get_object_or_404, render, redirect
 from django.conf import settings
 from pytz import timezone
-from .models import Admin, ResearchPaper, Submissions, User,Researcher , TermsAndConditions , Announcements , Student, ProgrammeCoordinator , Violations , Comment , Notification
+from .models import Admin, Bookmarks, Likes, ResearchPaper, Submissions, User,Researcher , TermsAndConditions , Announcements , Student, ProgrammeCoordinator , Violations , Comment , Notification
 
 from django.shortcuts import render, redirect
 from django.conf import settings
@@ -332,13 +332,125 @@ def view_research_paper(request, paper_id):
     researchname = researcher.user_id.fullname
     comments = Comment.objects.filter(paper_id=research_papers)
     user_name = request.session.get('user_name', 'Guest')
+    user_id = User.objects.filter(fullname=user_name).first()
     notifications = Notification.objects.filter(user_id__fullname=user_name).order_by('-created_at') if user_name != 'Guest' else []
+
+
+    has_liked = False
+    has_bookmarked = False
+
+    if user_id:
+      has_liked = Likes.objects.filter(paper_id=research_papers, user_id=user_id).exists()
+      has_bookmarked = Bookmarks.objects.filter(paper_id=research_papers, user_id=user_id).exists()
 
 
     if user_name != 'Guest':
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
-    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_admin': is_admin ,'researchname': researchname, 'comments': comments , 'notifications': notifications } )
+    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_admin': is_admin ,'researchname': researchname, 'comments': comments , 'notifications': notifications , 'has_liked': has_liked, 'has_bookmarked': has_bookmarked } )
+
+
+def like_research_paper(request, paper_id):
+    research_paper = get_object_or_404(ResearchPaper, paper_id=paper_id)
+
+    user_id = request.session.get('user_id')
+    if not user_id:
+        messages.error(request, "You must be logged in to like a paper.")
+        return redirect('signin')
+
+    # 3. Fetch the actual User object instance
+    user_instance = get_object_or_404(User, user_id=user_id)
+
+    paper_likes = Likes.objects.create(
+        paper_id=research_paper,
+        liked_at=timezone.now(),
+        user_id = user_instance
+    )
+
+    paper_likes.save()
+
+    research_paper.total_likes += 1
+    research_paper.save()
+    messages.success(request, 'You liked this research paper!')
+    return redirect('view_research_paper', paper_id=paper_id)
+
+
+def unlike_research_paper(request, paper_id):
+    research_paper = get_object_or_404(ResearchPaper, paper_id=paper_id)
+
+    user_id = request.session.get('user_id')
+    if not user_id:
+        messages.error(request, "You must be logged in to unlike a paper.")
+        return redirect('signin')
+
+    # 3. Fetch the actual User object instance
+    user_instance = get_object_or_404(User, user_id=user_id)
+
+    try:
+        paper_likes = Likes.objects.get(
+            paper_id=research_paper,
+            user_id=user_instance
+        )
+        paper_likes.delete()
+
+        research_paper.total_likes -= 2
+        research_paper.save()
+        messages.success(request, 'You unliked this research paper!')
+    except Likes.DoesNotExist:
+        messages.error(request, 'You have not liked this paper yet.')
+
+    return redirect('view_research_paper', paper_id=paper_id)
+
+def bookmark_research_paper(request, paper_id):
+    research_paper = get_object_or_404(ResearchPaper, paper_id=paper_id)
+
+    user_id = request.session.get('user_id')
+    if not user_id:
+        messages.error(request, "You must be logged in to bookmark a paper.")
+        return redirect('signin')
+
+    # 3. Fetch the actual User object instance
+    user_instance = get_object_or_404(User, user_id=user_id)
+
+    paper_bookmarks = Bookmarks.objects.create(
+        paper_id=research_paper,
+        bookmarked_at=timezone.now(),
+        user_id = user_instance
+    )
+
+    paper_bookmarks.save()
+
+    research_paper.total_bookmarked += 1
+    research_paper.save()
+    messages.success(request, 'You bookmarked this research paper!')
+    return redirect('view_research_paper', paper_id=paper_id)
+
+
+def unlike_bookmark_research_paper(request, paper_id):
+    research_paper = get_object_or_404(ResearchPaper, paper_id=paper_id)
+
+    user_id = request.session.get('user_id')
+    if not user_id:
+        messages.error(request, "You must be logged in to remove bookmark from a paper.")
+        return redirect('signin')
+
+    # 3. Fetch the actual User object instance
+    user_instance = get_object_or_404(User, user_id=user_id)
+
+    try:
+        paper_bookmarks = Bookmarks.objects.get(
+            paper_id=research_paper,
+            user_id=user_instance
+        )
+        paper_bookmarks.delete()
+
+        research_paper.total_bookmarked -= 1
+        research_paper.save()
+        messages.success(request, 'You removed bookmark from this research paper!')
+    except Bookmarks.DoesNotExist:
+        messages.error(request, 'You have not bookmarked this paper yet.')
+
+    return redirect('view_research_paper', paper_id=paper_id)
 
 #programme coordinator
 def get_logged_in_coordinator(request): #id and role retrieval
@@ -1111,3 +1223,38 @@ def inspect_profile(request, user_id):
         'user_name': user_name, 
         'user_data': user_data
     })
+
+
+
+
+def inventory_page(request):
+    user_name = request.session.get('user_name', 'Guest')
+    user_id = request.session.get('user_id')
+    
+    active_view = request.GET.get('view', 'all') 
+
+    liked_papers = []
+    bookmarked_papers = []
+
+    if not user_id:
+        return redirect('signin')
+
+    user = User.objects.filter(user_id=user_id).first()
+    
+    if user:
+        if active_view in ['all', 'likes']:
+            liked_entries = Likes.objects.filter(user_id=user).select_related('paper_id')
+            liked_papers = [entry.paper_id for entry in liked_entries]
+
+        if active_view in ['all', 'bookmarks']:
+            bookmarked_entries = Bookmarks.objects.filter(user_id=user).select_related('paper_id')
+            bookmarked_papers = [entry.paper_id for entry in bookmarked_entries]
+            
+    context = {
+        'user_name': user_name,
+        'liked_papers': liked_papers,
+        'bookmarked_papers': bookmarked_papers,
+        'active_view': active_view,  # Send this to the template
+    }
+    return render(request, 'inventory_page.html', context)
+
