@@ -65,6 +65,10 @@ urlpatterns = [
     path('coordinator/view_researcher_profile/<int:researcher_id>', views.view_researcher_profile, name ='view_researcher_profile'),
   
 
+   # Studnet URLs
+   path('submit_fyp/<int:user_id>/', views.submit_fyp, name='submit_fyp'),
+    # End Student URLs
+
 
     
     #End Coordinator URLS

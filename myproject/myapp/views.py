@@ -36,6 +36,7 @@ def index(request):
     user_name = request.session.get('user_name', 'Guest')
     announcements = Announcements.objects.all().order_by('-date_posted') 
     research_papers = ResearchPaper.objects.filter(paper_status='approved')
+    user_id = request.session.get('user_id') # Make sure this is being set during sign-in!
 
     latest_tc = TermsAndConditions.objects.order_by('-last_updated').first()
     user = User.objects.filter(fullname=user_name).first()
@@ -59,7 +60,7 @@ def index(request):
     if user_name != 'Guest':
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
-    return render(request, 'home.html', {'user_name': user_name , 'announcements': announcements, 'is_admin': is_admin , 'new_tc_update': new_tc_update, 'research_papers': research_papers } )
+    return render(request, 'home.html', {'user_name': user_name , 'announcements': announcements, 'is_admin': is_admin , 'new_tc_update': new_tc_update, 'research_papers': research_papers, 'user_id': user_id } )
 
 
 
@@ -1258,3 +1259,52 @@ def inventory_page(request):
     }
     return render(request, 'inventory_page.html', context)
 
+
+
+
+def submit_fyp(request, user_id):
+    session_user_id = request.session.get('user_id')
+
+    fyp_paper = ResearchPaper.objects.filter(student_id__user_id=user_id, paper_status__in=['pending', 'approved', 'revision']).first()
+
+    
+    
+    # Security Check
+    if not session_user_id or int(session_user_id) != int(user_id):
+        messages.error(request, "Unauthorized access.")
+        return redirect('signin')
+
+    user_name = request.session.get('user_name', 'Guest')
+
+    if request.method == 'POST':
+        fyp_title = request.POST.get('fyp_title')
+        # match the name attribute in HTML
+        fyp_category = request.POST.get('fyp_category', 'General') 
+        fyp_desc = request.POST.get('fyp_description')
+        fyp_pdf = request.FILES.get('fyp_file')
+        fyp_doi = request.POST.get('fyp_doi')
+
+        # Check required fields
+        if fyp_title and fyp_desc and fyp_pdf:
+            try:
+                new_fyp = ResearchPaper(
+                    paper_title=fyp_title,
+                    paper_category=fyp_category,
+                    paper_desc=fyp_desc,
+                    paper_pdf=fyp_pdf,
+                    paper_doi=fyp_doi,
+                    paper_status='pending',
+                    student_id=Student.objects.get(user_id=user_id),
+                    total_likes=0,
+                    total_bookmarked=0,
+                    researcher_id=None
+                )
+                new_fyp.save()
+                messages.success(request, "FYP submitted successfully!")
+                return redirect('researchpaper')
+            except Exception as e:
+                messages.error(request, f"Error saving paper: {e}")
+        else:
+            messages.error(request, "Please fill in all required fields.")
+
+    return render(request, 'submit_fyp.html', {'user_name': user_name, 'user_id': user_id , 'fyp_paper': fyp_paper})
