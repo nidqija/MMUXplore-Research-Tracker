@@ -6,7 +6,7 @@ from multiprocessing import context
 from django.shortcuts import get_object_or_404, render, redirect
 from django.conf import settings
 from pytz import timezone
-from .models import Admin, ResearchPaper, Submissions, User,Researcher , TermsAndConditions , Announcements , Student, ProgrammeCoordinator , Violations , Comment , Notification
+from .models import Admin, Bookmarks, Likes, ResearchPaper, Submissions, User,Researcher , TermsAndConditions , Announcements , Student, ProgrammeCoordinator , Violations , Comment , Notification
 
 from django.shortcuts import render, redirect
 from django.conf import settings
@@ -39,6 +39,7 @@ def index(request):
     user_name = request.session.get('user_name', 'Guest')
     announcements = Announcements.objects.all().order_by('-date_posted') 
     research_papers = ResearchPaper.objects.filter(paper_status='approved')
+    user_id = request.session.get('user_id') # Make sure this is being set during sign-in!
 
     latest_tc = TermsAndConditions.objects.order_by('-last_updated').first()
     user = User.objects.filter(fullname=user_name).first()
@@ -62,7 +63,7 @@ def index(request):
     if user_name != 'Guest':
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
-    return render(request, 'home.html', {'user_name': user_name , 'announcements': announcements, 'is_admin': is_admin , 'new_tc_update': new_tc_update, 'research_papers': research_papers } )
+    return render(request, 'home.html', {'user_name': user_name , 'announcements': announcements, 'is_admin': is_admin , 'new_tc_update': new_tc_update, 'research_papers': research_papers, 'user_id': user_id } )
 
 
 
@@ -335,8 +336,17 @@ def view_research_paper(request, paper_id):
     researchname = researcher.user_id.fullname
     comments = Comment.objects.filter(paper_id=research_papers)
     user_name = request.session.get('user_name', 'Guest')
+    user_id = request.session.get('user_id')
     
     notifications = Notification.objects.filter(user_id__fullname=user_name).order_by('-created_at') if user_name != 'Guest' else []
+
+
+    has_liked = False
+    has_bookmarked = False
+
+    if user_id:
+      has_liked = Likes.objects.filter(paper_id=research_papers, user_id=user_id).exists()
+      has_bookmarked = Bookmarks.objects.filter(paper_id=research_papers, user_id=user_id).exists()
 
 
     if user_name != 'Guest':
@@ -348,7 +358,110 @@ def view_research_paper(request, paper_id):
     if user_role == 'program_coordinator':
         is_coordinator = ProgrammeCoordinator.objects.filter(user_id=request.user).exists()
 
-    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_coordinator': is_coordinator, 'is_admin': is_admin ,'researchname': researchname, 'comments': comments , 'notifications': notifications } )
+    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_coordinator': is_coordinator, 'is_admin': is_admin ,'researchname': researchname, 'comments': comments , 'notifications': notifications , 'has_liked': has_liked, 'has_bookmarked': has_bookmarked , 'user_id': user_id} )
+
+
+def like_research_paper(request, paper_id):
+    research_paper = get_object_or_404(ResearchPaper, paper_id=paper_id)
+
+    user_id = request.session.get('user_id')
+    if not user_id:
+        messages.error(request, "You must be logged in to like a paper.")
+        return redirect('signin')
+
+    # 3. Fetch the actual User object instance
+    user_instance = get_object_or_404(User, user_id=user_id)
+
+    paper_likes = Likes.objects.create(
+        paper_id=research_paper,
+        liked_at=timezone.now(),
+        user_id = user_instance
+    )
+
+    paper_likes.save()
+
+    research_paper.total_likes += 1
+    research_paper.save()
+    messages.success(request, 'You liked this research paper!')
+    return redirect('view_research_paper', paper_id=paper_id)
+
+
+def unlike_research_paper(request, paper_id):
+    research_paper = get_object_or_404(ResearchPaper, paper_id=paper_id)
+
+    user_id = request.session.get('user_id')
+    if not user_id:
+        messages.error(request, "You must be logged in to unlike a paper.")
+        return redirect('signin')
+
+    # 3. Fetch the actual User object instance
+    user_instance = get_object_or_404(User, user_id=user_id)
+
+    try:
+        paper_likes = Likes.objects.get(
+            paper_id=research_paper,
+            user_id=user_instance
+        )
+        paper_likes.delete()
+
+        research_paper.total_likes -= 2
+        research_paper.save()
+        messages.success(request, 'You unliked this research paper!')
+    except Likes.DoesNotExist:
+        messages.error(request, 'You have not liked this paper yet.')
+
+    return redirect('view_research_paper', paper_id=paper_id)
+
+def bookmark_research_paper(request, paper_id):
+    research_paper = get_object_or_404(ResearchPaper, paper_id=paper_id)
+
+    user_id = request.session.get('user_id')
+    if not user_id:
+        messages.error(request, "You must be logged in to bookmark a paper.")
+        return redirect('signin')
+
+    # 3. Fetch the actual User object instance
+    user_instance = get_object_or_404(User, user_id=user_id)
+
+    paper_bookmarks = Bookmarks.objects.create(
+        paper_id=research_paper,
+        bookmarked_at=timezone.now(),
+        user_id = user_instance
+    )
+
+    paper_bookmarks.save()
+
+    research_paper.total_bookmarked += 1
+    research_paper.save()
+    messages.success(request, 'You bookmarked this research paper!')
+    return redirect('view_research_paper', paper_id=paper_id)
+
+
+def unlike_bookmark_research_paper(request, paper_id):
+    research_paper = get_object_or_404(ResearchPaper, paper_id=paper_id)
+
+    user_id = request.session.get('user_id')
+    if not user_id:
+        messages.error(request, "You must be logged in to remove bookmark from a paper.")
+        return redirect('signin')
+
+    # 3. Fetch the actual User object instance
+    user_instance = get_object_or_404(User, user_id=user_id)
+
+    try:
+        paper_bookmarks = Bookmarks.objects.get(
+            paper_id=research_paper,
+            user_id=user_instance
+        )
+        paper_bookmarks.delete()
+
+        research_paper.total_bookmarked -= 1
+        research_paper.save()
+        messages.success(request, 'You removed bookmark from this research paper!')
+    except Bookmarks.DoesNotExist:
+        messages.error(request, 'You have not bookmarked this paper yet.')
+
+    return redirect('view_research_paper', paper_id=paper_id)
 
 #programme coordinator
 def get_logged_in_coordinator(request): #id and role retrieval
@@ -1178,7 +1291,8 @@ def notification_page(request):
     return render(request, 'notification_page.html', {
         'user_name': user_name, 
         'unread_notifications': unread_notifications,
-        'read_notifications': read_notifications
+        'read_notifications': read_notifications,
+        'user_id': user_id
     })
 
 
@@ -1227,3 +1341,95 @@ def inspect_profile(request, user_id):
         'user_name': user_name, 
         'user_data': user_data
     })
+
+
+
+
+def inventory_page(request):
+    user_name = request.session.get('user_name', 'Guest')
+    user_id = request.session.get('user_id')
+    
+    active_view = request.GET.get('view', 'all') 
+
+    liked_papers = []
+    bookmarked_papers = []
+    co_authored_papers = []
+
+    if not user_id:
+        return redirect('signin')
+
+    user = User.objects.filter(user_id=user_id).first()
+    
+    if user:
+        if active_view in ['all', 'likes']:
+            liked_entries = Likes.objects.filter(user_id=user).select_related('paper_id')
+            liked_papers = [entry.paper_id for entry in liked_entries]
+
+        if active_view in ['all', 'bookmarks']:
+            bookmarked_entries = Bookmarks.objects.filter(user_id=user).select_related('paper_id')
+            bookmarked_papers = [entry.paper_id for entry in bookmarked_entries]
+
+        if active_view in ['all', 'co_authored']:
+            co_authored_papers = ResearchPaper.objects.filter(paper_coauthor=user).distinct()
+
+
+            
+    context = {
+        'user_name': user_name,
+        'liked_papers': liked_papers,
+        'bookmarked_papers': bookmarked_papers,
+        'active_view': active_view,  # Send this to the template
+        'user_id': user_id ,
+        'co_authored_papers': co_authored_papers
+    }
+    return render(request, 'inventory_page.html', context)
+
+
+
+
+def submit_fyp(request, user_id):
+    session_user_id = request.session.get('user_id')
+
+    fyp_paper = ResearchPaper.objects.filter(student_id__user_id=user_id, paper_status__in=['pending', 'approved', 'revision']).first()
+
+    
+    
+    # Security Check
+    if not session_user_id or int(session_user_id) != int(user_id):
+        messages.error(request, "Unauthorized access.")
+        return redirect('signin')
+
+    user_name = request.session.get('user_name', 'Guest')
+
+    if request.method == 'POST':
+        fyp_title = request.POST.get('fyp_title')
+        # match the name attribute in HTML
+        fyp_category = request.POST.get('fyp_category', 'General') 
+        fyp_desc = request.POST.get('fyp_description')
+        fyp_pdf = request.FILES.get('fyp_file')
+        fyp_doi = request.POST.get('fyp_doi')
+
+        # Check required fields
+        if fyp_title and fyp_desc and fyp_pdf:
+            try:
+                new_fyp = ResearchPaper(
+                    paper_title=fyp_title,
+                    paper_category=fyp_category,
+                    paper_desc=fyp_desc,
+                    paper_pdf=fyp_pdf,
+                    paper_doi=fyp_doi,
+                    paper_status='pending',
+                    student_id=Student.objects.get(user_id=user_id),
+                    total_likes=0,
+                    total_bookmarked=0,
+                    researcher_id=None
+                )
+                new_fyp.save()
+                messages.success(request, "FYP submitted successfully!")
+                return redirect('researchpaper')
+            except Exception as e:
+                messages.error(request, f"Error saving paper: {e}")
+        else:
+            messages.error(request, "Please fill in all required fields.")
+
+    return render(request, 'submit_fyp.html', {'user_name': user_name, 'user_id': user_id , 'fyp_paper': fyp_paper})
