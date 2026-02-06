@@ -499,7 +499,7 @@ def coordinator_view_research_paper(request, paper_id):
     return render(request, 'coordinator/view_research_paper.html', context)
 
 
-def reportpage(request):
+def analytics_page(request):
 
     user_id = request.session.get('user_id')
     user_name = request.session.get('user_name')
@@ -514,9 +514,9 @@ def reportpage(request):
 
     }
 
-    return render(request, 'coordinator/analyticspage.html', context)
+    return render(request, 'coordinator/analytics_page.html', context)
 
-def generatereport(request) :
+def generate_report(request) :
 
     user_id = request.session.get('user_id')
     user_name = request.session.get('user_name')
@@ -545,26 +545,42 @@ def generatereport(request) :
     }
     
 
-    return render(request, 'coordinator/generatereport.html', context)
+    return render(request, 'coordinator/generate_report.html', context)
 
 
-def researcherpage(request):
+def researcher_directory(request):
 
     user_id = request.session.get('user_id')
     user_name = request.session.get('user_name')
     coordinator = ProgrammeCoordinator.objects.get(user_id__user_id=user_id)
     researchers = Researcher.objects.all()
 
+    query = request.GET.get('q', '').strip()
+
+    if query:
+        researcher = researchers.filter(
+            Q(user_id__fullname__icontains=query) |
+            Q(user_id__university_id__icontains=query) |
+            Q(OCRID__icontains=query) |
+            Q(google_scholar_id__icontains=query)
+        )
+
+    match_count = researchers.count()
+
     context = {
         'coordinator' : coordinator,
         'user_name': user_name,
         'researchers': researchers,
+        'query' : query,
+        "match_count" : match_count
 
     }
 
 
 
-    return render(request, 'coordinator/researcherpage.html', context)
+    return render(request, 'coordinator/researcher_directory.html', context)
+
+
 
 
 
