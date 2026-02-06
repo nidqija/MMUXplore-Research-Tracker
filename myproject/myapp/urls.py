@@ -23,6 +23,11 @@ urlpatterns = [
     path('report_comment/', views.report_comment, name='report_comment'),
     path('notifications_page/', views.notification_page, name='notification_page'),
     path('mark_notification_read/<int:notify_id>/', views.mark_notification_read, name='mark_notification_read'),
+    path('like_paper/<int:paper_id>/', views.like_research_paper, name='like_paper'),
+    path('bookmark_paper/<int:paper_id>/', views.bookmark_research_paper, name='bookmark_paper'),
+    path('inventory_page/', views.inventory_page, name='inventory_page'),
+    path('unlike_paper/<int:paper_id>/', views.unlike_research_paper, name='unlike_paper'),
+    path('remove_bookmark/<int:paper_id>/', views.unlike_bookmark_research_paper, name='remove_bookmark'),
     
     
 
