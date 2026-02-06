@@ -1,0 +1,32 @@
+<nav class="navbar navbar-expand-lg " style="background-color: rgb(0, 0, 141);">
+    <div class="container p-2">
+        <a class="navbar-brand fw-bold text-white" href="{% url 'home' %}">MMU Xplore</a>
+
+        <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarContent"
+            aria-controls="navbarContent" aria-expanded="false" aria-label="Toggle navigation">
+            <span class="navbar-toggler-icon"></span>
+        </button>
+
+        <div class="collapse navbar-collapse" id="navbarContent">
+            <ul class="navbar-nav mx-auto mb-2 mb-lg-0">
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="{% url 'home' %}">Home</a>
+                </li>
+                <li class="nav-item">
+                    <a class="nav-link text-white" href="{% url 'researchpaper' %}">Papers</a>
+                </li>
+            </ul>
+
+            <div class="d-flex align-items-center">
+                <form class="d-flex me-3" method="GET" action="{% url 'search_paper' %}">
+                    <input class="form-control me-2" type="search" name="search_query"
+                        value="{{ search_query|default:'' }}" placeholder="Search papers..." aria-label="Search">
+                    <button class="btn btn-success" type="submit">Search</button>
+                </form>
+
+                <a class="btn btn-outline-light me-2" href="{% url 'signin' %}">Sign In</a>
+                <a class="btn btn-warning" href="{% url 'signup' %}">Sign Up</a>
+            </div>
+        </div>
+    </div>
+</nav>
