@@ -501,8 +501,7 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                {% for paper in papers %}
-                {% if paper.paper_status == 'rejected' %}
+                {% for paper in revision_papers %}
                 <div class="paper-list-item">
                     <h6>{{ paper.paper_title }}</h6>
                     <p>{{ paper.paper_desc|truncatewords:30 }}</p>
@@ -513,7 +512,6 @@
                             data-bs-dismiss="modal">Edit Paper</button>
                     </div>
                 </div>
-                {% endif %}
                 {% empty %}
                 <p class="text-muted text-center">No papers need revision.</p>
                 {% endfor %}
@@ -534,22 +532,16 @@
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
             <div class="modal-body">
-                {% for paper in papers %}
-                {% if paper.paper_status == 'approved' %}
+                {% for paper in approved_papers %}
                 <div class="paper-list-item">
                     <h6>{{ paper.paper_title }}</h6>
                     <p>{{ paper.paper_desc|truncatewords:30 }}</p>
-                    <small class="text-muted">Published: {{ paper.published_date|date:"jS F Y"|default:"Date pending"
-                        }}</small>
+
                     <div class="mt-2">
-                        {% if paper.paper_pdf %}
-                        <a href="{{ paper.paper_pdf.url }}" target="_blank" class="btn-dark-blue btn-sm">View Paper</a>
-                        {% else %}
-                        <button class="btn-dark-blue btn-sm" disabled>No PDF</button>
-                        {% endif %}
+                        <a href="{% url 'view_research_paper' paper.paper_id %}" class="btn-dark-blue btn-sm">View
+                            Paper</a>
                     </div>
                 </div>
-                {% endif %}
                 {% empty %}
                 <p class="text-muted text-center">No accepted papers yet.</p>
                 {% endfor %}

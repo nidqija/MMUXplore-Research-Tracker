@@ -236,6 +236,8 @@ def researcher_home(request, researcher_id):
         'revision_count': revision_count,
         'approved_count': approved_count,
         'pending_papers': pending_papers,
+        'revision_papers': all_papers.filter(paper_status='rejected'),
+        'approved_papers': all_papers.filter(paper_status='approved'),
         'papers': papers
     }
 
@@ -244,7 +246,7 @@ def researcher_home(request, researcher_id):
 
 def researcher_upload_page(request, researcher_id):
     researcher = Researcher.objects.get(researcher_id=researcher_id)
-    all_users = User.objects.all().exclude(role='admin')
+    all_users = User.objects.all().exclude(role='admin').exclude(user_id=researcher.user_id.user_id)
 
     context = {
         'researcher': researcher,
@@ -404,6 +406,7 @@ def submission_detail(request, submission_id):
         
         if action == 'approve':
             paper.paper_status = 'approved'
+            paper.published_date = timezone.now()
             submission.status = 'approved'
             messages.success(request, "Paper Approved! Submission entry removed.")
             
