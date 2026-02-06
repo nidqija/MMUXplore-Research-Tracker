@@ -127,6 +127,7 @@
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <p class="mb-1"><strong>Author:</strong> {{ paper.researcher_id.user_id.fullname }}</p>
+                            <p class="mb-1"><strong>Co-Authors:</strong> {{ paper.researcher_id.user_id.fullname }}</p>
                             <p class="mb-1"><strong>Researcher ID:</strong> {{ paper.researcher_id.pk }}</p>
                             <p class="mb-1"><strong>Submission ID:</strong> {{ submission_id }}</p>
                             <p class="mb-1"><strong>Paper ID:</strong> {{ paper.paper_id }}</p>
@@ -173,11 +174,11 @@
 
     {% include 'components/footer.html' %}
 
-
+    
     <div class="modal fade" id="decisionModal" tabindex="-1" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
-                <span class="btn-close-custom" data-bs-dismiss="modal">&times;</span>
+               
                 
                 <form method="POST" id="decisionForm">
                     {% csrf_token %}
@@ -212,7 +213,7 @@
         const decisionModalEl = document.getElementById('decisionModal');
         const decisionModal = new bootstrap.Modal(decisionModalEl);
         
-        // Get Elements inside Modal
+        // get the modal elements
         const modalTitle = document.getElementById('modalTitle');
         const modalDesc = document.getElementById('modalDesc');
         const modalActionInput = document.getElementById('modalActionInput');
