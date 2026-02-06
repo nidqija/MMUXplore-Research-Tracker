@@ -82,6 +82,7 @@
         <div class="subtitle">Directory of Researchers</div>
 
         <form method="get">
+            {% csrf_token %}
             <input type="text"
                    name="q"
                    class="search-box"
@@ -98,22 +99,21 @@
         <p class="text-muted">{{match_count}}</p>
     
 
-    <table>
-        <thead>
+    <table class="table table-hover mt-4">
+        <thead class="table-light">
             <tr>
-                <th>ID</th> <th>Researcher Name</th> <th> ORCID</th> <th> Google Scholar</th> 
+                <th>ID</th> <th>Researcher Name</th> <th> ORCID</th> <th> Email</th> 
             </tr>
 
         </thead>
 
         <tbody>
             {%for researcher in researchers%}
-            <tr>
-                <td>{{ researcher.researcher_id }}</td>
-                <td>{{ researcher.user_id.fullname }}</td>
-                <td>{{ researcher.user_id.university_id }}</td>
-                <td>{{ researcher.OCRID|default:"—" }}</td>
-                <td>{{ researcher.google_scholar_id|default:"—" }}</td>
+            <tr class='clickable-row' data-href='#'>
+                <td><a href= "{% url 'view_researcher_profile' researcher.researcher_id %}">{{ researcher.researcher_id }}</a></td>
+                <td><a href= "{% url 'view_researcher_profile' researcher.researcher_id %}">{{ researcher.user_id.fullname }}</a></td>
+                <td><a href= "{% url 'view_researcher_profile' researcher.researcher_id %}">{{ researcher.OCRID|default:"—" }}</a></td>
+                <td><a href= "{% url 'view_researcher_profile' researcher.researcher_id %}">{{  researcher.user_id.email }}</a></td>
             </tr>
             {% empty %}
             <tr>
