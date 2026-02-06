@@ -116,10 +116,11 @@ class Comment(models.Model):
 
 class Notification(models.Model):
     notify_id = models.AutoField(primary_key=True)
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications')
+    user_id = models.ForeignKey(User, on_delete=models.CASCADE, related_name='notifications') #recipient id
     notify_title = models.CharField(max_length=100)
     notify_message = models.TextField()
     created_at = models.DateTimeField(auto_now_add=True)
+    sender_id = models.ForeignKey(User, on_delete=models.CASCADE, blank=True, null=True)
 
     def __str__(self):
         return f"{self.notify_title} for {self.user.fullname}"

@@ -5,23 +5,21 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-rbsA2VBKQhggwzxH7pPCaAqO46MgnOM80zW1RWuH61DGLwZJEdK2Kadq2F9CUG65" crossorigin="anonymous">
     <title>Research Paper Page</title>
-</head>
-<body>
 
-    
-    <!----------------------------------------------------------------------Navbar component-------------------------------------------------------------------------------------->
-
-
-{% include 'components/coordinator_navbar.html' %}
-
-<!--------------------------------------------------------------------------------------------------------------------------------------------------------------------->
-
-<!--Style sheets----> 
-<style>
+    <style>
         body {
             font-family: 'Inter', sans-serif;
             background-color: #f8f9fa;
         }
+
+        .page-wrapper {
+            background-color: #ffffff;
+            max-width: 1100px;
+            margin: 0 auto;
+            min-height: 100vh;
+            padding-bottom: 200px;
+        }
+
         .back-link {
             text-decoration: none;
             color: #333;
@@ -43,18 +41,8 @@
             box-shadow: 0 4px 8px rgba(0,0,0,0.2);
             border-radius: 4px;
         }
-        .meta-label {
-            color: #6c757d;
-            font-size: 0.9rem;
-            margin-bottom: 2px;
-        }
-        .meta-value {
-            font-weight: 600;
-            color: #212529;
-            margin-bottom: 10px;
-        }
         .action-link {
-            color: #6c63ff; /* The purple color from screenshot */
+            color: #6c63ff;
             text-decoration: none;
             font-weight: 500;
             margin-right: 15px;
@@ -63,35 +51,69 @@
         
         /* Button Styling */
         .btn-custom {
-            border-radius: 50px; /* Rounded pill shape */
+            border-radius: 50px;
             padding: 8px 30px;
             font-weight: 600;
             border: none;
+            transition: opacity 0.2s;
         }
-        .btn-approve { background-color: #009945; color: white; } /* Green */
-        .btn-approve:hover { background-color: #007a37; color: white; }
-        
-        .btn-revision { background-color: #f9a825; color: white; } /* Orange */
-        .btn-revision:hover { background-color: #f57f17; color: white; }
-        
-        .btn-reject { background-color: #d32f2f; color: white; } /* Red */
-        .btn-reject:hover { background-color: #b71c1c; color: white; }
+        .btn-custom:hover { opacity: 0.9; }
+
+        .btn-approve { background-color: #009945; color: white; } 
+        .btn-revision { background-color: #f9a825; color: white; } 
+        .btn-reject { background-color: #d32f2f; color: white; } 
 
         .tags {
             font-size: 0.85rem;
             color: #666;
             margin-top: 10px;
         }
+
+ 
+        .modal-content {
+            border-radius: 15px;
+            border: none;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            text-align: center;
+            padding: 20px;
+        }
+        .modal-header { border-bottom: none; justify-content: center; position: relative; }
+        .modal-footer { border-top: none; justify-content: center; gap: 10px; }
+        .btn-close-custom { position: absolute; right: 20px; top: 20px; cursor: pointer; color: #aaa; font-size: 1.2rem; }
+        
+        .modal-btn-confirm {
+            background-color: #222;
+            color: white;
+            border-radius: 50px;
+            padding: 8px 30px;
+            border: none;
+        }
+        .modal-btn-confirm:hover { background-color: #000; color: white; }
+        
+        .modal-btn-cancel {
+            background: none;
+            border: none;
+            color: #777;
+            text-decoration: underline;
+        }
+        
+        textarea.form-control {
+            background-color: #f9f9f9;
+            resize: none;
+            font-size: 0.9rem;
+        }
     </style>
 </head>
 <body>
 
+<!----------------------------------------------------------------------Navbar component-------------------------------------------------------------------------------------->
+{% include 'components/coordinator_navbar.html' %}
+<!--------------------------------------------------------------------------------------------------------------------------------------------------------------------->
 
-<!------------------------------------------------------------------------Submission Paper Component------------------------------------------------------------------------------------->
 
 
-
-<div class="container mt-5">
+<div class = "page-wrapper">
+    <div class="container mt-5">
         <a href="{% url 'coordinator_submissions' %}" class="back-link mb-4">
             <span class="me-2">&larr;</span> back
         </a>
@@ -110,15 +132,14 @@
                     <div class="row mb-3">
                         <div class="col-md-12">
                             <p class="mb-1"><strong>Author:</strong> {{ paper.researcher_id.user_id.fullname }}</p>
+                            <p class="mb-1"><strong>Co-Authors:</strong> {{ paper.researcher_id.user_id.fullname }}</p>
                             <p class="mb-1"><strong>Researcher ID:</strong> {{ paper.researcher_id.pk }}</p>
                             <p class="mb-1"><strong>Submission ID:</strong> {{ submission_id }}</p>
                             <p class="mb-1"><strong>Paper ID:</strong> {{ paper.paper_id }}</p>
-                            
                         </div>
                     </div>
 
                     <div class="mb-4">
-                        
                         {% if paper.paper_pdf %}
                             <a href="{{ paper.paper_pdf.url }}" download class="action-link">Download paper</a>
                         {% endif %}
@@ -127,48 +148,132 @@
                     <div class="tags mb-4">
                         <span class="me-3">Faculty of Computing</span>
                         <span class="me-3" >{{ paper.paper_category }}</span>
-                        
                     </div>
 
                     <div class="mb-5">
                         <span class="text-muted">Date Submitted</span><br>
                         <strong>{{ paper.last_updated|date:"d/m/Y" }}</strong>
-                        
                     </div>
-                    {% if submission.status == 'pending' %}
-                    <form method="POST" class="d-flex justify-content-end align-items-end gap-3" style="margin-top: 20px;">
-                        {% csrf_token %}
-                        <button type="submit" name="action" value="approve" class="btn btn-custom btn-approve">Approve</button>
-                        <button type="submit" name="action" value="revision" class="btn btn-custom btn-revision">Request for revision</button>
-                        <button type="submit" name="action" value="reject" class="btn btn-custom btn-reject">Reject</button>
-                    </form>
-                    {% endif %}
 
-                    {% if submission.status == 'rejected' %}
-                    <form method="POST" class="d-flex justify-content-end align-items-end gap-3" style="margin-top: 20px;">
-                        {% csrf_token %}
-                        <button type="submit" name="action" value="reopen" class="btn btn-custom btn-revision">Reopen for evaluation</button>
-                    {% endif %}
+                    <div class="d-flex justify-content-end align-items-end gap-3" style="margin-top: 20px;">
+                        
+                        {% if submission.status == 'pending' or submission.status == 'revision'%}
+                            <button type="button" onclick="triggerModal('approve')" class="btn btn-custom btn-approve">Approve</button>
+                            <button type="button" onclick="triggerModal('revision')" class="btn btn-custom btn-revision">Request for revision</button>
+                            <button type="button" onclick="triggerModal('reject')" class="btn btn-custom btn-reject">Reject</button>
+                        {% endif %}
+
+                        {% if submission.status == 'rejected' %}
+                            <form method="POST">
+                                {% csrf_token %}
+                                 <button type="button" onclick="triggerModal('reopen')" class="btn btn-custom btn-approve">Reopen for evaluation</button>
+                            </form>
+                        {% endif %}
+                    </div>
+
                 </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!---------------------------------------------------------------Footer Component----------------------------------------------------------------------------------------->
+{% include 'components/footer.html' %}
+<!--------------------------------------------------------------------------------------------------------------------------------------------------------------------->
+
+
+
+    
+    <div class="modal fade" id="decisionModal" tabindex="-1" aria-hidden="true">
+        <div class="modal-dialog modal-dialog-centered">
+            <div class="modal-content">
+               
+                
+                <form method="POST" id="decisionForm">
+                    {% csrf_token %}
+                    <input type="hidden" name="action" id="modalActionInput">
+
+                    <div class="modal-header">
+                        <h5 class="modal-title fw-bold" id="modalTitle">Confirm Action?</h5>
+                    </div>
+                    
+                    <div class="modal-body">
+                        <p class="text-muted mb-3" id="modalDesc">This decision will notify the authors.</p>
+                        
+                        <div id="reasonContainer" style="display: none;">
+                            <textarea name="reason" id="modalReason" class="form-control" rows="3" placeholder="Type reason here..."></textarea>
+                        </div>
+                    </div>
+
+                    <div class="modal-footer">
+                        <button type="button" class="modal-btn-cancel" data-bs-dismiss="modal">Cancel</button>
+                        <button type="submit" class="modal-btn-confirm" id="modalSubmitBtn">Proceed</button>
+                    </div>
+                </form>
             </div>
         </div>
     </div>
 
 
-
-
-<!---------------------------------------------------------------Footer Component----------------------------------------------------------------------------------------->
-
- {% include 'components/footer.html' %}
-
-<!--------------------------------------------------------------------------------------------------------------------------------------------------------------------->
-
-    
-
-
-
-
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+    
+    <script>
+        // Get Modal Element
+        const decisionModalEl = document.getElementById('decisionModal');
+        const decisionModal = new bootstrap.Modal(decisionModalEl);
+        
+        // get the modal elements
+        const modalTitle = document.getElementById('modalTitle');
+        const modalDesc = document.getElementById('modalDesc');
+        const modalActionInput = document.getElementById('modalActionInput');
+        const reasonContainer = document.getElementById('reasonContainer');
+        const modalReason = document.getElementById('modalReason');
+        const modalSubmitBtn = document.getElementById('modalSubmitBtn');
+
+        function triggerModal(actionType) {
+            //  Set the hidden input value
+            modalActionInput.value = actionType;
+
+            //  Reset Textarea
+            modalReason.value = "";
+            
+            //  Customize Content based on action
+            if (actionType === 'approve') {
+                modalTitle.innerText = "Approve Submission?";
+                modalDesc.innerText = "This decision will publish the paper immediately.";
+                reasonContainer.style.display = 'none';
+                modalReason.required = false;
+                modalSubmitBtn.innerText = "Approve";
+            } 
+            else if (actionType === 'revision') {
+                modalTitle.innerText = "Request Revision?";
+                modalDesc.innerText = "Please provide instructions for the author.";
+                reasonContainer.style.display = 'block';
+                modalReason.placeholder = "Enter instructions for revision...";
+                modalReason.required = true;
+                modalSubmitBtn.innerText = "Request";
+            } 
+            else if (actionType === 'reject') {
+                modalTitle.innerText = "Reject Submission?";
+                modalDesc.innerText = "This decision will notify the author.";
+                reasonContainer.style.display = 'block';
+                modalReason.placeholder = "Notify author on the reason for rejection...";
+                modalReason.required = true;
+                modalSubmitBtn.innerText = "Reject";
+            }
+
+            else if (actionType === 'reopen') {
+                modalTitle.innerText = "Reopen Submission for Evaluation?";
+                modalDesc.innerText = "This decision will notify the author.";
+                reasonContainer.style.display = 'none';
+                modalReason.required = false;
+                modalSubmitBtn.innerText = "Reopen";
+            } 
+
+            // Show the Modal
+            decisionModal.show();
+        }
+    </script>
+
 </body>
 </html>
-
