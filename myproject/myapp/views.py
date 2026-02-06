@@ -332,13 +332,20 @@ def view_research_paper(request, paper_id):
     researchname = researcher.user_id.fullname
     comments = Comment.objects.filter(paper_id=research_papers)
     user_name = request.session.get('user_name', 'Guest')
+    
     notifications = Notification.objects.filter(user_id__fullname=user_name).order_by('-created_at') if user_name != 'Guest' else []
 
 
     if user_name != 'Guest':
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
-    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_admin': is_admin ,'researchname': researchname, 'comments': comments , 'notifications': notifications } )
+    user_role = request.session.get('role')
+    is_coordinator = False 
+
+    if user_role == 'program_coordinator':
+        is_coordinator = ProgrammeCoordinator.objects.filter(user_id=request.user).exists()
+
+    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_coordinator': is_coordinator, 'is_admin': is_admin ,'researchname': researchname, 'comments': comments , 'notifications': notifications } )
 
 #programme coordinator
 def get_logged_in_coordinator(request): #id and role retrieval
@@ -481,26 +488,7 @@ def submission_detail(request, submission_id):
     return render(request, 'coordinator/submission_detail.html', context)
 
 
-def coordinator_research_paper_page(request):
-    # Get user_id from session
-    user_id = request.session.get('user_id')
-    
-    # Fetch the coordinator object (don't leave it as None!)
-    try:
-        coordinator = ProgrammeCoordinator.objects.get(user_id__user_id=user_id)
-    except ProgrammeCoordinator.DoesNotExist:
-        coordinator = None 
 
-    research_papers = ResearchPaper.objects.all()
-    
-    context = {
-        'coordinator': coordinator,
-        'research_papers': research_papers,
-        'user_id': user_id,
-        'user_name': request.session.get('user_name'),
-        'is_coordinator': True,
-    }
-    return render(request, 'coordinator/researchpaper.html', context)
 
 def coordinator_view_research_paper(request, paper_id):
     #  Get the paper safely

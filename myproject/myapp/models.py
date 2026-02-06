@@ -36,7 +36,6 @@ class Admin(models.Model):
 
 class ProgrammeCoordinator(models.Model):
     prog_coor_id = models.AutoField(primary_key=True)
-    
     faculty_id = models.CharField(max_length=50, null=True, blank=True) 
     prog_name = models.CharField(max_length=150, null=True, blank=True)
     faculty = models.CharField(max_length=150, null=True, blank=True)
