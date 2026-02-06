@@ -67,7 +67,7 @@
             <td>
                 <span class="badge bg-warning text-dark">{{ submission.status }}</span>
             </td>
-            <td>{{ submission.submitted_at|date:"d/m/Y H:i" }}</td>
+            <td>{{ submission.paper_id.last_updated }}</td>
             <td>
                 <a href="{% url 'submission_detail' submission.submission_id %}" class="btn btn-sm btn-outline-primary">
                     View Details
