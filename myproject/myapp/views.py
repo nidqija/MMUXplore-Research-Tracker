@@ -359,10 +359,16 @@ def coordinator_home(request, user_id):
     # and we are looking for the 'user_id' field on the User model.
     coordinator = get_object_or_404(ProgrammeCoordinator, user_id__user_id=user_id)
     user_name = request.session.get('user_name')
+
+
+    submission = Submissions.objects.filter(status='pending').select_related('paper_id')
+    pastSubmission = Submissions.objects.filter(status__in=['approved', 'rejected']).select_related('paper_id')
     
     return render(request, 'coordinator/coordinator_home.html', {
         'coordinator': coordinator,
         'user_name': user_name,
+        'submissions': submission,
+        'pastSubmissions': pastSubmission,
     })
 
 def submissions(request):
@@ -558,27 +564,51 @@ def researcher_directory(request):
     query = request.GET.get('q', '').strip()
 
     if query:
-        researcher = researchers.filter(
+        researchers = researchers.filter(
             Q(user_id__fullname__icontains=query) |
             Q(user_id__university_id__icontains=query) |
             Q(OCRID__icontains=query) |
             Q(google_scholar_id__icontains=query)
         )
 
-    match_count = researchers.count()
+    #match_count = researchers.count()
 
     context = {
         'coordinator' : coordinator,
         'user_name': user_name,
-        'researchers': researchers,
+        'researchers': researchers, #only pass researchers that match the query
         'query' : query,
-        "match_count" : match_count
+        #"match_count" : match_count
 
     }
 
 
 
     return render(request, 'coordinator/researcher_directory.html', context)
+
+
+def view_researcher_profile(request, researcher_id) :
+
+    user_id = request.session.get('user_id')
+    user_name = request.session.get('user_name')
+
+    coordinator = ProgrammeCoordinator.objects.get(user_id__user_id=user_id)
+    researcher = get_object_or_404(Researcher, researcher_id = researcher_id)
+    researcher_id = researcher.researcher_id
+
+
+
+    context = {
+
+        'coordinator' : coordinator,
+        'user_name' : user_name,
+        'researcher' : researcher,
+        'researcher_id' : researcher_id
+    }
+
+
+
+    return render(request, 'coordinator/view_researcher_profile.html' , context )
 
 
 
