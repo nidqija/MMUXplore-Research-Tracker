@@ -1424,7 +1424,17 @@ def submit_fyp(request, user_id):
                     total_bookmarked=0,
                     researcher_id=None
                 )
+
+
+                new_submission = Submissions(
+                paper_id=new_fyp,
+                status='pending',
+                submitted_at=timezone.now()
+                )
+
+                
                 new_fyp.save()
+                new_submission.save()
                 messages.success(request, "FYP submitted successfully!")
                 return redirect('researchpaper')
             except Exception as e:
