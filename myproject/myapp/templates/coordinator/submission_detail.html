@@ -118,6 +118,7 @@
             <span class="me-2">&larr;</span> back
         </a>
 
+        {% if submission.paper_id.researcher_id %}
         <div class="paper-card">
             <div class="row">
                 
@@ -173,6 +174,65 @@
 
                 </div>
             </div>
+            {% elif submission.paper_id.student_id %}
+            <div class="paper-card">
+            <div class="row">
+                
+                <div class="col-md-3 text-center">
+                    <img src="https://marketplace.canva.com/EAFaQ8qaArw/1/0/1003w/canva-brown-minimalist-novel-book-cover-twv1M7wzE24.jpg" 
+                         alt="Paper Cover" class="book-cover">
+                </div>
+
+                <div class="col-md-9 position-relative">
+                    <h2 class="fw-bold mb-3">{{ paper.paper_title }}</h2>
+
+                    <div class="row mb-3">
+                        <div class="col-md-12">
+                            <p class="mb-1"><strong>Author:</strong> {{ paper.student_id.user_id.fullname }}</p>
+                            <p class="mb-1"><strong>Student ID:</strong> {{ paper.student_id.pk }}</p>
+                            <p class="mb-1"><strong>Submission ID:</strong> {{ submission_id }}</p>
+                            <p class="mb-1"><strong>Paper ID:</strong> {{ paper.paper_id }}</p>
+                        </div>
+                    </div>
+
+                    <div class="mb-4">
+                        {% if paper.paper_pdf %}
+                            <a href="{{ paper.paper_pdf.url }}" download class="action-link">Download paper</a>
+                        {% endif %}
+                    </div>
+
+                    <div class="tags mb-4">
+                        <span class="me-3">Faculty of Computing</span>
+                        <span class="me-3" >{{ paper.paper_category }}</span>
+                    </div>
+
+                    <div class="mb-5">
+                        <span class="text-muted">Date Submitted</span><br>
+                        <strong>{{ paper.last_updated|date:"d/m/Y" }}</strong>
+                    </div>
+
+                    <div class="d-flex justify-content-end align-items-end gap-3" style="margin-top: 20px;">
+                        
+                        {% if submission.status == 'pending' or submission.status == 'revision'%}
+                            <button type="button" onclick="triggerModal('approve')" class="btn btn-custom btn-approve">Approve</button>
+                            <button type="button" onclick="triggerModal('revision')" class="btn btn-custom btn-revision">Request for revision</button>
+                            <button type="button" onclick="triggerModal('reject')" class="btn btn-custom btn-reject">Reject</button>
+                        {% endif %}
+
+                        {% if submission.status == 'rejected' %}
+                            <form method="POST">
+                                {% csrf_token %}
+                                 <button type="button" onclick="triggerModal('reopen')" class="btn btn-custom btn-approve">Reopen for evaluation</button>
+                            </form>
+                        {% endif %}
+                    </div>
+
+                </div>
+            </div>
+        </div>
+        {% endif %}
+
+
         </div>
     </div>
 </div>
