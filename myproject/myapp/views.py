@@ -333,7 +333,7 @@ def view_research_paper(request, paper_id):
     researchname = researcher.user_id.fullname
     comments = Comment.objects.filter(paper_id=research_papers)
     user_name = request.session.get('user_name', 'Guest')
-    user_id = User.objects.filter(fullname=user_name).first()
+    user_id = request.session.get('user_id')
     notifications = Notification.objects.filter(user_id__fullname=user_name).order_by('-created_at') if user_name != 'Guest' else []
 
 
@@ -348,7 +348,7 @@ def view_research_paper(request, paper_id):
     if user_name != 'Guest':
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
-    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_admin': is_admin ,'researchname': researchname, 'comments': comments , 'notifications': notifications , 'has_liked': has_liked, 'has_bookmarked': has_bookmarked } )
+    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_admin': is_admin ,'researchname': researchname, 'comments': comments , 'notifications': notifications , 'has_liked': has_liked, 'has_bookmarked': has_bookmarked , 'user_id': user_id} )
 
 
 def like_research_paper(request, paper_id):
@@ -1175,7 +1175,8 @@ def notification_page(request):
     return render(request, 'notification_page.html', {
         'user_name': user_name, 
         'unread_notifications': unread_notifications,
-        'read_notifications': read_notifications
+        'read_notifications': read_notifications,
+        'user_id': user_id
     })
 
 
@@ -1236,6 +1237,7 @@ def inventory_page(request):
 
     liked_papers = []
     bookmarked_papers = []
+    co_authored_papers = []
 
     if not user_id:
         return redirect('signin')
@@ -1250,12 +1252,19 @@ def inventory_page(request):
         if active_view in ['all', 'bookmarks']:
             bookmarked_entries = Bookmarks.objects.filter(user_id=user).select_related('paper_id')
             bookmarked_papers = [entry.paper_id for entry in bookmarked_entries]
+
+        if active_view in ['all', 'co_authored']:
+            co_authored_papers = ResearchPaper.objects.filter(paper_coauthor=user).distinct()
+
+
             
     context = {
         'user_name': user_name,
         'liked_papers': liked_papers,
         'bookmarked_papers': bookmarked_papers,
         'active_view': active_view,  # Send this to the template
+        'user_id': user_id ,
+        'co_authored_papers': co_authored_papers
     }
     return render(request, 'inventory_page.html', context)
 

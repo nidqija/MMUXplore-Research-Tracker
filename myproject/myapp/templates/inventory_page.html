@@ -34,6 +34,9 @@
            
         <a href="{% url 'inventory_page' %}?view=bookmarks" 
            class="btn {% if active_view == 'bookmarks' %}btn-primary{% else %}btn-outline-primary{% endif %}">Bookmarked Papers</a>
+        <a href="{% url 'inventory_page' %}?view=co_authored"
+              class="btn {% if active_view == 'co_authored' %}btn-info{% else %}btn-outline-info{% endif %}">Co-Authored Papers</a>
+              
     </div>
 
   {% if active_view == 'all' or active_view == 'likes' %}
@@ -88,7 +91,33 @@
     </div>
 {% endif %}
 
+{% if active_view == 'all' or active_view == 'co_authored' %}
+    <h3 class="text-info mb-4">Co-Authored Papers</h3>
+    <div class="row row-cols-1 row-cols-md-3 g-4 mb-5">
+        {% for paper in co_authored_papers %}
+            <div class="col">
+                <div class="card shadow-sm border-0">
+                    <div style="height: 160px; background: #eee;">
+                         <img height="200px" src="https://i1.rgstatic.net/publication/378963846_A_Study_on_Video_Thumbnails_Design_Attributes_and_Their_Influence_to_the_Outcome_of_the_Video/links/65f32d9a286738732d4790a6/largepreview.png" class="card-img-top" alt="Cover">
+                    </div>
+                    <div class="card-body">
+                        <h5 class="card-title">{{ paper.paper_title }}</h5>
+                        <p class="card-text text-muted small">{{ paper.paper_desc|truncatewords:20 }}</p>   
+                    </div>
+                    <div class="card-footer bg-transparent border-0">
+                        <a href="{% url 'view_research_paper' paper.paper_id %}" class="btn btn-info btn-sm w-100">View</a>
+                    </div>
+                </div>
+            </div>
+        {% empty %}
+            <div class="col-12">
+                <p class="text-muted">No co-authored papers found.</p>
+            </div>
+        {% endfor %}
+    </div>
+{% endif %}
 </div>
+
 
 {% include 'components/footer.html' %}
 
