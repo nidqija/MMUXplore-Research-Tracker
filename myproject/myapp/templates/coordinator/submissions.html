@@ -31,112 +31,93 @@
 
 <!---------------------------------------------------------------Home Page Content--------------------------------------------------------------------------------------->
 <div class = "page-wrapper">
-<div class="container mt-5">
-    <h2 class="mb-4">Pending Submissions</h2>
+    <div class="container mt-5">
+        <h2 class="mb-4">Pending Submissions</h2>
 
-    {% if messages %}
-        {% for message in messages %}
-            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
-                {{ message }}
-                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
-            </div>
-        {% endfor %}
-    {% endif %}
-
-    <table class="table table-hover mt-4">
-    <thead class="table-light">
-        <tr>
-            <th>Submission ID</th> <th>Paper Title</th> <th>Author</th>
-            <th>Status</th>        <th>Last Updated</th>  <th>Action</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for submission in submissions %}
-    <tr>
-        <td>{{ submission.submission_id }}</td>
-        <td>{{ submission.paper_id.paper_title }}</td>
-
-        {% if submission.paper_id.researcher_id %}
-        <td class="mb-1"> {{ submission.paper_id.researcher_id.user_id.fullname }}</td>
-        {% elif submission.paper_id.student_id %}
-        <td class="mb-1"> {{ submission.paper_id.student_id.user_id.fullname }}</td>
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
         {% endif %}
-        <td>
-            <span class="badge bg-warning text-dark">{{ submission.status }}</span>
-        </td>
-        <td>{{ submission.paper_id.last_updated }}</td>
-        <td>
-            <a href="{% url 'submission_detail' submission.submission_id %}" class="btn btn-sm btn-outline-primary">
-                View Details
-            </a>
-        </td>
-    </tr>
-    {% empty %}
-    <tr>
-        <td colspan="5" class="text-center py-4">No pending submissions found.</td>
-    </tr>
-    {% endfor %}
-</tbody>
-</table>
+
+        <table class="table table-hover mt-4">
+        <thead class="table-light">
+            <tr>
+                <th>Submission ID</th> <th>Paper Title</th> <th>Author</th>
+                <th>Status</th>        <th>Last Updated</th>  <th>Action</th>
+            </tr>
+        </thead>
+            <tbody>
+            {% for submission in submissions %}
+            <tr>
+                <td>{{ submission.submission_id }}</td>
+                <td>{{ submission.paper_id.paper_title }}</td>
+
+                {% if submission.paper_id.researcher_id %}
+                <td class="mb-1"> {{ submission.paper_id.researcher_id.user_id.fullname }}</td>
+                {% elif submission.paper_id.student_id %}
+                <td class="mb-1"> {{ submission.paper_id.student_id.user_id.fullname }}</td>
+                {% endif %}
+                <td>
+                    <span class="badge bg-warning text-dark">{{ submission.status }}</span>
+                </td>
+                <td>{{ submission.paper_id.last_updated }}</td>
+                <td>
+                    <a href="{% url 'submission_detail' submission.submission_id %}" class="btn btn-sm btn-outline-primary">
+                        View Details
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center py-4">No pending submissions found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+    </div>
 
 
+    <div class="container mt-5">
+        <h2 class="mb-4">Past Submissions</h2>
+        <table class="table table-hover mt-4">
+            <thead class="table-light">
+                <tr>
+                    <th>Submission ID</th> <th>Paper Title</th> <th>Author</th>
+                    <th>Status</th>        <th>Last Updated</th>  <th>Action</th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for submission in pastSubmissions %}
+            <tr>
+                <td>{{ submission.submission_id }}</td>
+                <td>{{ submission.paper_id.paper_title }}</td>
+                <td class="mb-1">{{ submission.paper_id.researcher_id.user_id.fullname }}</td>
+                <td>
+                    <span class="badge bg-warning text-dark">{{ submission.status }}</span>
+                </td>
+                <td>{{ submission.paper_id.last_updated }}</td>
+                <td>
+                    <a href="{% url 'submission_detail' submission.submission_id %}" class="btn btn-sm btn-outline-primary">
+                        View Details
+                    </a>
+                </td>
+            </tr>
+            {% empty %}
+            <tr>
+                <td colspan="5" class="text-center py-4">No past submissions found.</td>
+            </tr>
+            {% endfor %}
+        </tbody>
+        </table>
+    </div>
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-<div class="container mt-5">
-<h2 class="mb-4">Past Submissions</h2>
-<table class="table table-hover mt-4">
-    <thead class="table-light">
-        <tr>
-            <th>Submission ID</th> <th>Paper Title</th> <th>Author</th>
-            <th>Status</th>        <th>Last Updated</th>  <th>Action</th>
-        </tr>
-    </thead>
-    <tbody>
-    {% for submission in pastSubmissions %}
-    <tr>
-        <td>{{ submission.submission_id }}</td>
-        <td>{{ submission.paper_id.paper_title }}</td>
-        <td class="mb-1">{{ submission.paper_id.researcher_id.user_id.fullname }}</td>
-        <td>
-            <span class="badge bg-warning text-dark">{{ submission.status }}</span>
-        </td>
-        <td>{{ submission.paper_id.last_updated }}</td>
-        <td>
-            <a href="{% url 'submission_detail' submission.submission_id %}" class="btn btn-sm btn-outline-primary">
-                View Details
-            </a>
-        </td>
-    </tr>
-    {% empty %}
-    <tr>
-        <td colspan="5" class="text-center py-4">No past submissions found.</td>
-    </tr>
-    {% endfor %}
-</tbody>
-</table>
-
+    </div>
 </div>
-</div>
+
 
 
 <!---------------------------------------------------------------Footer Component----------------------------------------------------------------------------------------->
