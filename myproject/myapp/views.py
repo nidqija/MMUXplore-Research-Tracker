@@ -1,5 +1,7 @@
 
 import datetime
+import csv
+from fpdf import FPDF
 from multiprocessing import context
 from django.shortcuts import get_object_or_404, render, redirect
 from django.conf import settings
@@ -14,6 +16,7 @@ from django.views.decorators.http import require_POST
 from functools import wraps
 from django.utils import timezone
 from django.db.models import Q
+from django.http import HttpResponse
 
 
 
@@ -368,7 +371,7 @@ def coordinator_home(request, user_id):
     user_name = request.session.get('user_name')
 
 
-    submission = Submissions.objects.filter(status__in=['approved', 'revision']).select_related('paper_id')
+    submission = Submissions.objects.filter(status__in=['pending', 'revision']).select_related('paper_id')
     pastSubmission = Submissions.objects.filter(status__in=['approved', 'rejected']).select_related('paper_id')
     
     return render(request, 'coordinator/coordinator_home.html', {
@@ -551,16 +554,139 @@ def generate_report(request) :
     user_name = request.session.get('user_name')
     coordinator = ProgrammeCoordinator.objects.get(user_id__user_id=user_id)
     researchers = Researcher.objects.all()
+    
+
+    query = request.GET.get('q', '').strip()
+
+    if query:
+        researchers = researchers.filter(
+            Q(user_id__fullname__icontains=query) |
+            Q(user_id__university_id__icontains=query) |
+            Q(OCRID__icontains=query) |
+            Q(google_scholar_id__icontains=query)
+        )
+        
+
+
+    file_format = request.POST.get("format")
 
     if request.method == "POST" and request.POST.get("generate"):
+
         res_id = request.POST.get("researcher_id")
 
         researcher = Researcher.objects.get(researcher_id=res_id)
-
+        email = researcher.user_id.email
         bio_desc = researcher.bio_description
-        orcid = researcher.OCRID
+        OCRID = researcher.OCRID
         google_sch = researcher.google_scholar_id
         publication_count = ResearchPaper.objects.filter(researcher_id=researcher).count()
+
+        paper_titles = ResearchPaper.objects.filter(researcher_id= researcher).values_list('paper_title', flat=True)
+
+        if file_format == "csv":
+            # Create CSV response
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = f'attachment; filename="{researcher.user_id.fullname}_report.csv"'
+
+            writer = csv.writer(response)
+
+            # CSV header
+            writer.writerow([
+                'Researcher Name',
+                'email',
+                'OCRID',
+                'Google Scholar ID',
+                'Bio Description',
+                'Total Publications'
+            ])
+
+            # CSV data
+            writer.writerow([
+                researcher.user_id.fullname,
+                email,
+                OCRID,
+                google_sch,
+                bio_desc,
+                publication_count
+            ])
+
+            return response   # ⬅ return file, NOT render
+        
+
+        if file_format == "pdf":
+
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font("Arial","B",16)
+            pdf.cell(0, 10, f"Research Report: {researcher.user_id.fullname}", ln=True, align='C')
+            pdf.set_font("Arial", "", 12)
+            pdf.cell(0, 10, f"Email: {email}", ln=True)
+            pdf.cell(0, 10, f"ORCID: {OCRID}", ln=True)
+            pdf.cell(0, 10, f"Google Scholar: {google_sch}", ln=True)
+            pdf.cell(0, 10, f"Number of Publications: {publication_count}", ln=True)
+
+            pdf.ln(10)
+            pdf.set_font("Arial", "B", 12)
+            pdf.cell(0, 10, "Publications:", ln=True)
+            pdf.set_font("Arial", "", 12)
+            for paper in paper_titles:
+                    pdf.multi_cell(pdf.w - 2*pdf.l_margin, 10, f"- {paper}")
+            
+            response = HttpResponse( content_type="application/pdf")
+            clean_filename = f"{researcher.user_id.fullname}_report.pdf".replace(" ", "_")
+            response['Content-Disposition'] = f'attachment; filename="{clean_filename}"'
+            pdf_output = pdf.output(dest='S')
+            response.write(pdf_output)
+            return response
+
+    if request.method == "POST" and request.POST.get("faculty_gen"):
+
+
+        
+        filename = f"Faculty_of_Computing_Report_{timezone.now().strftime('%Y-%m-%d')}.csv"
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="{filename}"'
+
+        writer = csv.writer(response)
+
+        # 2. Define the Header Row
+        writer.writerow([
+            'Paper ID', 
+            'Research Title', 
+            'Researcher', 
+            'Category', 
+            'Status', 
+            'DOI', 
+            'Total Likes', 
+            'Total Bookmarks', 
+            'Published Date',
+            'Co-Author Count'
+        ])
+
+        # 3. Filter Papers
+        # We filter papers where the linked ProgrammeCoordinator's faculty is 'Faculty of Computing'
+        papers = ResearchPaper.objects.all()
+
+        # 4. Write Data Rows
+        for paper in papers:
+            # Get count of co-authors for this paper
+            co_author_count = paper.paper_coauthor.count()
+            
+            writer.writerow([
+                paper.paper_id,
+                paper.paper_title,
+                paper.researcher_id.user_id.fullname,
+                paper.paper_category,
+                paper.paper_status, # Shows 'Approved' instead of 'approved'
+                paper.paper_doi if paper.paper_doi else "N/A",
+                paper.total_likes,
+                paper.total_bookmarked,
+                paper.published_date if paper.published_date else "Not Published",
+                co_author_count
+            ])
+
+        return response
+        
 
     
 
@@ -570,6 +696,8 @@ def generate_report(request) :
         'coordinator' : coordinator,
         'user_name': user_name,
         'researchers': researchers,
+        'researchers': researchers, #only pass researchers that match the query
+        'query' : query
 
     }
     
