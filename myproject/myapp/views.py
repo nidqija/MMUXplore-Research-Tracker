@@ -206,6 +206,8 @@ def researcher_home(request, researcher_id):
         abstract = request.POST.get('abstract')
         category = request.POST.get('category')
         doi = request.POST.get('doi')
+        paper_pdf = request.FILES.get('paper_pdf')
+        coauthors = request.POST.getlist('paper_coauth')
         
         if paper_id:
             try:
@@ -217,9 +219,18 @@ def researcher_home(request, researcher_id):
                 if doi:
                     paper.paper_doi = doi
                 
+                if paper_pdf:
+                    paper.paper_pdf = paper_pdf
+
                 # Logic: If editing a paper (especially one in revision/rejected), reset to pending
                 paper.paper_status = 'pending'
                 paper.save() # save() method on model handles syncing to Submissions
+
+                # Update Co-Authors
+                if coauthors:
+                     paper.paper_coauthor.set(coauthors)
+                else:
+                     paper.paper_coauthor.clear()
 
                 messages.success(request, 'Paper updated successfully.')
             except ResearchPaper.DoesNotExist:
@@ -228,6 +239,9 @@ def researcher_home(request, researcher_id):
     
     # Get all papers by this researcher
     all_papers = ResearchPaper.objects.filter(researcher_id=researcher)
+
+    # Get all users for co-author selection (excluding admin and self)
+    all_users = User.objects.all().exclude(role='admin').exclude(user_id=researcher.user_id.user_id)
     
 
     # Count by status
@@ -242,6 +256,7 @@ def researcher_home(request, researcher_id):
 
     context = {
         'researcher': researcher,
+        'all_users': all_users,
         'pending_count': pending_count,
         'revision_count': revision_count,
         'approved_count': approved_count,

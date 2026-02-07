@@ -381,7 +381,7 @@
                         <div class="text-center mt-3">
                             {% if paper.paper_status == 'pending' or paper.paper_status == 'revision' %}
                             <button type="button" class="btn-dark-blue w-100"
-                                onclick="openEditModal('{{ paper.paper_id }}', '{{ paper.paper_title|escapejs }}', '{{ paper.paper_desc|escapejs }}', '{{ paper.paper_category|escapejs }}', '{{ paper.paper_doi|escapejs }}')">
+                                onclick="openEditModal('{{ paper.paper_id }}', '{{ paper.paper_title|escapejs }}', '{{ paper.paper_desc|escapejs }}', '{{ paper.paper_category|escapejs }}', '{{ paper.paper_doi|escapejs }}', '{% for user in paper.paper_coauthor.all %}{{ user.user_id }}{% if not forloop.last %},{% endif %}{% endfor %}')">
                                 Edit Paper
                             </button>
                             {% elif paper.paper_status == 'rejected' %}
@@ -418,7 +418,7 @@
                 <h5 class="modal-title">Edit Paper Details</h5>
                 <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
             </div>
-            <form id="editPaperForm" method="POST">
+            <form id="editPaperForm" method="POST" enctype="multipart/form-data">
                 {% csrf_token %}
                 <input type="hidden" name="paper_id" id="modalPaperId">
 
@@ -455,6 +455,28 @@
                         <label for="modalPaperAbstract" class="form-label">Abstract</label>
                         <textarea class="form-control" name="abstract" id="modalPaperAbstract" rows="5"
                             placeholder="Enter paper abstract"></textarea>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Update Paper PDF</label>
+                        <input type="file" class="form-control" name="paper_pdf" accept=".pdf">
+                        <small class="text-muted">Upload a new file to replace the current one.</small>
+                    </div>
+
+                    <div class="mb-3">
+                        <label class="form-label">Co-Authors</label>
+                        <div
+                            style="max-height: 150px; overflow-y: auto; border: 1px solid #dee2e6; border-radius: 5px; padding: 10px;">
+                            {% for user in all_users %}
+                            <div class="form-check">
+                                <input class="form-check-input coauthor-checkbox" type="checkbox" name="paper_coauth"
+                                    value="{{ user.user_id }}" id="modal_user_{{ user.user_id }}">
+                                <label class="form-check-label" for="modal_user_{{ user.user_id }}">
+                                    {{ user.fullname }}
+                                </label>
+                            </div>
+                            {% endfor %}
+                        </div>
                     </div>
 
                     <div class="alert alert-warning">
@@ -515,7 +537,7 @@
                     <small class="text-muted">Last Updated: {{ paper.last_updated|date:"jS F Y" }}</small>
                     <div class="mt-2">
                         <button type="button" class="btn-dark-blue btn-sm"
-                            onclick="openEditModal('{{ paper.paper_id }}', '{{ paper.paper_title|escapejs }}', '{{ paper.paper_desc|escapejs }}', '{{ paper.paper_category|escapejs }}', '{{ paper.paper_doi|escapejs }}')"
+                            onclick="openEditModal('{{ paper.paper_id }}', '{{ paper.paper_title|escapejs }}', '{{ paper.paper_desc|escapejs }}', '{{ paper.paper_category|escapejs }}', '{{ paper.paper_doi|escapejs }}', '{% for user in paper.paper_coauthor.all %}{{ user.user_id }}{% if not forloop.last %},{% endif %}{% endfor %}')"
                             data-bs-dismiss="modal">Edit Paper</button>
                     </div>
                 </div>
@@ -561,13 +583,30 @@
 </div>
 
 <script>
-    function openEditModal(id, title, abstract, category, doi) {
+    function openEditModal(id, title, abstract, category, doi, coauthorIds) {
         // Set values in the modal
         document.getElementById('modalPaperId').value = id;
         document.getElementById('modalPaperTitle').value = title;
         document.getElementById('modalPaperAbstract').value = abstract;
         document.getElementById('modalPaperCategory').value = category || '';
         document.getElementById('modalPaperDOI').value = doi || '';
+
+        // Reset Co-Author Checkboxes
+        document.querySelectorAll('.coauthor-checkbox').forEach(cb => {
+            cb.checked = false;
+        });
+
+        // Check the co-authors for this paper
+        if (coauthorIds) {
+            // Convert to string to be safe, then split
+            const ids = String(coauthorIds).split(',');
+            ids.forEach(uid => {
+                const checkbox = document.getElementById('modal_user_' + uid.trim());
+                if (checkbox) {
+                    checkbox.checked = true;
+                }
+            });
+        }
 
         // Show the modal
         var myModal = new bootstrap.Modal(document.getElementById('editPaperModal'));
