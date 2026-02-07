@@ -201,12 +201,13 @@
 <!--------------------------------------------------------------------------------------------------------------------------------------------------------------------->
 
 <div class="page-wrapper">
-        <a href="{% url 'researcher_directory' %}" class="back-link mb-4">
-            <span class="me-2">&larr;</span> back
-        </a>
+        
         <div class="profile-container">
 
-        <div class="d-flex justify-content-between align-items-center mb-4">
+        <div class="mb-4">
+            <a href="{% url 'researcher_directory' %}" class="back-link mb-4">
+            <span class="me-2">&larr;</span> back
+        </a>
             <h1 class="m-0">{{ researcher.user_id.fullname }}</h1>
         </div>
 
@@ -217,7 +218,6 @@
                 <div class="avatar-circle">
                     {{ researcher.user_id.fullname|slice:":1"|upper }}
                 </div>
-                <p class="text-muted">{{ researcher.user_id.email }}</p>
             </div>
 
             <div class="col-md-8">
@@ -229,6 +229,11 @@
                         <div class="view-field">
                             <div class="view-label">Full Name</div>
                             <div class="view-value">{{ researcher.user_id.fullname }}</div>
+                        </div>
+
+                        <div class="view-field">
+                            <div class="view-label">Email</div>
+                            <div class="view-value">{{ researcher.user_id.email }}</div>
                         </div>
 
                         <div class="view-field">

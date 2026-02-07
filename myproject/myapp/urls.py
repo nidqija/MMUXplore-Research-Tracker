@@ -58,7 +58,6 @@ urlpatterns = [
     path('coordinator/submissions/', views.submissions, name='coordinator_submissions'),
     path('coordinator/submission/<int:submission_id>/', views.submission_detail, name='submission_detail'),
     path('coordinator/paper/<int:paper_id>/',views.coordinator_view_research_paper,name='coordinator_view_research_paper'),
-    path('coordinator/analytics_page/', views.analytics_page, name ='analytics_page'),
     path('coordinator/generate_report/', views.generate_report, name ='generate_report'),
     path('coordinator/researcher_directory/', views.researcher_directory, name ='researcher_directory'),
     path('coordinator/view_researcher_profile/<int:researcher_id>', views.view_researcher_profile, name ='view_researcher_profile'),

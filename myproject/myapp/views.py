@@ -1,7 +1,6 @@
 
 import datetime
 import csv
-from fpdf import FPDF
 from multiprocessing import context
 from django.shortcuts import get_object_or_404, render, redirect
 from django.conf import settings
@@ -110,7 +109,7 @@ def user_signup(request):
         elif role == 'student':
             Student.objects.create(user_id=user) #
         elif role == 'program_coordinator': 
-            ProgrammeCoordinator.objects.create(user_id=user)
+            ProgrammeCoordinator.objects.create(user_id=user, prog_name = user.fullname)
             request.session['user_id'] = user.user_id  #  store ID for URL redirects
        
 
@@ -356,6 +355,7 @@ def researcher_profile(request, researcher_id):
 def view_research_paper(request, paper_id):
     research_papers = ResearchPaper.objects.get(paper_id=paper_id)
     researcher = research_papers.researcher_id
+    coordinator = "dummy"
     researchname = researcher.user_id.fullname
     comments = Comment.objects.filter(paper_id=research_papers)
     user_name = request.session.get('user_name', 'Guest')
@@ -373,15 +373,16 @@ def view_research_paper(request, paper_id):
 
 
     if user_name != 'Guest':
+        
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
-    user_role = request.session.get('role')
-    is_coordinator = False 
+    
+   
+    if user_name != 'Guest':
+        coordinator = ProgrammeCoordinator.objects.get(user_id__user_id=user_id)
+        is_coordinator = ProgrammeCoordinator.objects.filter(prog_name=user_name).exists()
 
-    if user_role == 'program_coordinator':
-        is_coordinator = ProgrammeCoordinator.objects.filter(user_id=request.user).exists()
-
-    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_coordinator': is_coordinator, 'is_admin': is_admin ,'researchname': researchname, 'comments': comments , 'notifications': notifications , 'has_liked': has_liked, 'has_bookmarked': has_bookmarked , 'user_id': user_id} )
+    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_coordinator': is_coordinator, 'is_admin': is_admin ,'researchname': researchname, 'comments': comments , 'notifications': notifications , 'has_liked': has_liked, 'has_bookmarked': has_bookmarked , 'user_id': user_id, 'coordinator':coordinator} )
 
 
 def like_research_paper(request, paper_id):
@@ -505,6 +506,42 @@ def coordinator_home(request, user_id):
     # and we are looking for the 'user_id' field on the User model.
     coordinator = get_object_or_404(ProgrammeCoordinator, user_id__user_id=user_id)
     user_name = request.session.get('user_name')
+    
+    
+    #Analytics Dashboard
+    papers = ResearchPaper.objects.all()
+    total_papers = papers.count()
+    
+
+
+    approved_count = papers.filter(paper_status='approved').count()
+    approval_rate = (
+        round((approved_count / total_papers) * 100, 2)
+        if total_papers > 0 else 0
+    )
+
+
+
+    #submissions
+    submission = Submissions.objects.all()
+    pending_submissions = Submissions.objects.filter(status__in=['pending', 'revision'])
+    completed_submissions = Submissions.objects.filter(status__in=['approved', 'rejected'])
+
+    pending_submissions = pending_submissions.count()
+    completed_submissions = completed_submissions.count()
+
+   
+
+    #Researchers
+    researchers = Researcher.objects.all()
+    num_researcher = researchers.count()
+
+    #Students
+    students = Student.objects.all()
+    num_student = students.count()
+
+    coordinators = ProgrammeCoordinator.objects.all()
+    num_coordinator = coordinators.count()
 
 
     submission = Submissions.objects.filter(status__in=['pending', 'revision']).select_related('paper_id')
@@ -515,6 +552,18 @@ def coordinator_home(request, user_id):
         'user_name': user_name,
         'submissions': submission,
         'pastSubmissions': pastSubmission,
+
+        'total_papers': total_papers,
+        'approval_rate': approval_rate,
+        'approved_count' : approved_count,
+
+        'pending_submissions': pending_submissions,
+        'completed_submissions': completed_submissions,
+
+
+        'num_researcher' : num_researcher,
+        'num_student' : num_student,
+        'num_coordinator' : num_coordinator
     })
 
 def submissions(request):
@@ -666,24 +715,6 @@ def coordinator_view_research_paper(request, paper_id):
 
     return render(request, 'coordinator/view_research_paper.html', context)
 
-
-def analytics_page(request):
-
-    user_id = request.session.get('user_id')
-    user_name = request.session.get('user_name')
-    coordinator = ProgrammeCoordinator.objects.get(user_id__user_id=user_id)
-    researchpapers = ResearchPaper.objects.filter(paper_status='approved').order_by('-published_date')
-
-    context = {
-        'coordinator' : coordinator,
-        'researchpapers' : researchpapers,
-        'user_name': user_name
-
-
-    }
-
-    return render(request, 'coordinator/analytics_page.html', context)
-
 def generate_report(request) :
 
     user_id = request.session.get('user_id')
@@ -704,7 +735,7 @@ def generate_report(request) :
         
 
 
-    file_format = request.POST.get("format")
+   
 
     if request.method == "POST" and request.POST.get("generate"):
 
@@ -719,101 +750,93 @@ def generate_report(request) :
 
         paper_titles = ResearchPaper.objects.filter(researcher_id= researcher).values_list('paper_title', flat=True)
 
-        if file_format == "csv":
-            # Create CSV response
-            response = HttpResponse(content_type='text/csv')
-            response['Content-Disposition'] = f'attachment; filename="{researcher.user_id.fullname}_report.csv"'
+   
+        # Create CSV response
+        response = HttpResponse(content_type='text/csv')
+        response['Content-Disposition'] = f'attachment; filename="{researcher.user_id.fullname}_report.csv"'
 
-            writer = csv.writer(response)
+        writer = csv.writer(response)
 
-            # CSV header
-            writer.writerow([
-                'Researcher Name',
-                'email',
-                'OCRID',
-                'Google Scholar ID',
-                'Bio Description',
-                'Total Publications'
-            ])
+        # CSV header
+        writer.writerow([
+            'Researcher Name',
+            'email',
+            'OCRID',
+            'Google Scholar ID',
+            'Bio Description',
+            'Total Publications'
+        ])
 
-            # CSV data
-            writer.writerow([
-                researcher.user_id.fullname,
-                email,
-                OCRID,
-                google_sch,
-                bio_desc,
-                publication_count
-            ])
+        # CSV data
+        writer.writerow([
+            researcher.user_id.fullname,
+            email,
+            OCRID,
+            google_sch,
+            bio_desc,
+            publication_count
+        ])
 
-            return response   # ⬅ return file, NOT render
+        return response   # ⬅ return file, NOT render
         
 
-        if file_format == "pdf":
-
-            pdf = FPDF()
-            pdf.add_page()
-            pdf.set_font("Arial","B",16)
-            pdf.cell(0, 10, f"Research Report: {researcher.user_id.fullname}", ln=True, align='C')
-            pdf.set_font("Arial", "", 12)
-            pdf.cell(0, 10, f"Email: {email}", ln=True)
-            pdf.cell(0, 10, f"ORCID: {OCRID}", ln=True)
-            pdf.cell(0, 10, f"Google Scholar: {google_sch}", ln=True)
-            pdf.cell(0, 10, f"Number of Publications: {publication_count}", ln=True)
-
-            pdf.ln(10)
-            pdf.set_font("Arial", "B", 12)
-            pdf.cell(0, 10, "Publications:", ln=True)
-            pdf.set_font("Arial", "", 12)
-            for paper in paper_titles:
-                    pdf.multi_cell(pdf.w - 2*pdf.l_margin, 10, f"- {paper}")
-            
-            response = HttpResponse( content_type="application/pdf")
-            clean_filename = f"{researcher.user_id.fullname}_report.pdf".replace(" ", "_")
-            response['Content-Disposition'] = f'attachment; filename="{clean_filename}"'
-            pdf_output = pdf.output(dest='S')
-            response.write(pdf_output)
-            return response
 
     if request.method == "POST" and request.POST.get("faculty_gen"):
 
+        filename = (
+            f"Faculty_of_Computing_Report_"
+            f"{timezone.now().strftime('%Y-%m-%d')}.csv"
+        )
 
-        
-        filename = f"Faculty_of_Computing_Report_{timezone.now().strftime('%Y-%m-%d')}.csv"
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
         writer = csv.writer(response)
 
-        # 2. Define the Header Row
         writer.writerow([
-            'Paper ID', 
-            'Research Title', 
-            'Researcher', 
-            'Category', 
-            'Status', 
-            'DOI', 
-            'Total Likes', 
-            'Total Bookmarks', 
+            'Paper ID',
+            'Research Title',
+            'Researcher',
+            'Category',
+            'Status',
+            'DOI',
+            'Total Likes',
+            'Total Bookmarks',
             'Published Date',
             'Co-Author Count'
         ])
 
-        # 3. Filter Papers
-        # We filter papers where the linked ProgrammeCoordinator's faculty is 'Faculty of Computing'
-        papers = ResearchPaper.objects.all()
+        papers = ResearchPaper.objects.select_related(
+            'researcher_id',
+            'researcher_id__user_id',
+            'student_id',
+            'student_id__user_id'
+        )
 
-        # 4. Write Data Rows
         for paper in papers:
-            # Get count of co-authors for this paper
+
+            # ---------- SAFE ACCESS ----------
+            researcher_name = (
+                paper.researcher_id.user_id.fullname
+                if paper.researcher_id and paper.researcher_id.user_id
+                else "None"
+            )
+
+            student_name =  (
+                paper.student_id.user_id.fullname
+                if paper.student_id and paper.student_id.user_id
+                else "None"
+            )
+
             co_author_count = paper.paper_coauthor.count()
-            
+            author_name = researcher_name or student_name or "N/A"
+
             writer.writerow([
                 paper.paper_id,
                 paper.paper_title,
-                paper.researcher_id.user_id.fullname,
+                author_name,
                 paper.paper_category,
-                paper.paper_status, # Shows 'Approved' instead of 'approved'
+                paper.paper_status,
                 paper.paper_doi if paper.paper_doi else "N/A",
                 paper.total_likes,
                 paper.total_bookmarked,
@@ -1132,12 +1155,19 @@ def manage_users(request):
 
 def profile_page(request):
 
-
+    coordinator="placeholder"
     user_name = request.session.get('user_name', 'Guest')
-
+    user_id = request.session.get('user_id')
     user_data = User.objects.filter(fullname=user_name).first()
 
-    return render(request , 'profile_page.html', {'user_name': user_name, 'user_data': user_data} )
+    is_coordinator = False
+    if user_name != 'Guest':
+        coordinator = ProgrammeCoordinator.objects.get(user_id__user_id=user_id)
+        is_coordinator = ProgrammeCoordinator.objects.filter(prog_name=user_name).exists()
+
+
+
+    return render(request , 'profile_page.html', {'user_id': user_id,'user_name': user_name, 'user_data': user_data, 'is_coordinator': is_coordinator, 'coordinator':coordinator} )
 
 
 
