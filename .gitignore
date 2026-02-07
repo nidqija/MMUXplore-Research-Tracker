@@ -3,3 +3,4 @@ database_dump.txt
 __pycache__/
 *.pyc
 *.pyo
+export_db.py

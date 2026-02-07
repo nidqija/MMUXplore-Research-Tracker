@@ -355,8 +355,11 @@
                                 <div class="mt-2">
                                     {% if paper.paper_status == 'pending' %}
                                     <span class="status-badge badge-pending">Pending Approval</span>
-                                    {% elif paper.paper_status == 'rejected' %}
+                                    {% elif paper.paper_status == 'revision' %}
                                     <span class="status-badge badge-revision">Needs Revision</span>
+                                    {% elif paper.paper_status == 'rejected' %}
+                                    <span class="status-badge badge-danger"
+                                        style="background-color: #f8d7da; color: #721c24;">Rejected</span>
                                     {% elif paper.paper_status == 'approved' %}
                                     <span class="status-badge badge-published">Published</span>
                                     {% endif %}
@@ -376,10 +379,14 @@
                         </div>
 
                         <div class="text-center mt-3">
-                            {% if paper.paper_status != 'approved' %}
+                            {% if paper.paper_status == 'pending' or paper.paper_status == 'revision' %}
                             <button type="button" class="btn-dark-blue w-100"
                                 onclick="openEditModal('{{ paper.paper_id }}', '{{ paper.paper_title|escapejs }}', '{{ paper.paper_desc|escapejs }}', '{{ paper.paper_category|escapejs }}', '{{ paper.paper_doi|escapejs }}')">
                                 Edit Paper
+                            </button>
+                            {% elif paper.paper_status == 'rejected' %}
+                            <button type="button" class="btn btn-secondary w-100" disabled>
+                                Submission Rejected
                             </button>
                             {% else %}
                             <a href="{% url 'view_research_paper' paper.paper_id %}" class="btn-dark-blue btn-sm">

@@ -80,6 +80,7 @@ class ResearchPaper(models.Model):
         ('pending', 'Pending'),
         ('approved', 'Approved'),
         ('rejected', 'Rejected'),
+        ('revision', 'Revision'),
     ]
 
     paper_id = models.AutoField(primary_key=True)
@@ -97,6 +98,22 @@ class ResearchPaper(models.Model):
     student_id = models.ForeignKey(Student, on_delete=models.SET_NULL, null=True, blank=True)
     published_date = models.DateField(null=True, blank=True)
     last_updated = models.DateTimeField(auto_now=True)
+
+    def save(self, *args, **kwargs):
+        super().save(*args, **kwargs)
+        # Sync status with Submissions table
+        submission = Submissions.objects.filter(paper_id=self).first()
+        if submission:
+            if submission.status != self.paper_status:
+                submission.status = self.paper_status
+                submission.save()
+        else:
+            # Create a submission entry if it doesn't exist (e.g. for papers 1-10)
+            Submissions.objects.create(
+                paper_id=self,
+                status=self.paper_status,
+                submitted_at=timezone.now()
+            )
 
     def __str__(self):
         return self.paper_title
@@ -139,15 +156,6 @@ class TermsAndConditions(models.Model):
      def __str__(self):
           return self.title , self.content
      
-# =================================== Co-Author Model ========================================
-
-class CoAuthor(models.Model):
-    coauth_id = models.AutoField(primary_key=True)
-    paper_id = models.ForeignKey(ResearchPaper, on_delete=models.CASCADE, related_name='co_authors')
-    user_id = models.ForeignKey(User, on_delete=models.CASCADE)
-    
-    def __str__(self):
-        return f"{self.user.fullname} on {self.paper.paper_title}"
 # =================================== Announcements Model ========================================
 
 class Announcements(models.Model):

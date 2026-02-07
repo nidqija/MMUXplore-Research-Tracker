@@ -100,9 +100,7 @@
                 <div class="d-flex w-100 justify-content-between mb-1">
                     <h6 class="mb-1 fw-bold text-primary">{{ notification.notify_title }}</h6>
                     <div class="d-flex align-items-center">
-                        <small class="text-muted me-2" style="font-size: 0.75rem;">{{ notification.created_at|timesince
-                            }}
-                            ago</small>
+
                         <a href="{% url 'mark_notification_read' notification.notify_id %}" class="text-secondary"
                             title="Mark as Read">
                             <i class="bi bi-check-circle fs-5"></i>

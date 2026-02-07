@@ -216,7 +216,11 @@ def researcher_home(request, researcher_id):
                     paper.paper_category = category
                 if doi:
                     paper.paper_doi = doi
-                paper.save()
+                
+                # Logic: If editing a paper (especially one in revision/rejected), reset to pending
+                paper.paper_status = 'pending'
+                paper.save() # save() method on model handles syncing to Submissions
+
                 messages.success(request, 'Paper updated successfully.')
             except ResearchPaper.DoesNotExist:
                 messages.error(request, 'Paper not found.')
@@ -225,10 +229,12 @@ def researcher_home(request, researcher_id):
     # Get all papers by this researcher
     all_papers = ResearchPaper.objects.filter(researcher_id=researcher)
     
+
     # Count by status
     pending_count = all_papers.filter(paper_status='pending').count()
-    revision_count = all_papers.filter(paper_status='rejected').count()
+    revision_count = all_papers.filter(paper_status='revision').count()
     approved_count = all_papers.filter(paper_status='approved').count()
+    rejected_count = all_papers.filter(paper_status='rejected').count()
     
     # Get papers for display
     pending_papers = all_papers.filter(paper_status='pending')
@@ -239,8 +245,10 @@ def researcher_home(request, researcher_id):
         'pending_count': pending_count,
         'revision_count': revision_count,
         'approved_count': approved_count,
+        'rejected_count': rejected_count,
         'pending_papers': pending_papers,
-        'revision_papers': all_papers.filter(paper_status='rejected'),
+        'revision_papers': all_papers.filter(paper_status='revision'),
+        'rejected_papers': all_papers.filter(paper_status='rejected'),
         'approved_papers': all_papers.filter(paper_status='approved'),
         'papers': papers
     }
