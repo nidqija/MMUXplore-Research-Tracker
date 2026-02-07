@@ -177,7 +177,9 @@
                                         </a>
                                     </li>
                                     <li>
-                                        <a class="dropdown-item text-warning" href="#">
+                                        <a class="dropdown-item text-warning" 
+                                            href="{% url 'warn_specific_user' user_id=comment.user_id.user_id paper_id=research_papers.paper_id %}"
+                                            onclick="return confirm('Send an official warning to this user?')">
                                             <i class="bi bi-exclamation-triangle me-2"></i>Warn User
                                         </a>
                                     </li>

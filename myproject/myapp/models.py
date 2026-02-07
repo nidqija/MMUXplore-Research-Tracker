@@ -14,6 +14,7 @@ class User(models.Model):
      password = models.CharField(max_length=250 , default='password')
      role = models.CharField(max_length=50, default='student')
      avatar = models.FileField(upload_to='profile/', blank=True, null=True)
+     is_banned = models.BooleanField(default=False)
      date_joined = models.DateTimeField(auto_now_add=True )
      
      def __str__(self):
