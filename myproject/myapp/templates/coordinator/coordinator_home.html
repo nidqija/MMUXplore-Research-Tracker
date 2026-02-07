@@ -39,6 +39,104 @@
     </div>
 
     <div class="container mt-5">
+    <h2 class="mb-4">Analytics Dashboard</h2>
+
+
+            <div class="row g-4 mt-3">
+
+                <div class="col-md-3">
+                    <div class="card text-center shadow-sm">
+                        <div class="card-body">
+                            <h6 class="text-muted">Total Papers</h6>
+                            <h3>{{ total_papers }}</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card text-center shadow-sm">
+                        <div class="card-body">
+                            <h6 class="text-muted">Published Papers</h6>
+                            <h3>{{ approved_count }}</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card text-center shadow-sm">
+                        <div class="card-body">
+                            <h6 class="text-muted">Completed Submissions</h6>
+                            <h3>{{ completed_submissions }}</h3>
+                        </div>
+                    </div>
+                </div>
+
+
+                <div class="col-md-3">
+                    <div class="card text-center shadow-sm">
+                        <div class="card-body">
+                            <h6 class="text-muted">Pending Submissions</h6>
+                            <h3>{{ pending_submissions }}</h3>
+                        </div>
+                    </div>
+                </div>
+
+
+
+            </div>
+
+            <div class="row g-4 mt-3">
+
+                <div class="col-md-3">
+                    <div class="card text-center shadow-sm">
+                        <div class="card-body">
+                            <h6 class="text-muted">Approval Rate</h6>
+                            <h3>{{ approval_rate }}%</h3>
+                        </div>
+                    </div>
+                </div>
+
+                
+
+                <div class="col-md-3">
+                    <div class="card text-center shadow-sm">
+                        <div class="card-body">
+                            <h6 class="text-muted">Total Researchers</h6>
+                            <h3>{{ num_researcher }}</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card text-center shadow-sm">
+                        <div class="card-body">
+                            <h6 class="text-muted">Total Students</h6>
+                            <h3>{{ num_student }}</h3>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="col-md-3">
+                    <div class="card text-center shadow-sm">
+                        <div class="card-body">
+                            <h6 class="text-muted">Total Coordinators</h6>
+                            <h3>{{ num_coordinator }}</h3>
+                        </div>
+                    </div>
+                </div>
+
+
+
+                    
+            </div>
+
+
+
+
+
+    </div>
+
+    <div class="container mt-5">
         <h2 class="mb-4"><a href="{% url 'coordinator_submissions' %}" style="text-decoration: none;">Pending Submissions</a></h2>
 
 
