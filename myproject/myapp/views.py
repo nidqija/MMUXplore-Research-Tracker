@@ -803,7 +803,7 @@ def generate_report(request) :
             'Total Likes',
             'Total Bookmarks',
             'Published Date',
-            'Co-Author Count'
+            'Co-Authors'
         ])
 
         papers = ResearchPaper.objects.select_related(
@@ -829,7 +829,9 @@ def generate_report(request) :
             )
 
             co_author_count = paper.paper_coauthor.count()
-            author_name = researcher_name or student_name or "N/A"
+            # csv only wants to pick student name or researcher name only smh, this fixes it
+            author_name = ", ".join(name for name in [researcher_name, student_name] if name and name != "None") or "N/A" 
+            
 
             writer.writerow([
                 paper.paper_id,
