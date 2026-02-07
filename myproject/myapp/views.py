@@ -379,8 +379,8 @@ def view_research_paper(request, paper_id):
     
    
     if user_name != 'Guest':
-        coordinator = ProgrammeCoordinator.objects.get(user_id__user_id=user_id)
-        is_coordinator = ProgrammeCoordinator.objects.filter(prog_name=user_name).exists()
+        coordinator = ProgrammeCoordinator.objects.filter(user_id__user_id=user_id).first()
+        is_coordinator = coordinator is not None
 
     return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_coordinator': is_coordinator, 'is_admin': is_admin ,'researchname': researchname, 'comments': comments , 'notifications': notifications , 'has_liked': has_liked, 'has_bookmarked': has_bookmarked , 'user_id': user_id, 'coordinator':coordinator} )
 
@@ -1162,8 +1162,8 @@ def profile_page(request):
 
     is_coordinator = False
     if user_name != 'Guest':
-        coordinator = ProgrammeCoordinator.objects.get(user_id__user_id=user_id)
-        is_coordinator = ProgrammeCoordinator.objects.filter(prog_name=user_name).exists()
+        coordinator = ProgrammeCoordinator.objects.filter(user_id__user_id=user_id).first()
+        is_coordinator = coordinator is not None
 
 
 
