@@ -70,6 +70,7 @@ def user_signup(request):
     if request.method == 'POST':
         university_id = request.POST.get('university_id')
         email = request.POST.get('email')
+        fullname = request.POST.get('fullname')
         role = request.POST.get('role')
         password = request.POST.get('password')
 
@@ -96,7 +97,7 @@ def user_signup(request):
 
         
         user = User.objects.create(
-            fullname='', 
+            fullname=fullname, 
             university_id=university_id, 
             email=email, 
             password=password, 
@@ -106,11 +107,26 @@ def user_signup(request):
       
         if role == 'researcher':
             Researcher.objects.create(user_id=user) #
+            researcher = Researcher.objects.get(user_id=user)
+             # Log them in immediately
+            request.session['user_id'] = user.user_id 
+            request.session['user_name'] = user.fullname
+            request.session['user_role'] = 'researcher'
+
+            messages.success(request, 'Researcher account created successfully!')
+            # SKIP avatar_register and go to researcher home
+            return redirect('researcher_home', researcher_id=researcher.researcher_id)
         elif role == 'student':
-            Student.objects.create(user_id=user) #
+            Student.objects.create(user_id=user) 
         elif role == 'program_coordinator': 
-            ProgrammeCoordinator.objects.create(user_id=user, prog_name = user.fullname)
-            request.session['user_id'] = user.user_id  #  store ID for URL redirects
+            ProgrammeCoordinator.objects.create(user_id=user, prog_name=user.fullname)
+           
+            request.session['user_id'] = user.user_id 
+            request.session['user_name'] = user.fullname
+            request.session['user_role'] = 'program_coordinator' 
+
+            messages.success(request, 'Account created successfully!')
+            # 3. Redirect directly to home, bypassing avatar_register
             return redirect('coordinator_home', user_id=user.user_id)
        
 
@@ -1211,7 +1227,7 @@ def profile_page(request):
     coordinator="placeholder"
     user_name = request.session.get('user_name', 'Guest')
     user_id = request.session.get('user_id')
-    user_data = User.objects.filter(fullname=user_name).first()
+    user_data = User.objects.get(user_id=user_id)
 
     is_coordinator = False
     if user_name != 'Guest':

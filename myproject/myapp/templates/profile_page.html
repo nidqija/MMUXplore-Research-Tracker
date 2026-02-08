@@ -21,73 +21,72 @@
          
           
         </div>
-  <div class="row mb-5">
+<div class="row mb-5">
   <div class="col-sm-6">
     <div class="card" style="border: none;">
       <div class="card-body">
         <div class="d-flex justify-content-center">
-       <img height="350px" width="200px" src="{{ user_data.avatar.url }}" alt="">
-       </div>
+          {% if user_data.avatar %}
+            <img height="350px" width="200px" src="{{ user_data.avatar.url }}" alt="Profile Picture" style="object-fit: cover;">
+          {% else %}
+            <img height="350px" width="200px" src="https://via.placeholder.com/200x350?text=No+Avatar" alt="Default Avatar">
+          {% endif %}
+        </div>
       </div>
     </div>
   </div>
+
   <div class="col-sm-6">
     <div class="card" style="border: none;">
       <div class="card-body">
-
-         <h5>Full Name:</h5>
+        <h5>Full Name:</h5>
         <p class="card-text mb-5" style="font-size: 20px;"> {{ user_data.fullname }}</p>
-        
 
-         <h5>Email:</h5>
+        <h5>Email:</h5>
         <p class="card-text mb-5" style="font-size: 20px;"> {{ user_data.email }}</p>
          
         <h5>Role:</h5>
         <p class="card-text mb-4" style="font-size: 20px;"> {{ user_data.role }}</p>
         
-        <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal" style="border-radius: 30px; ">Edit Profile</a>
+        <a href="#" class="btn btn-primary" data-bs-toggle="modal" data-bs-target="#exampleModal" style="border-radius: 30px;">Edit Profile</a>
 
         <div class="modal fade" id="exampleModal" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-  <div class="modal-dialog">
-    <div class="modal-content">
-      <div class="modal-header">
-        <h1 class="modal-title fs-5" id="exampleModalLabel">Edit Profile</h1>
-        <form action="{% url 'update_profile' %}" method="POST" enctype="multipart/form-data">
-          {% csrf_token %}
-        <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+          <div class="modal-dialog">
+            <div class="modal-content">
+              <form action="{% url 'update_profile' %}" method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="modal-header">
+                  <h1 class="modal-title fs-5" id="exampleModalLabel">Edit Profile</h1>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body text-start">
+                  <div class="mb-3">
+                    <label class="form-label">Avatar</label>
+                    <input type="file" class="form-control" name="avatar">
+                    <small class="text-muted">Leave empty to keep current avatar</small>
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Full Name</label>
+                    <input type="text" class="form-control" name="fullname" value="{{ user_data.fullname }}">
+                  </div>
+                  <div class="mb-3">
+                    <label class="form-label">Email</label>
+                    <input type="email" class="form-control" name="email" value="{{ user_data.email }}">
+                  </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+                  <a href="{% url 'logout' %}" class="btn btn-danger">Log Out</a>
+                  <button type="submit" class="btn btn-primary">Update Profile</button>
+                </div>
+              </form>
+            </div>
+          </div>
+        </div>
       </div>
-      <div class="modal-body">
-        <div class="mb-3">
-  <label for="exampleFormControlInput1" class="form-label">Avatar</label>
-  <input type="file" class="form-control" id="exampleFormControlInput1" name="avatar" value="{{ user_data.avatar.url }}" >
-</div>
-   <div class="mb-3">
-  <label for="exampleFormControlInput1" class="form-label">Full Name</label>
-  <input type="text" class="form-control" id="exampleFormControlInput1" name="fullname" value="{{ user_data.fullname }}" >
-</div>
-<div class="mb-3">
-  <label for="exampleFormControlTextarea1" class="form-label">Email</label>
-  <textarea class="form-control" id="exampleFormControlTextarea1" rows="3" name="email">{{ user_data.email }}</textarea>
-</div>
-<div class="mb-3 d-flex justify-content-end">
-  <button type="submit" class="btn btn-primary"> Update Profile </button>
-</div>
-      </div>
-      <div class="modal-footer">
-        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-        <a href="{% url 'logout' %}"> <button type="button" class="btn btn-primary" >Log Out</button></a>
-      </div>
-      </form>
     </div>
   </div>
-</div>
-
-      </div>
-
-    </div>
-    
-  </div>
-</div>
+</div>  
 
     </div>
 
