@@ -5,7 +5,7 @@ This guide details the steps to set up, configure, and run the MMU Xplore Resear
 Start by cloning the codebase to your local machine.
 
 Bash
-git clone <your-repo-url>
+git clone <(https://github.com/nidqija/MMUXplore-Research-Tracker.git)>
 cd <your-project-folder>
 2. Create & Activate Virtual Environment
 It is recommended to use a virtual environment to manage dependencies isolated from your system Python.
