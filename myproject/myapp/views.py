@@ -38,7 +38,7 @@ def index(request):
     user_name = request.session.get('user_name', 'Guest')
     announcements = Announcements.objects.all().order_by('-date_posted') 
     research_papers = ResearchPaper.objects.filter(paper_status='approved')
-    user_id = request.session.get('user_id') # Make sure this is being set during sign-in!
+    user_id = request.session.get('user_id')    
 
     latest_tc = TermsAndConditions.objects.order_by('-last_updated').first()
     user = User.objects.filter(fullname=user_name).first()
@@ -125,22 +125,28 @@ def user_signup(request):
 
 
 
-        
 
 
 def user_avatar_register(request):
     if request.method == 'POST':
         fullname = request.POST.get('fullname')
         avatar = request.FILES.get('avatar')
+        program_name = request.POST.get('program_name')
+        year_of_study = request.POST.get('year_of_study')
+        
 
         # Retrieve the email we just stored in the signup view
         temp_email = request.session.get('temp_user_email')
         user = User.objects.filter(email=temp_email).first()
+        student = Student.objects.filter(user_id=user).first() if user and user.role == 'student' else None
 
         if user:
             user.fullname = fullname
             user.avatar = avatar
+            student.program_of_studies = program_name
+            student.year_of_studies = year_of_study
             user.save()
+            student.save()
             
             # Now that the profile is complete, set the main session
             request.session['user_name'] = user.fullname
@@ -359,7 +365,8 @@ def view_research_paper(request, paper_id):
     researchname = researcher.user_id.fullname
     comments = Comment.objects.filter(paper_id=research_papers)
     user_name = request.session.get('user_name', 'Guest')
-    user_id = request.session.get('user_id')    
+    user_id = request.session.get('user_id')
+   
     
     notifications = Notification.objects.filter(user_id__fullname=user_name).order_by('-created_at') if user_name != 'Guest' else []
 
@@ -936,6 +943,7 @@ def user_signin(request):
         if admin:
             if admin.password == password:
                 request.session['user_name'] = admin.user_name
+                request.session['user_id'] = admin.admin_id  
                 request.session['is_admin'] = True
                 messages.success(request, 'Admin Signed in successfully.')
                 return redirect('admin_homepage')
@@ -1138,6 +1146,33 @@ def announcement_page(request):
     return render(request , 'adminguy/announcement_page.html', {'user_name': user_name , 'announcement_list': announcement_list} )
 
 
+@require_POST
+def update_announcement(request, announcement_id):
+    if request.method == 'POST':
+     try:
+        announcement = Announcements.objects.get(announcement_id=announcement_id)
+        new_title = request.POST.get('announcementtitle')
+        new_desc = request.POST.get('announcementdescription')
+        new_attachment = request.FILES.get('announcementattachment')
+
+        if new_title and new_desc :
+            announcement.announcement_title = new_title
+            announcement.announcement_desc = new_desc
+
+            if new_attachment:
+                announcement.attachment = new_attachment
+
+            announcement.save()
+            messages.success(request, 'Announcement updated successfully.')
+
+        else:
+            messages.error(request , 'Failed to update announcement. Please try again.')
+     
+     except Announcements.DoesNotExist:
+        messages.error(request, 'Announcement not found.')
+        return redirect('announcement_page')
+     
+    return redirect('announcement_page')
 
 
 @require_POST
@@ -1158,8 +1193,9 @@ def manage_users(request):
     user_name = request.session.get('user_name', 'Guest')
     users = User.objects.annotate( violation_count=Count('violations_received') ).order_by('-violation_count') # Optional: show most reported users first
     total_users = users.filter(is_banned=False).count()
+    total_bans = users.filter(is_banned=True).count()
 
-    return render(request , 'adminguy/manage_users.html', {'user_name': user_name , 'users': users, 'total_users': total_users} )
+    return render(request , 'adminguy/manage_users.html', {'user_name': user_name , 'users': users, 'total_users': total_users, 'total_bans': total_bans    } )
 
 
 
@@ -1575,6 +1611,7 @@ def view_comments(request, comment_id):
     user_name = request.session.get('user_name', 'Guest')
     user_id = request.session.get('user_id')
 
+
     reported_comment = get_object_or_404(Comment, comment_id=comment_id)
     
     research_papers = reported_comment.paper_id
@@ -1588,6 +1625,7 @@ def view_comments(request, comment_id):
         'research_papers': research_papers, # Now the template has the title, PDF, ID, etc.
         'comments': comments,
         'paper_id': research_papers.paper_id, # Keeps your existing logic working
+
     }
 
     return render(request, 'view_research_paper.html', context)
