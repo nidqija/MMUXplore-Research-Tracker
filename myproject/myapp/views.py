@@ -111,6 +111,7 @@ def user_signup(request):
         elif role == 'program_coordinator': 
             ProgrammeCoordinator.objects.create(user_id=user, prog_name = user.fullname)
             request.session['user_id'] = user.user_id  #  store ID for URL redirects
+            return redirect('coordinator_home', user_id=user.user_id)
        
 
        
@@ -133,38 +134,44 @@ def user_avatar_register(request):
         avatar = request.FILES.get('avatar')
         program_name = request.POST.get('program_name')
         year_of_study = request.POST.get('year_of_study')
-        
 
-        # Retrieve the email we just stored in the signup view
         temp_email = request.session.get('temp_user_email')
         user = User.objects.filter(email=temp_email).first()
-        student = Student.objects.filter(user_id=user).first() if user and user.role == 'student' else None
 
         if user:
+            # 1. Update Common User Fields
             user.fullname = fullname
             user.avatar = avatar
-            student.program_of_studies = program_name
-            student.year_of_studies = year_of_study
             user.save()
-            student.save()
-            
-            # Now that the profile is complete, set the main session
+
+            if user.role == 'student':
+                student = Student.objects.filter(user_id=user).first()
+                if student:
+                    student.program_of_studies = program_name
+                    student.year_of_studies = year_of_study
+                    student.save()
+
+            # 3. Finalize Session
             request.session['user_name'] = user.fullname
-            
-            # Clean up the temporary session
-            del request.session['temp_user_email']
-            
+            if 'temp_user_email' in request.session:
+                del request.session['temp_user_email']
+
             messages.success(request, 'Profile updated successfully.')
+
+            # 4. Correct Redirect Logic
             if user.role == 'program_coordinator':
                 return redirect('coordinator_home', user_id=user.user_id)
+            elif user.role == 'researcher':
+                researcher = Researcher.objects.filter(user_id=user).first()
+                return redirect('researcher_home', researcher_id=researcher.researcher_id)
             
-            return redirect('home')
+            return redirect('home') # Default for students
+        
         else:
             messages.error(request, 'Session expired. Please sign up again.')
             return redirect('user_signup')
             
     return render(request, 'user_avatar_register.html')
-
 
 
 
