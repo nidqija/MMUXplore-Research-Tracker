@@ -40,7 +40,7 @@
     <div class="card" >
       <div class="card-body text-center" style="background-color: rgb(225, 167, 142); " >
         <h5 class="card-title">User Bans</h5>
-        <h1>0</h1>
+        <h1>{{ total_bans }}</h1>
       </div>
     </div>
   </div>
@@ -84,7 +84,7 @@
             <td>{{ user.violation_count }}</td>
             {% endif %}
               <td>
-                {% if user.violation_count > 3 %}
+                {% if user.violation_count >= 3 %}
                  <a class="btn btn-danger btn-sm" href="{% url 'ban_user' user.user_id %}">Ban User</a>
                 {% else %}
                 <a href="{% url 'inspect_profile' user.user_id %}" class="btn btn-info btn-sm">Inspect Profile</a>

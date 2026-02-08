@@ -44,6 +44,7 @@ urlpatterns = [
     path('adminguy/delete_term/<int:term_id>/', views.delete_term_condition, name='delete_term_condition' ),
     path('adminguy/update_term/<int:term_id>/', views.update_term_condition, name='update_term_condition' ),
     path('adminguy/announcement_page/', views.announcement_page, name='announcement_page' ),
+    path('adminguy/update_announcement/<int:announcement_id>/', views.update_announcement, name='update_announcement' ),
     path('adminguy/delete_announcement/<int:announcement_id>/', views.delete_announcement, name='delete_announcement' ),
     path('adminguy/manage_users/', views.manage_users, name='manage_users' ),
     path('term_condition_page/', views.term_condition_page, name='term_condition_page' ),
