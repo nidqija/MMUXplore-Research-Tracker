@@ -28,9 +28,7 @@ urlpatterns = [
     path('inventory_page/', views.inventory_page, name='inventory_page'),
     path('unlike_paper/<int:paper_id>/', views.unlike_research_paper, name='unlike_paper'),
     path('remove_bookmark/<int:paper_id>/', views.unlike_bookmark_research_paper, name='remove_bookmark'),
-    
-    
-
+    path('warn_specific_user/<int:user_id>/<int:paper_id>/', views.warn_specific_user, name='warn_specific_user'),
     # End General URLs
 
     #researcher URLs
@@ -46,10 +44,14 @@ urlpatterns = [
     path('adminguy/delete_term/<int:term_id>/', views.delete_term_condition, name='delete_term_condition' ),
     path('adminguy/update_term/<int:term_id>/', views.update_term_condition, name='update_term_condition' ),
     path('adminguy/announcement_page/', views.announcement_page, name='announcement_page' ),
+    path('adminguy/update_announcement/<int:announcement_id>/', views.update_announcement, name='update_announcement' ),
     path('adminguy/delete_announcement/<int:announcement_id>/', views.delete_announcement, name='delete_announcement' ),
     path('adminguy/manage_users/', views.manage_users, name='manage_users' ),
     path('term_condition_page/', views.term_condition_page, name='term_condition_page' ),
     path('adminguy/inspect_profile/<int:user_id>/', views.inspect_profile, name='inspect_profile' ),
+    path('adminguy/manage_user_reports/', views.manage_user_reports, name='manage_user_reports' ),
+    path('view_comment/<int:comment_id>/', views.view_comments, name='view_comment'),
+    path('ban_user/<int:user_id>/', views.ban_users, name='ban_user'),
     # End Admin URLs
 
 

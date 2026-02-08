@@ -14,7 +14,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 from functools import wraps
 from django.utils import timezone
-from django.db.models import Q
+from django.db.models import Q , Count
 from django.http import HttpResponse
 
 
@@ -38,7 +38,7 @@ def index(request):
     user_name = request.session.get('user_name', 'Guest')
     announcements = Announcements.objects.all().order_by('-date_posted') 
     research_papers = ResearchPaper.objects.filter(paper_status='approved')
-    user_id = request.session.get('user_id') # Make sure this is being set during sign-in!
+    user_id = request.session.get('user_id')    
 
     latest_tc = TermsAndConditions.objects.order_by('-last_updated').first()
     user = User.objects.filter(fullname=user_name).first()
@@ -125,22 +125,28 @@ def user_signup(request):
 
 
 
-        
 
 
 def user_avatar_register(request):
     if request.method == 'POST':
         fullname = request.POST.get('fullname')
         avatar = request.FILES.get('avatar')
+        program_name = request.POST.get('program_name')
+        year_of_study = request.POST.get('year_of_study')
+        
 
         # Retrieve the email we just stored in the signup view
         temp_email = request.session.get('temp_user_email')
         user = User.objects.filter(email=temp_email).first()
+        student = Student.objects.filter(user_id=user).first() if user and user.role == 'student' else None
 
         if user:
             user.fullname = fullname
             user.avatar = avatar
+            student.program_of_studies = program_name
+            student.year_of_studies = year_of_study
             user.save()
+            student.save()
             
             # Now that the profile is complete, set the main session
             request.session['user_name'] = user.fullname
@@ -360,6 +366,7 @@ def view_research_paper(request, paper_id):
     comments = Comment.objects.filter(paper_id=research_papers)
     user_name = request.session.get('user_name', 'Guest')
     user_id = request.session.get('user_id')
+   
     
     notifications = Notification.objects.filter(user_id__fullname=user_name).order_by('-created_at') if user_name != 'Guest' else []
 
@@ -936,6 +943,8 @@ def user_signin(request):
         if admin:
             if admin.password == password:
                 request.session['user_name'] = admin.user_name
+                request.session['user_id'] = admin.admin_id  
+                request.session['is_admin'] = True
                 messages.success(request, 'Admin Signed in successfully.')
                 return redirect('admin_homepage')
             else:
@@ -949,6 +958,10 @@ def user_signin(request):
                 request.session['user_name'] = user.fullname
                 request.session['user_id'] = user.user_id  
 
+                if user.is_banned :
+                    messages.error(request, "Your account has been banned. Please contact support.")
+                    return render(request, 'signin.html')
+
                 if user.role == 'researcher':
                     # Check if researcher profile exists
                     try:
@@ -961,6 +974,8 @@ def user_signin(request):
                         return redirect('home')
 
                 elif user.role == 'student':
+
+                    
                     messages.success(request, 'Student Signed in successfully.')
                     return redirect('home')
                 
@@ -1131,6 +1146,33 @@ def announcement_page(request):
     return render(request , 'adminguy/announcement_page.html', {'user_name': user_name , 'announcement_list': announcement_list} )
 
 
+@require_POST
+def update_announcement(request, announcement_id):
+    if request.method == 'POST':
+     try:
+        announcement = Announcements.objects.get(announcement_id=announcement_id)
+        new_title = request.POST.get('announcementtitle')
+        new_desc = request.POST.get('announcementdescription')
+        new_attachment = request.FILES.get('announcementattachment')
+
+        if new_title and new_desc :
+            announcement.announcement_title = new_title
+            announcement.announcement_desc = new_desc
+
+            if new_attachment:
+                announcement.attachment = new_attachment
+
+            announcement.save()
+            messages.success(request, 'Announcement updated successfully.')
+
+        else:
+            messages.error(request , 'Failed to update announcement. Please try again.')
+     
+     except Announcements.DoesNotExist:
+        messages.error(request, 'Announcement not found.')
+        return redirect('announcement_page')
+     
+    return redirect('announcement_page')
 
 
 @require_POST
@@ -1149,9 +1191,11 @@ def delete_announcement(request, announcement_id):
 
 def manage_users(request):
     user_name = request.session.get('user_name', 'Guest')
-    users = User.objects.all()
-    total_users = users.count()
-    return render(request , 'adminguy/manage_users.html', {'user_name': user_name , 'users': users, 'total_users': total_users} )
+    users = User.objects.annotate( violation_count=Count('violations_received') ).order_by('-violation_count') # Optional: show most reported users first
+    total_users = users.filter(is_banned=False).count()
+    total_bans = users.filter(is_banned=True).count()
+
+    return render(request , 'adminguy/manage_users.html', {'user_name': user_name , 'users': users, 'total_users': total_users, 'total_bans': total_bans    } )
 
 
 
@@ -1237,6 +1281,15 @@ def delete_comment(request, comment_id, paper_id):
         # Security Check: Is the user an admin OR the owner of the comment?
         if is_admin or comment.user_id.fullname == user_name:
             comment.delete()
+
+            warning = Notification(
+                user_id=comment.user_id,
+                notify_title="Comment Deleted",
+                notify_message=f"Your comment on paper ID {paper_id} was deleted by an admin.",
+                created_at=timezone.now()
+            )
+            warning.save()
+
             messages.success(request, 'Comment deleted successfully.')
         else:
             messages.error(request, 'You do not have permission to delete this comment.')
@@ -1273,7 +1326,8 @@ def search_paper(request):
         'user_name': user_name,
         'is_admin': is_admin,
         'researchpapers': researchpapers,
-        'search_query': query
+        'search_query': query ,
+        'user_id': request.session.get('user_id')
     }
     
     return render(request, 'researchpaper.html', context)
@@ -1300,6 +1354,7 @@ def report_comment(request):
         violation_type=reason,
         date_reported=timezone.now()
     )
+    
     violations.save()
 
    
@@ -1391,10 +1446,16 @@ def inspect_profile(request, user_id):
     user_name = request.session.get('user_name', 'Guest')
     # Use get_object_or_404 to ensure safe retrieval
     user_data = get_object_or_404(User, user_id=user_id)
+    violation_count = Violations.objects.filter(user=user_data).count()
+    user_id = user_data.user_id
+
     
     return render(request, 'profile_page.html', {
         'user_name': user_name, 
-        'user_data': user_data
+        'user_data': user_data,
+        'inspect_mode': True , # Flag to indicate admin inspection mode
+        'user_id': user_id ,
+        'violation_count': violation_count
     })
 
 
@@ -1498,3 +1559,91 @@ def submit_fyp(request, user_id):
             messages.error(request, "Please fill in all required fields.")
 
     return render(request, 'submit_fyp.html', {'user_name': user_name, 'user_id': user_id , 'fyp_paper': fyp_paper})
+
+
+def warn_specific_user(request, user_id, paper_id):
+    target_user = get_object_or_404(User, pk=user_id)
+    admin_name = request.session.get('user_name')
+    comment_id = request.GET.get('comment_id', None)
+    sender_instance = User.objects.filter(fullname=admin_name).first()
+    reporter_id = sender_instance.pk if sender_instance else None
+
+    Notification.objects.create(
+        user_id_id=target_user.pk, 
+        notify_title="System Warning",
+        notify_message="You have received a formal warning regarding your recent activity.",
+        sender_id_id= reporter_id,
+        created_at=timezone.now()
+    )
+
+    Violations.objects.create(
+        user_id=target_user.pk, 
+        reporter_id= reporter_id,
+        violation_type="Official Warning",
+        date_reported=timezone.now(),
+        comment_id=comment_id      
+    )
+
+    
+
+    messages.success(request, f"Warning successfully sent to {target_user.fullname}.")
+    return redirect('view_research_paper', paper_id=paper_id)
+
+
+
+def manage_user_reports(request):
+    user_name = request.session.get('user_name', 'Guest')
+    reports = Notification.objects.all().filter(notify_title="Comment Reported").order_by('-created_at')
+
+
+
+
+    context = {
+        'user_name': user_name,
+        'reports': reports
+    }
+
+    return render(request, 'adminguy/manage_report.html', context)
+
+
+
+def view_comments(request, comment_id):
+    user_name = request.session.get('user_name', 'Guest')
+    user_id = request.session.get('user_id')
+
+
+    reported_comment = get_object_or_404(Comment, comment_id=comment_id)
+    
+    research_papers = reported_comment.paper_id
+    
+    
+    comments = Comment.objects.filter(paper_id=research_papers).order_by('-created_at')
+
+    context = {
+        'user_name': user_name,
+        'user_id': user_id,
+        'research_papers': research_papers, # Now the template has the title, PDF, ID, etc.
+        'comments': comments,
+        'paper_id': research_papers.paper_id, # Keeps your existing logic working
+
+    }
+
+    return render(request, 'view_research_paper.html', context)
+
+
+
+def ban_users(request, user_id):
+    target_user = get_object_or_404(User, pk=user_id)
+    admin_id = request.session.get('user_id') 
+    
+
+    if target_user.pk == admin_id:
+        messages.error(request, "You cannot ban your own account.")
+        return redirect('manage_users')
+    
+    else:
+      target_user.is_banned = True 
+      target_user.save()
+
+    messages.success(request, f"User {target_user.fullname} has been banned.")
+    return redirect('manage_users')
