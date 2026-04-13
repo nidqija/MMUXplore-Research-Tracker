@@ -31,6 +31,9 @@ DEBUG = True
 
 ALLOWED_HOSTS = ['0.0.0.0', 'mmuxplore-research-tracker-production.up.railway.app']
 
+#CSRF trusted origins
+CSRF_TRUSTED_ORIGINS=['https://mmuxplore-research-tracker-production.up.railway.app']
+
 
 # Application definition
 
