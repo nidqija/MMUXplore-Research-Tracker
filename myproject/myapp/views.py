@@ -103,17 +103,16 @@ def user_signup(request):
             role=role
         )
 
-      
+        request.session['user_id'] = user.user_id  # store ID for URL redirects for all roles
+
         if role == 'researcher':
             Researcher.objects.create(user_id=user) #
         elif role == 'student':
             Student.objects.create(user_id=user) #
         elif role == 'program_coordinator': 
-            ProgrammeCoordinator.objects.create(user_id=user, prog_name = user.fullname)
-            request.session['user_id'] = user.user_id  #  store ID for URL redirects
+            ProgrammeCoordinator.objects.create(user_id=user, prog_name=user.fullname)
        
 
-       
         request.session['temp_user_email'] = email
 
         messages.success(request, 'Account created! Now let\'s set up your profile.')
