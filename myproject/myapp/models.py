@@ -60,18 +60,18 @@ class Researcher(models.Model):
      publications = models.TextField(blank=True)
 
      def __str__(self):
-        return self.user.fullname
+        return self.user_id.fullname if self.user_id else 'Researcher'
 
 # =================================== Student Model ========================================
 
 class Student(models.Model):
     student_id = models.AutoField(primary_key=True)
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
-    program_of_studies = models.CharField(max_length=150)
-    year_of_studies = models.CharField(max_length=20)
+    program_of_studies = models.CharField(max_length=150, blank=True, default='')
+    year_of_studies = models.CharField(max_length=20, blank=True, default='')
 
     def __str__(self):
-        return f"{self.user.fullname} - {self.program_of_studies}"
+        return f"{self.user_id.fullname} - {self.program_of_studies}"
 
 
 # =================================== Research Paper Model ========================================
