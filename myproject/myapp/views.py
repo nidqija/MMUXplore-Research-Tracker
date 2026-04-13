@@ -140,6 +140,11 @@ def user_avatar_register(request):
         user = User.objects.filter(email=temp_email).first()
         student = Student.objects.filter(user_id=user).first() if user and user.role == 'student' else None
 
+        # Ensure Student object exists for students
+        if user and user.role == 'student' and not student:
+            Student.objects.create(user_id=user)
+            student = Student.objects.filter(user_id=user).first()
+
         if user:
             user.fullname = fullname
             user.avatar = avatar
