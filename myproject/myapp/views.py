@@ -104,14 +104,14 @@ def user_signup(request):
         )
 
         request.session['user_id'] = user.user_id  # store ID for URL redirects for all roles
+        request.session['user_role'] = user.role
 
         if role == 'researcher':
-            Researcher.objects.create(user_id=user) #
+            Researcher.objects.create(user_id=user)
         elif role == 'student':
-            Student.objects.create(user_id=user) #
+            Student.objects.create(user_id=user)
         elif role == 'program_coordinator': 
             ProgrammeCoordinator.objects.create(user_id=user, prog_name=user.fullname)
-       
 
         request.session['temp_user_email'] = email
 
@@ -156,12 +156,18 @@ def user_avatar_register(request):
             
             # Now that the profile is complete, set the main session
             request.session['user_name'] = user.fullname
+            request.session['user_role'] = user.role
             
             # Clean up the temporary session
             del request.session['temp_user_email']
             
             messages.success(request, 'Profile updated successfully.')
-            if user.role == 'program_coordinator':
+            if user.role == 'researcher':
+                researcher = Researcher.objects.filter(user_id=user).first()
+                if researcher:
+                    return redirect('researcher_home', researcher_id=researcher.researcher_id)
+                return redirect('home')
+            elif user.role == 'program_coordinator':
                 return redirect('coordinator_home', user_id=user.user_id)
             
             return redirect('home')
@@ -963,6 +969,7 @@ def user_signin(request):
             if user.password == password:
                 request.session['user_name'] = user.fullname
                 request.session['user_id'] = user.user_id  
+                request.session['user_role'] = user.role
 
                 if user.is_banned :
                     messages.error(request, "Your account has been banned. Please contact support.")
@@ -980,12 +987,9 @@ def user_signin(request):
                         return redirect('home')
 
                 elif user.role == 'student':
-
-                    
                     messages.success(request, 'Student Signed in successfully.')
                     return redirect('home')
                 
-
                 elif user.role == 'program_coordinator':
                         try:
                             # We need the coordinator object to verify they exist, 
