@@ -143,10 +143,12 @@ def user_avatar_register(request):
         if user:
             user.fullname = fullname
             user.avatar = avatar
-            student.program_of_studies = program_name
-            student.year_of_studies = year_of_study
             user.save()
-            student.save()
+            
+            if student:
+                student.program_of_studies = program_name
+                student.year_of_studies = year_of_study
+                student.save()
             
             # Now that the profile is complete, set the main session
             request.session['user_name'] = user.fullname
