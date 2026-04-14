@@ -81,8 +81,16 @@ def user_signup(request):
             messages.error(request, 'University ID must contain only numbers.')
             return render(request, 'signup.html')
 
+        if User.objects.filter(university_id=university_id).exists():
+            messages.error(request, 'University ID already registered.')
+            return render(request, 'signup.html')
+
         if not email:
             messages.error(request, 'Email is required.')
+            return render(request, 'signup.html')
+
+        if User.objects.filter(email=email).exists():
+            messages.error(request, 'Email already registered.')
             return render(request, 'signup.html')
 
         if not password:
