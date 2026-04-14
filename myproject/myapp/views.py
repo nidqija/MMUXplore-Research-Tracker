@@ -111,7 +111,7 @@ def user_signup(request):
         elif role == 'student':
             Student.objects.create(user_id=user)
         elif role == 'program_coordinator': 
-            ProgrammeCoordinator.objects.create(user_id=user, prog_name=user.fullname)
+            ProgrammeCoordinator.objects.create(user_id=user, prog_name=user.fullname or 'Coordinator')
 
         request.session['temp_user_email'] = email
 
@@ -153,15 +153,14 @@ def user_avatar_register(request):
                 student.program_of_studies = program_name
                 student.year_of_studies = year_of_study
                 student.save()
-            
-            # Now that the profile is complete, set the main session
-            request.session['user_name'] = user.fullname
-            request.session['user_role'] = user.role
-            
-            # Clean up the temporary session
-            del request.session['temp_user_email']
-            
-            messages.success(request, 'Profile updated successfully.')
+
+            if user and user.role == 'program_coordinator':
+                coordinator = ProgrammeCoordinator.objects.filter(user_id=user).first()
+                if coordinator:
+                    coordinator.prog_name = user.fullname or coordinator.prog_name
+                    coordinator.save()
+                else:
+                    ProgrammeCoordinator.objects.create(user_id=user, prog_name=user.fullname or 'Coordinator')
             if user.role == 'researcher':
                 researcher = Researcher.objects.filter(user_id=user).first()
                 if researcher:
@@ -374,10 +373,11 @@ def view_research_paper(request, paper_id):
     research_papers = ResearchPaper.objects.get(paper_id=paper_id)
     researcher = research_papers.researcher_id
     coordinator = None
-    researchname = researcher.user_id.fullname
+    researchname = researcher.user_id.fullname if researcher and researcher.user_id else 'Unknown Researcher'
     comments = Comment.objects.filter(paper_id=research_papers)
     user_name = request.session.get('user_name', 'Guest')
     user_id = request.session.get('user_id')
+    user_role = request.session.get('user_role', 'Guest')
    
     
     notifications = Notification.objects.filter(user_id__fullname=user_name).order_by('-created_at') if user_name != 'Guest' else []
@@ -397,7 +397,7 @@ def view_research_paper(request, paper_id):
         coordinator = ProgrammeCoordinator.objects.filter(user_id__user_id=user_id).first()
         is_coordinator = coordinator is not None
 
-    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_coordinator': is_coordinator, 'is_admin': is_admin ,'researchname': researchname, 'comments': comments , 'notifications': notifications , 'has_liked': has_liked, 'has_bookmarked': has_bookmarked , 'user_id': user_id, 'coordinator':coordinator} )
+    return render(request , 'view_research_paper.html', {'user_name': user_name , 'user_role': user_role, 'research_papers': research_papers , 'researcher': researcher , 'is_coordinator': is_coordinator, 'is_admin': is_admin ,'researchname': researchname, 'comments': comments , 'notifications': notifications , 'has_liked': has_liked, 'has_bookmarked': has_bookmarked , 'user_id': user_id, 'coordinator':coordinator} )
 
 
 def like_research_paper(request, paper_id):
@@ -1256,8 +1256,13 @@ def add_comment(request, paper_id):
 
     message_desc = request.POST.get('message_desc')
 
+    # Require login to add a comment
+    if not (user or current_admin):
+        messages.error(request, 'You must sign in to add a comment.')
+        return redirect('signin')
+
     # Check if we have a valid commenter and a message
-    if (user or current_admin) and message_desc:
+    if message_desc:
         new_comment = Comment(
             paper_id=research_paper,
             user_id=user, # Will be None if Admin is commenting
@@ -1269,7 +1274,7 @@ def add_comment(request, paper_id):
         # 3. Trigger Notification for the Paper Author
         # Logic: Don't notify the author if they are the one commenting
         author_user = research_paper.researcher_id.user_id
-        if user != author_user:
+        if author_user and user != author_user:
             Notification.objects.create(
                 user_id=author_user,
                 notify_title="New Comment",
