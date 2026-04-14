@@ -68,10 +68,26 @@ def index(request):
 
 def user_signup(request):
     if request.method == 'POST':
-        university_id = request.POST.get('university_id')
-        email = request.POST.get('email')
+        university_id = request.POST.get('university_id', '').strip()
+        email = request.POST.get('email', '').strip()
         role = request.POST.get('role')
-        password = request.POST.get('password')
+        password = request.POST.get('password', '').strip()
+
+        if not university_id:
+            messages.error(request, 'University ID is required.')
+            return render(request, 'signup.html')
+
+        if not university_id.isdigit():
+            messages.error(request, 'University ID must contain only numbers.')
+            return render(request, 'signup.html')
+
+        if not email:
+            messages.error(request, 'Email is required.')
+            return render(request, 'signup.html')
+
+        if not password:
+            messages.error(request, 'Password is required.')
+            return render(request, 'signup.html')
 
         if not role:
             messages.error(request, 'Please select a valid role.')

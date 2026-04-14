@@ -59,10 +59,10 @@
 
 
   <div class="mb-3 mt-4">
-    <input type="text" class="form-control" name="university_id" id="exampleInputEmail1" placeholder="university id" aria-describedby="emailHelp">
+    <input type="text" class="form-control" name="university_id" id="exampleInputEmail1" placeholder="university id" inputmode="numeric" pattern="\d+" required aria-describedby="emailHelp">
   </div>
   <div class="input-group mb-3">
-  <select class="form-select" id="inputGroupSelect03" name="role" aria-label="Example select with button addon">
+  <select class="form-select" id="inputGroupSelect03" name="role" aria-label="Example select with button addon" required>
     <option value="" disabled selected>Select your role</option>
     <option value="student">Student</option>
     <option value="researcher">Researcher</option>
@@ -70,10 +70,10 @@
   </select>
 </div>
   <div class="mb-3 mt-4">
-    <input type="email" class="form-control" name="email" placeholder="email" id="exampleInputPassword1">
+    <input type="email" class="form-control" name="email" placeholder="email" id="exampleInputPassword1" required>
   </div>
     <div class="mb-3 mt-4">
-    <input type="password" class="form-control" name="password" placeholder="password" id="exampleInputPassword1">
+    <input type="password" class="form-control" name="password" placeholder="password" id="exampleInputPassword1" required>
   </div>
 
   <p class="mt-4 mb-4">Already have an account? <a href="/signin">Sign in!</a></p>
