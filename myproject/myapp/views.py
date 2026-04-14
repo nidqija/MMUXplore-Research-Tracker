@@ -373,7 +373,7 @@ def researcher_profile(request, researcher_id):
 def view_research_paper(request, paper_id):
     research_papers = ResearchPaper.objects.get(paper_id=paper_id)
     researcher = research_papers.researcher_id
-    coordinator = "dummy"
+    coordinator = None
     researchname = researcher.user_id.fullname
     comments = Comment.objects.filter(paper_id=research_papers)
     user_name = request.session.get('user_name', 'Guest')
@@ -385,19 +385,15 @@ def view_research_paper(request, paper_id):
 
     has_liked = False
     has_bookmarked = False
+    is_admin = False
+    is_coordinator = False
 
     if user_id:
-      has_liked = Likes.objects.filter(paper_id=research_papers, user_id=user_id).exists()
-      has_bookmarked = Bookmarks.objects.filter(paper_id=research_papers, user_id=user_id).exists()
-
+        has_liked = Likes.objects.filter(paper_id=research_papers, user_id=user_id).exists()
+        has_bookmarked = Bookmarks.objects.filter(paper_id=research_papers, user_id=user_id).exists()
 
     if user_name != 'Guest':
-        
         is_admin = Admin.objects.filter(user_name=user_name).exists()
-
-    
-   
-    if user_name != 'Guest':
         coordinator = ProgrammeCoordinator.objects.filter(user_id__user_id=user_id).first()
         is_coordinator = coordinator is not None
 
@@ -1233,7 +1229,7 @@ def view_announcement_page(request , announcement_id):
 
     is_admin = False
 
-    if 'user_name' != 'Guest':
+    if user_name != 'Guest':
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
     return render(request, 'view_announcement.html', {'user_name': user_name , 'announcements': announcements, 'is_admin': is_admin})
