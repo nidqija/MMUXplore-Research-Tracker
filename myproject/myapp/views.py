@@ -161,11 +161,21 @@ def user_avatar_register(request):
                     coordinator.save()
                 else:
                     ProgrammeCoordinator.objects.create(user_id=user, prog_name=user.fullname or 'Coordinator')
+            
+            # Set main session now that profile is complete
+            request.session['user_name'] = user.fullname
+            request.session['user_role'] = user.role
+            
+            # Clean up temporary session
+            if 'temp_user_email' in request.session:
+                del request.session['temp_user_email']
+            
+            messages.success(request, 'Profile updated successfully.')
+            
             if user.role == 'researcher':
                 researcher = Researcher.objects.filter(user_id=user).first()
                 if researcher:
                     return redirect('researcher_home', researcher_id=researcher.researcher_id)
-                return redirect('home')
             elif user.role == 'program_coordinator':
                 return redirect('coordinator_home', user_id=user.user_id)
             
