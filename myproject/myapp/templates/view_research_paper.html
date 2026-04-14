@@ -177,7 +177,7 @@
                                     <i class="bi bi-three-dots-vertical"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
-                                    {% if comment.user_id and (comment.user_id.fullname == user_name) or is_admin %}
+                                    {% if (comment.user_id and comment.user_id.fullname == user_name) or is_admin %}
                                     {% if is_admin %}
                                     <li>
                                         <a class="dropdown-item text-danger"
@@ -186,6 +186,7 @@
                                             Delete Comment
                                         </a>
                                     </li>
+                                    {% if comment.user_id %}
                                     <li>
                                         <a class="dropdown-item text-warning" 
                                             href="{% url 'warn_specific_user' user_id=comment.user_id.user_id paper_id=research_papers.paper_id %}"
@@ -193,6 +194,7 @@
                                             <i class="bi bi-exclamation-triangle me-2"></i>Warn User
                                         </a>
                                     </li>
+                                    {% endif %}
                                     {% else %}
                                     <li>
                                         <a class="dropdown-item d-flex align-items-center" href="#">
