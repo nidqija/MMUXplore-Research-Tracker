@@ -18,15 +18,15 @@
     {% else %}
         {% include 'components/student_navbar.html' %}
     {% endif %}
-    
-    {% if is_admin %}
+
+    {% if user_name == 'Guest' %}
+        {% include 'components/guest_navbar.html' %}
+    {% elif is_admin %}
         {% include 'components/admin_navbar.html' %}
+    {% elif is_coordinator %}
+        {% include 'components/coordinator_navbar.html' %}
     {% else %}
-        {% if is_coordinator %}
-            {% include 'components/coordinator_navbar.html' %}
-        {% else %}
-            {% include 'components/student_navbar.html' %}
-        {% endif %}
+        {% include 'components/student_navbar.html' %}
     {% endif %}
 
     <!---------------------------------------------------------------Research Paper Detail Content--------------------------------------------------------------------------------------->
@@ -48,7 +48,6 @@
         {% else %}
         <a href="{% url 'bookmark_paper' paper_id=research_papers.paper_id %}" class=" btn btn-primary mb-3"> Bookmarked: {{ research_papers.total_bookmarked }}</a>
         {% endif %}
-</a>
 {% if research_papers.paper_pdf %}
     <a href="{{ research_papers.paper_pdf.url }}" target="_blank" class="btn btn-danger mb-3">
         <i class="bi bi-box-arrow-up-right"></i> View Paper
