@@ -177,7 +177,7 @@
                                     <i class="bi bi-three-dots-vertical"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
-                                    {% if (comment.user_id and comment.user_id.fullname == user_name) or is_admin %}
+                                    {% if comment.user_id and comment.user_id.fullname == user_name or is_admin %}
                                     {% if is_admin %}
                                     <li>
                                         <a class="dropdown-item text-danger"
