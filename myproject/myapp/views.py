@@ -1225,6 +1225,7 @@ def profile_page(request):
 
 def view_announcement_page(request , announcement_id):
     user_name = request.session.get('user_name', 'Guest')
+    user_id = request.session.get('user_id')
     announcements = Announcements.objects.filter(announcement_id=announcement_id)
 
     is_admin = False
@@ -1232,7 +1233,12 @@ def view_announcement_page(request , announcement_id):
     if user_name != 'Guest':
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
-    return render(request, 'view_announcement.html', {'user_name': user_name , 'announcements': announcements, 'is_admin': is_admin})
+    return render(request, 'view_announcement.html', {
+        'user_name': user_name,
+        'user_id': user_id,
+        'announcements': announcements,
+        'is_admin': is_admin
+    })
 
 
 # add comment to research paper 
