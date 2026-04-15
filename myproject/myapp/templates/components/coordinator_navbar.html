@@ -40,18 +40,10 @@
       </div>
       <div class="modal-body">
         Welcome back, {{ user_name }}!
-        <br>
-        Would you like to edit your profile?
       </div>
       <div class="modal-footer">
-        
-        <div class="modal-footer">
-            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
-            
-            <a href="{% url 'profile' %}" class="btn btn-primary">Go to Profile Page</a>
-            
-            <a href="{% url 'logout' %}" class="btn btn-danger">Logout</a>
-        </div>
+        <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
+        <a href="{% url 'logout' %}" class="btn btn-danger">Logout</a>
       </div>
     </div>
   </div>

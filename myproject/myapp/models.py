@@ -66,8 +66,8 @@ class Researcher(models.Model):
 class Student(models.Model):
     student_id = models.AutoField(primary_key=True)
     user_id = models.ForeignKey(User, on_delete=models.CASCADE)
-    program_of_studies = models.CharField(max_length=150)
-    year_of_studies = models.CharField(max_length=20)
+    program_of_studies = models.CharField(max_length=150, null=True, blank=True)
+    year_of_studies = models.CharField(max_length=20, null=True, blank=True)
 
     def __str__(self):
         return f"{self.user.fullname} - {self.program_of_studies}"
@@ -91,6 +91,7 @@ class ResearchPaper(models.Model):
     paper_desc = models.TextField()
     paper_doi = models.CharField(max_length=100, blank=True, verbose_name="DOI")
     paper_pdf = models.FileField(upload_to='research_papers/')
+    paper_cover = models.ImageField(upload_to='research_papers/', blank=True, null=True)
     paper_status = models.CharField(max_length=20, choices=PAPER_STATUS_CHOICES, default='Pending')
     paper_coauthor = models.ManyToManyField(User, related_name='coauthored_papers', blank=True)
     total_bookmarked = models.IntegerField(default=0)

@@ -40,18 +40,11 @@
     <div class="card" >
       <div class="card-body text-center" style="background-color: rgb(225, 167, 142); " >
         <h5 class="card-title">User Bans</h5>
-        <h1 class="card-text">10</h1>
+        <h1>0</h1>
       </div>
     </div>
   </div>
-<div class="col-md-4">
-    <div class="card" >
-      <div class="card-body text-center" style="background-color: rgb(225, 167, 142); " >
-        <h5 class="card-title">User Bans</h5>
-        <h1 class="card-text">10</h1>
-      </div>
-    </div>
-  </div>
+
 </div>
                 </div>
     <table class="table table-bordered">
@@ -62,17 +55,32 @@
             <th scope="col">University ID</th>
             <th scope="col">Email</th>
             <th scope="col">Role</th>
+            <th scope="col">Violation Count</th>
         </tr>
         </thead>
         <tbody>
         {% for user in users %}
         <tr>
-            <td>{{ user.id }}</td>
+            <td>{{ user.user_id }}</td>
             <td>{{ user.fullname }}</td>
             <td>{{ user.university_id }}</td>
             <td>{{ user.email }}</td>
             <td>{{ user.role }}</td>
+            {% if user.violation_count is None %}
+              <td>0</td>
+              {% else %}
+
+            <td>{{ user.violation_count }}</td>
+            {% endif %}
+              <td>
+                {% if user.violation_count > 3 %}
+                 <a class="btn btn-danger btn-sm" href="">Ban User</a>
+                {% else %}
+                <a href="{% url 'inspect_profile' user.user_id %}" class="btn btn-info btn-sm">Inspect Profile</a>
+                {% endif %}
+              </td>
         </tr>
+
         {% endfor %}
         </tbody>
     </table>

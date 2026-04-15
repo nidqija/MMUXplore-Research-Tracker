@@ -10,12 +10,14 @@ urlpatterns = [
     path('', views.index, name='home'),
     path('signup/', views.user_signup, name='signup'),
     path('signin/', views.user_signin, name='signin'),
-    path('profile/', views.profile_page, name='profile'),
+
     path('avatar_register/', views.user_avatar_register, name='avatar_register'),
     path('update_profile/', views.update_profile, name='update_profile'),
+    path('profile/', views.profile_page, name='profile'),
+
     path('view_announcements/<int:announcement_id>/', views.view_announcement_page, name='view_announcements'),
     path('term_condition_page/', views.term_condition_page, name='term_condition_page' ),
-    path('logout/', views.user_logout, name='logout'),
+    path('signout/', views.user_logout, name='logout'),
     path('view_research_paper/<int:paper_id>/', views.view_research_paper, name='view_research_paper'),
     path('add_comment/<int:paper_id>/', views.add_comment, name='add_comment'),
     path('delete_comment/<int:comment_id>/<int:paper_id>', views.delete_comment, name='delete_comment'),
@@ -28,9 +30,9 @@ urlpatterns = [
     path('inventory_page/', views.inventory_page, name='inventory_page'),
     path('unlike_paper/<int:paper_id>/', views.unlike_research_paper, name='unlike_paper'),
     path('remove_bookmark/<int:paper_id>/', views.unlike_bookmark_research_paper, name='remove_bookmark'),
-    
-    
-
+    path('warn_specific_user/<int:user_id>/<int:paper_id>/', views.warn_specific_user, name='warn_specific_user'),
+    path('update_comment/<int:comment_id>/<int:paper_id>/', views.update_comment, name='update_comment'),
+    path('faq/', views.faq_page, name='faq_page'),
     # End General URLs
 
     #researcher URLs
@@ -50,6 +52,8 @@ urlpatterns = [
     path('adminguy/manage_users/', views.manage_users, name='manage_users' ),
     path('term_condition_page/', views.term_condition_page, name='term_condition_page' ),
     path('adminguy/inspect_profile/<int:user_id>/', views.inspect_profile, name='inspect_profile' ),
+    path('adminguy/manage_user_reports/', views.manage_user_reports, name='manage_user_reports' ),
+    path('view_comment/<int:comment_id>/', views.view_comments, name='view_comment'),
     # End Admin URLs
 
 
@@ -75,5 +79,3 @@ urlpatterns = [
 
 if settings.DEBUG:
     urlpatterns += static(settings.MEDIA_URL, document_root=settings.MEDIA_ROOT)
-
-    

@@ -62,6 +62,7 @@
         {% for submission in submissions %}
         <tr>
             <td>{{ submission.submission_id }}</td>
+            <td><img src="https://i1.rgstatic.net/publication/378963846_A_Study_on_Video_Thumbnails_Design_Attributes_and_Their_Influence_to_the_Outcome_of_the_Video/links/65f32d9a286738732d4790a6/largepreview.png" alt="Paper Cover" style="width: 50px; height: 50px; object-fit: cover;"></td>
             <td>{{ submission.paper_id.paper_title }}</td>
             {% if submission.paper_id.researcher_id %}
             <td class="mb-1"> {{ submission.paper_id.researcher_id.user_id.fullname }}</td>
@@ -80,7 +81,7 @@
         </tr>
         {% empty %}
         <tr>
-            <td colspan="5" class="text-center py-4">No pending submissions found.</td>
+            <td colspan="6" class="text-center py-4">No pending submissions found.</td>
         </tr>
         {% endfor %}
     </tbody>

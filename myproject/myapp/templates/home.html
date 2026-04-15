@@ -31,11 +31,26 @@
 
   {% if user_name == 'Guest' %}
     {% include 'components/guest_navbar.html' %}
-  {% elif user_role == 'Admin' %}
+  {% elif role == 'admin' %}
     {% include 'components/admin_navbar.html' %}
+  {% elif role == 'researcher' %}
+    {% include 'components/researcher_navbar.html' %}
+  {% elif role == 'program_coordinator' %}
+    {% include 'components/coordinator_navbar.html' %}
   {% else %}
     {% include 'components/student_navbar.html' %}
   {% endif %}
+
+  <div class="container mt-3">
+    {% if messages %}
+      {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+          {{ message }}
+          <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+      {% endfor %}
+    {% endif %}
+  </div>
 
   <section id="announcement">
     {% if new_tc_update %}
@@ -112,7 +127,7 @@
       
       <div class="row row-cols-1 row-cols-md-4 g-4 mt-2">
         {% if research_papers %}
-          {% for paper in research_papers %}
+          {% for paper in research_papers %} 
           <div class="col">
             <div class="card h-100 shadow-sm">
               <img src="https://i1.rgstatic.net/publication/378963846_A_Study_on_Video_Thumbnails_Design_Attributes_and_Their_Influence_to_the_Outcome_of_the_Video/links/65f32d9a286738732d4790a6/largepreview.png"
