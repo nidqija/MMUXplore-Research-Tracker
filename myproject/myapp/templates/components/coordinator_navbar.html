@@ -62,8 +62,8 @@
 {% endif %}
   </li>
 </ul>
-  <form class="d-flex" role="search">
-      <input class="form-control me-2" type="search" placeholder="What are you looking for?" aria-label="Search">
+  <form class="d-flex" role="search" method="GET" action="{% url 'search_paper' %}">
+      <input class="form-control me-2" type="search" name="search_query" value="{{ search_query|default:'' }}" placeholder="What are you looking for?" aria-label="Search">
       <button class="btn btn-success" type="submit">Search</button>
     </form>
     

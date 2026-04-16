@@ -398,6 +398,11 @@ def view_research_paper(request, paper_id):
     comments = Comment.objects.filter(paper_id=research_papers)
     user_name = request.session.get('user_name', 'Guest')
     user_id = request.session.get('user_id')
+    role = request.session.get('role')
+    if not role and user_id:
+        current_user = User.objects.filter(user_id=user_id).first()
+        if current_user:
+            role = current_user.role
 
     notifications = Notification.objects.filter(user_id__fullname=user_name).order_by('-created_at') if user_name != 'Guest' else []
 
@@ -418,7 +423,13 @@ def view_research_paper(request, paper_id):
     is_coordinator = False
 
     if user_role == 'program_coordinator' and user_id:
+        # Keep coordinator navigation stable even if the profile row is missing.
         is_coordinator = ProgrammeCoordinator.objects.filter(user_id__user_id=user_id).exists()
+        if not is_coordinator:
+            user = User.objects.filter(user_id=user_id).first()
+            if user:
+                ProgrammeCoordinator.objects.get_or_create(user_id=user)
+                is_coordinator = True
 
     # Calculate inventory coverage for the student // for their research papers
     liked_count = 0
@@ -436,7 +447,7 @@ def view_research_paper(request, paper_id):
         if research_papers.paper_pdf.storage.exists(research_papers.paper_pdf.name):
             paper_pdf_url = research_papers.paper_pdf.url
 
-    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_coordinator': is_coordinator, 'is_admin': is_admin ,'researchname': researchname, 'comments': comments , 'notifications': notifications , 'has_liked': has_liked, 'has_bookmarked': has_bookmarked , 'user_id': user_id, 'liked_count': liked_count, 'bookmarked_count': bookmarked_count, 'co_authored_count': co_authored_count, 'paper_pdf_url': paper_pdf_url} )
+    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'role': role, 'is_coordinator': is_coordinator, 'is_admin': is_admin ,'researchname': researchname, 'comments': comments , 'notifications': notifications , 'has_liked': has_liked, 'has_bookmarked': has_bookmarked , 'user_id': user_id, 'liked_count': liked_count, 'bookmarked_count': bookmarked_count, 'co_authored_count': co_authored_count, 'paper_pdf_url': paper_pdf_url} )
 
 
 def like_research_paper(request, paper_id):
@@ -544,7 +555,7 @@ def unlike_bookmark_research_paper(request, paper_id):
 #programme coordinator
 def get_logged_in_coordinator(request): #id and role retrieval
     user_id = request.session.get('user_id')
-    user_role = request.session.get('user_role')
+    user_role = request.session.get('role')
 
     if not user_id or user_role != 'program_coordinator':
         return None
@@ -1077,9 +1088,10 @@ def research_paper_page(request):
         if user:
             role = user.role
             if role == 'researcher':
-                researcher = Researcher.objects.filter(user_id=user).first()
+                # Keep role-based navigation stable even if a profile row is missing.
+                researcher, _ = Researcher.objects.get_or_create(user_id=user)
             elif role == 'program_coordinator':
-                coordinator = ProgrammeCoordinator.objects.filter(user_id=user).first()
+                coordinator, _ = ProgrammeCoordinator.objects.get_or_create(user_id=user)
 
     context = {
         'user_name': user_name,
@@ -1388,9 +1400,10 @@ def search_paper(request):
         if user:
             role = user.role
             if role == 'researcher':
-                researcher = Researcher.objects.filter(user_id=user).first()
+                # Keep role-based navigation stable even if a profile row is missing.
+                researcher, _ = Researcher.objects.get_or_create(user_id=user)
             elif role == 'program_coordinator':
-                coordinator = ProgrammeCoordinator.objects.filter(user_id=user).first()
+                coordinator, _ = ProgrammeCoordinator.objects.get_or_create(user_id=user)
 
     context = {
         'user_name': user_name,
