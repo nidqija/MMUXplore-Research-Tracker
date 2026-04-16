@@ -14,7 +14,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 from functools import wraps
 from django.utils import timezone
-from django.db.models import Q , Count
+from django.db.models import Q , Count, OuterRef, Subquery
 from django.http import HttpResponse
 
 

@@ -167,7 +167,7 @@
                                             {% if not is_admin %}
                                                 <li>
                                                     <a class="dropdown-item text-warning d-flex align-items-center" href="#" data-bs-toggle="modal"
-                                                       data-bs-target="#reportCommentModal" onclick="prepareReportModal({{ comment.comment_id }})">
+                                                           data-bs-target="#reportCommentModal" data-comment-id="{{ comment.comment_id }}" onclick="prepareReportModal(this.dataset.commentId)">
                                                        <i class="bi bi-flag me-2"></i> Report Comment
                                                     </a>
                                                 </li>
