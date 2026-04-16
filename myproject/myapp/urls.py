@@ -17,6 +17,7 @@ urlpatterns = [
 
     path('view_announcements/<int:announcement_id>/', views.view_announcement_page, name='view_announcements'),
     path('term_condition_page/', views.term_condition_page, name='term_condition_page' ),
+    path('faq/', views.faq_page, name='faq'),
     path('signout/', views.user_logout, name='logout'),
     path('view_research_paper/<int:paper_id>/', views.view_research_paper, name='view_research_paper'),
     path('add_comment/<int:paper_id>/', views.add_comment, name='add_comment'),

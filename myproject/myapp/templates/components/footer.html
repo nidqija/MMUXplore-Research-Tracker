@@ -8,7 +8,7 @@
       <div class="card-body">
         <h5 class="card-title mb-3" style=" color: white;">Support</h5>
         <p class="card-text text-white" style="font-size:18px; font-weight: 100;">MMU</p>
-        <p class="card-text text-white" style="font-size:18px; font-weight: 100;">{% if user.is_authenticated %}{{ user.email }}{% else %}support@mmu.edu.my{% endif %}</p>
+        <p class="card-text text-white" style="font-size:18px; font-weight: 100;">support@mmu.edu.my</p>
         <p class="card-text text-white" style="font-size:18px; font-weight: 100;">+6012-3456789</p>
 
 
@@ -20,11 +20,15 @@
     <div class="card" style="background-color:transparent;border: none;"data-aos="fade-middle" data-aos-duration="1000">
       <div class="card-body">
         <h5 class="card-title mb-3" style=" color: white;">Account</h5>
-          <a style="text-decoration: none;" href="/signin"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">My Account</p></a>
-          <a style="text-decoration: none;" href="/signup"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">Register</p></a>
-          <a style="text-decoration: none;" href="/signin"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">Login</p></a>
-          <a style="text-decoration: none;" href="/researchpaper"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">Papers</p></a>
-          <a style="text-decoration: none;" href="/inventory_page"><p class="card-text text-white" style="font-size:18px; font-weight: 100;">Inventory</p></a>
+          {% if request.session.user_name and request.session.user_name != 'Guest' %}
+          <a style="text-decoration: none;" href="{% url 'profile' %}"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">My Account</p></a>
+          {% else %}
+          <a style="text-decoration: none;" href="{% url 'signin' %}"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">My Account</p></a>
+          {% endif %}
+          <a style="text-decoration: none;" href="{% url 'signup' %}"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">Register</p></a>
+          <a style="text-decoration: none;" href="{% url 'signin' %}"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">Login</p></a>
+          <a style="text-decoration: none;" href="{% url 'researchpaper' %}"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">Papers</p></a>
+          <a style="text-decoration: none;" href="{% url 'inventory_page' %}"><p class="card-text text-white" style="font-size:18px; font-weight: 100;">Inventory</p></a>
         
       </div>
     </div>
@@ -33,8 +37,8 @@
     <div class="card" style="background-color:transparent;border: none;" data-aos="fade-middle" data-aos-duration="1000">
       <div class="card-body">
         <h5 class="card-title mb-3"  style=" color: white;">Quick Link</h5>
-         <a href="/term_condition_page" style="text-decoration: none;"><p class="card-text text-white" style="font-size:18px; font-weight: 100;">Terms and Condition</p></a> 
-          <p class="card-text text-white" style="font-size:18px; font-weight: 100;">FAQ</p>
+         <a href="{% url 'term_condition_page' %}" style="text-decoration: none;"><p class="card-text text-white" style="font-size:18px; font-weight: 100;">Terms and Conditions</p></a>
+         <a href="{% url 'faq' %}" style="text-decoration: none;"><p class="card-text text-white" style="font-size:18px; font-weight: 100;">FAQ</p></a>
 
       </div>
     </div>

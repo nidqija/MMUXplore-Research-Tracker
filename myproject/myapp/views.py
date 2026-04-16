@@ -15,7 +15,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 from functools import wraps
 from django.utils import timezone
-from django.db.models import Q , Count
+from django.db.models import Q , Count, OuterRef, Subquery
 from django.http import HttpResponse
 
 
@@ -342,18 +342,7 @@ def researcher_upload_page(request, researcher_id):
                 paper_pdf=paper_file,
                 paper_status='pending'
             )
-
-            new_submission = Submissions(
-                paper_id=new_paper,
-                status='pending',
-                submitted_at=timezone.now()
-            )
-
-            
-
-        
             new_paper.save()
-            new_submission.save()
 
             if paper_coauthor:
                 new_paper.paper_coauthor.set(paper_coauthor)
@@ -566,8 +555,18 @@ def coordinator_home(request, user_id):
     user_name = request.session.get('user_name')
 
 
-    submission = Submissions.objects.filter(status__in=['pending', 'revision']).select_related('paper_id')
-    pastSubmission = Submissions.objects.filter(status__in=['approved', 'rejected']).select_related('paper_id')
+    latest_submission_id = Submissions.objects.filter(
+        paper_id=OuterRef('paper_id')
+    ).order_by('-submission_id').values('submission_id')[:1]
+
+    submission = Submissions.objects.filter(
+        status__in=['pending', 'revision'],
+        submission_id=Subquery(latest_submission_id)
+    ).select_related('paper_id')
+    pastSubmission = Submissions.objects.filter(
+        status__in=['approved', 'rejected'],
+        submission_id=Subquery(latest_submission_id)
+    ).select_related('paper_id')
     
     return render(request, 'coordinator/coordinator_home.html', {
         'coordinator': coordinator,
@@ -588,8 +587,18 @@ def submissions(request):
     user_id = request.session.get('user_id')
     user_name = request.session.get('user_name')
     coordinator = ProgrammeCoordinator.objects.filter(user_id__user_id=user_id).first()
-    submission = Submissions.objects.filter(status__in=['pending', 'revision']).select_related('paper_id')
-    pastSubmission = Submissions.objects.filter(status__in=['approved', 'rejected']).select_related('paper_id')
+    latest_submission_id = Submissions.objects.filter(
+        paper_id=OuterRef('paper_id')
+    ).order_by('-submission_id').values('submission_id')[:1]
+
+    submission = Submissions.objects.filter(
+        status__in=['pending', 'revision'],
+        submission_id=Subquery(latest_submission_id)
+    ).select_related('paper_id')
+    pastSubmission = Submissions.objects.filter(
+        status__in=['approved', 'rejected'],
+        submission_id=Subquery(latest_submission_id)
+    ).select_related('paper_id')
     context = {
         'coordinator': coordinator,
         'submissions': submission,
@@ -1114,6 +1123,37 @@ def term_condition_page(request):
     }
     return render(request, 'term_condition_page.html', context)
 
+
+def faq_page(request):
+    user_name = request.session.get('user_name', 'Guest')
+    user_id = request.session.get('user_id')
+
+    is_admin = False
+    role = None
+    researcher = None
+    coordinator = None
+
+    if user_name != 'Guest':
+        is_admin = Admin.objects.filter(user_name=user_name).exists()
+
+    if user_id:
+        user = User.objects.filter(user_id=user_id).first()
+        if user:
+            role = user.role
+            if role == 'researcher':
+                researcher = Researcher.objects.filter(user_id=user).first()
+            elif role == 'program_coordinator':
+                coordinator = ProgrammeCoordinator.objects.filter(user_id=user).first()
+
+    context = {
+        'user_name': user_name,
+        'is_admin': is_admin,
+        'role': role,
+        'researcher': researcher,
+        'coordinator': coordinator,
+    }
+    return render(request, 'faq.html', context)
+
 @require_POST
 def delete_term_condition(request, term_id):
     try:
@@ -1300,7 +1340,9 @@ def delete_comment(request, comment_id, paper_id):
 
 def search_paper(request):
     user_name = request.session.get('user_name', 'Guest')
+    user_id = request.session.get('user_id')
     query = request.GET.get('search_query', '').strip() # Added strip() to clean whitespace
+    category = request.GET.get('category', '').strip()
 
     # Base queryset
     base_results = ResearchPaper.objects.filter(paper_status='approved')
@@ -1315,16 +1357,38 @@ def search_paper(request):
     else:
         researchpapers = base_results
 
+    if category:
+        researchpapers = researchpapers.filter(paper_category__icontains=category)
+
     is_admin = False
+    role = None
+    researcher = None
+    coordinator = None
+    user = None
+
     if user_name != 'Guest':
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
+    if user_id:
+        user = User.objects.filter(user_id=user_id).first()
+        if user:
+            role = user.role
+            if role == 'researcher':
+                researcher = Researcher.objects.filter(user_id=user).first()
+            elif role == 'program_coordinator':
+                coordinator = ProgrammeCoordinator.objects.filter(user_id=user).first()
+
     context = {
-         'user_name': user_name,
+        'user_name': user_name,
         'is_admin': is_admin,
         'researchpapers': researchpapers,
-        'search_query': query ,
-        'user_id': request.session.get('user_id')
+        'search_query': query,
+        'selected_category': category,
+        'user_id': user_id,
+        'role': role,
+        'user': user,
+        'researcher': researcher,
+        'coordinator': coordinator,
     }
     
     return render(request, 'researchpaper.html', context)
@@ -1439,7 +1503,31 @@ def notification_page(request):
 def notification_context(request):
     user_name = request.session.get('user_name', 'Guest')
     user_id = request.session.get('user_id')
+    role = request.session.get('role')
     read_ids = request.session.get('read_notifications', [])
+    user = None
+    researcher = None
+    coordinator = None
+    is_admin = False
+
+    if user_name != 'Guest':
+        is_admin = Admin.objects.filter(user_name=user_name).exists()
+
+    if user_id:
+        user = User.objects.filter(user_id=user_id).first()
+    elif user_name != 'Guest':
+        user = User.objects.filter(fullname=user_name).first()
+
+    if user:
+        if not role:
+            role = user.role
+        if role == 'researcher':
+            researcher = Researcher.objects.filter(user_id=user).first()
+        elif role == 'program_coordinator':
+            coordinator = ProgrammeCoordinator.objects.filter(user_id=user).first()
+
+    if is_admin:
+        role = 'admin'
     
     notifications = [] # This will essentially be "unread_notifications" for the navbar
     
@@ -1456,7 +1544,16 @@ def notification_context(request):
              all_notifs = Notification.objects.filter(user_id=user).order_by('-created_at')
              notifications = [n for n in all_notifs if n.notify_id not in read_ids]
 
-    return {'notifications': notifications}
+    return {
+        'notifications': notifications,
+        'user_name': user_name,
+        'user_id': user_id,
+        'user': user,
+        'role': role,
+        'researcher': researcher,
+        'coordinator': coordinator,
+        'is_admin': is_admin,
+    }
 
 def mark_notification_read(request, notify_id):
     if not request.session.get('user_id'):
@@ -1583,17 +1680,7 @@ def submit_fyp(request, user_id):
                     total_bookmarked=0,
                     researcher_id=None
                 )
-
-
-                new_submission = Submissions(
-                paper_id=new_fyp,
-                status='pending',
-                submitted_at=timezone.now()
-                )
-
-                
                 new_fyp.save()
-                new_submission.save()
                 messages.success(request, "FYP submitted successfully!")
                 return redirect('researchpaper')
             except Exception as e:

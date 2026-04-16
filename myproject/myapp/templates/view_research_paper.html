@@ -21,90 +21,89 @@
         {% endif %}
     {% endif %}
 
+    <style>
+        .paper-cover-card {
+            width: 260px;
+            min-height: 360px;
+            background: linear-gradient(180deg, #7b7edb 0%, #6b4fb3 100%);
+            border-radius: 10px;
+            box-shadow: 0 10px 24px rgba(0, 0, 0, 0.12);
+            overflow: hidden;
+            flex-shrink: 0;
+        }
+
+        .paper-cover-card img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            display: block;
+        }
+
+        .paper-cover-placeholder {
+            min-height: 360px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 4rem;
+        }
+    </style>
+
     <div class="container p-5">
         <a class="btn btn-primary mb-5" href="{% url 'researchpaper' %}">Back</a>
-        <h3 class="mb-3">{{ research_papers.paper_title }}</h3>
-        <h6 class="text-muted mb-3">By {{ researchname }}</h6>
-        <h6 class="text-muted mb-5">{{ research_papers.published_date }}</h6>
+        <div class="card border-0 shadow-sm p-4">
+            <div class="row g-4 align-items-start">
+                <div class="col-md-auto">
+                    <div class="paper-cover-card">
+                        {% if research_papers.paper_cover %}
+                            <img src="{{ research_papers.paper_cover.url }}" alt="{{ research_papers.paper_title }} cover">
+                        {% else %}
+                        Bookmarked: {{ research_papers.total_bookmarked }}
+                    </a>
+                                <h3 class="mb-3">{{ research_papers.paper_title }}</h3>
+                                <h6 class="text-muted mb-3">By {{ researchname }}</h6>
+                                <h6 class="text-muted mb-5">{{ research_papers.published_date }}</h6>
 
-        {% if has_liked %}
-        <a href="{% url 'unlike_paper' paper_id=research_papers.paper_id %}" class="btn btn-danger mb-3">
-            Unlike Paper: {{ research_papers.total_likes }}
-        </a>
-        {% else %}
-        <a href="{% url 'like_paper' paper_id=research_papers.paper_id %}" class="btn btn-primary mb-3">
-            Likes: {{ research_papers.total_likes }}
-        </a>
-        {% endif %}
+                                {% if has_liked %}
+                                <a href="{% url 'unlike_paper' paper_id=research_papers.paper_id %}" class="btn btn-danger mb-3">
+                                    Unlike Paper: {{ research_papers.total_likes }}
+                                </a>
+                                {% else %}
+                                <a href="{% url 'like_paper' paper_id=research_papers.paper_id %}" class="btn btn-primary mb-3">
+                                    Likes: {{ research_papers.total_likes }}
+                                </a>
+                                {% endif %}
 
-        {% if has_bookmarked %}
-        <a href="{% url 'remove_bookmark' paper_id=research_papers.paper_id %}" class="btn btn-danger mb-3">
-            Unbookmark: {{ research_papers.total_bookmarked }}
-        </a>
-        {% else %}
-        <a href="{% url 'bookmark_paper' paper_id=research_papers.paper_id %}" class="btn btn-primary mb-3">
-            Bookmarked: {{ research_papers.total_bookmarked }}
-        </a>
-        {% endif %}
+                                {% if has_bookmarked %}
+                                <a href="{% url 'remove_bookmark' paper_id=research_papers.paper_id %}" class="btn btn-danger mb-3">
+                                    Unbookmark: {{ research_papers.total_bookmarked }}
+                                </a>
+                                {% else %}
+                                <a href="{% url 'bookmark_paper' paper_id=research_papers.paper_id %}" class="btn btn-primary mb-3">
+                                    Bookmarked: {{ research_papers.total_bookmarked }}
+                                </a>
+                                {% endif %}
 
-        {% if research_papers.paper_pdf %}
-        <a href="{{ research_papers.paper_pdf.url }}" target="_blank" class="btn btn-danger mb-3">
-            <i class="bi bi-box-arrow-up-right"></i> View Paper
-        </a>
-        <a class="btn btn-success mb-3" href="{{ research_papers.paper_pdf.url }}" download>
-            <i class="bi bi-download"></i> Download Paper
-        </a>
-        {% else %}
-        <button class="btn btn-secondary mb-3" disabled>
-            <i class="bi bi-exclamation-circle"></i> No Paper Available
-        </button>
-        {% endif %}
+                                {% if research_papers.paper_pdf %}
+                                <a href="{{ research_papers.paper_pdf.url }}" target="_blank" class="btn btn-danger mb-3">
+                                    <i class="bi bi-box-arrow-up-right"></i> View Paper
+                                </a>
+                                <a class="btn btn-success mb-3" href="{{ research_papers.paper_pdf.url }}" download>
+                                    <i class="bi bi-download"></i> Download Paper
+                                </a>
+                                {% else %}
+                                <button class="btn btn-secondary mb-3" disabled>
+                                    <i class="bi bi-exclamation-circle"></i> No Paper Available
+                                </button>
+                                {% endif %}
 
-        <button type="button" onclick="copyToClipboard()" class="btn btn-primary mb-3">
-            <i class="bi bi-share"></i> Share Paper
-        </button>
+                                <button type="button" onclick="copyToClipboard()" class="btn btn-primary mb-3">
+                                    <i class="bi bi-share"></i> Share Paper
+                                </button>
 
-        <div id="toastContainer" class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
-            <div class="alert alert-dark collapse" id="linkAlert">
-                <i class="bi bi-check-circle-fill me-2"></i> Link copied to clipboard!
-            </div>
-        </div>
-
-        <hr class="my-4">
-        <h4 class="mt-5">Abstract</h4>
-        <p class="mt-5 mb-5">{{ research_papers.paper_desc }}</p>
-        <hr class="my-4">
-
-        <div class="row align-items-center mt-5">
-            <div class="d-flex justify-content-between align-items-center">
-                <h4 class="mb-0">Comments</h4>
-                <a href="#" class="btn btn-primary" style="background-color: rgb(4, 4, 138);" data-bs-toggle="modal"
-                    data-bs-target="#addComment">Add Comment +</a>
-            </div>
-
-            {% if messages %}
-            {% for message in messages %}
-            <div class="alert alert-dismissible alert-success mt-3" role="alert">
-                {{ message }}
-            </div>
-            {% endfor %}
-            {% endif %}
-
-            <!-- Add Comment Modal -->
-            <div class="modal fade" id="addComment" tabindex="-1" aria-labelledby="exampleModalLabel" aria-hidden="true">
-                <div class="modal-dialog modal-dialog-centered">
-                    <div class="modal-content">
-                        <div class="modal-header">
-                            <h1 class="modal-title fs-5" id="exampleModalLabel">Add Comment</h1>
-                            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
-                        </div>
-                        <div class="modal-body">
-                            <form method="POST" action="{% url 'add_comment' paper_id=research_papers.paper_id %}">
-                                {% csrf_token %}
-                                <div class="mb-3">
-                                    <label for="commentText" class="col-form-label">Comment:</label>
-                                    <textarea class="form-control" id="commentText" name="message_desc" required></textarea>
-                                </div>
+                                <div id="toastContainer" class="position-fixed bottom-0 end-0 p-3" style="z-index: 11">
+                                    <div class="alert alert-dark collapse" id="linkAlert">
+                                        <i class="bi bi-check-circle-fill me-2"></i> Link copied to clipboard!
                                 <div class="modal-footer">
                                     <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Close</button>
                                     <button type="submit" class="btn btn-primary">Submit Comment</button>
