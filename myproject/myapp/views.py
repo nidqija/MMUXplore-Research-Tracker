@@ -421,7 +421,6 @@ def view_research_paper(request, paper_id):
       has_bookmarked = Bookmarks.objects.filter(paper_id=research_papers, user_id=user_id).exists()
 
 
-    is_admin = False
     if user_name != 'Guest':
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
@@ -1078,43 +1077,6 @@ def research_paper_page(request):
     }
 
     return render(request , 'researchpaper.html', context)
-
-
-def faq_page(request):
-    user_name = request.session.get('user_name', 'Guest')
-    user_id = request.session.get('user_id')
-
-    is_admin = False
-    researcher = None
-    coordinator = None
-    role = None
-    user = None
-    notifications = []
-
-    if user_name != 'Guest':
-        is_admin = Admin.objects.filter(user_name=user_name).exists()
-
-    if user_id:
-        user = User.objects.filter(user_id=user_id).first()
-        if user:
-            role = user.role
-            notifications = Notification.objects.filter(user_id=user).order_by('-created_at')
-            if role == 'researcher':
-                researcher = Researcher.objects.filter(user_id=user).first()
-            elif role == 'program_coordinator':
-                coordinator = ProgrammeCoordinator.objects.filter(user_id=user).first()
-
-    context = {
-        'user_name': user_name,
-        'user_id': user_id,
-        'is_admin': is_admin,
-        'role': role,
-        'researcher': researcher,
-        'coordinator': coordinator,
-        'user': user,
-        'notifications': notifications,
-    }
-    return render(request, 'faq.html', context)
     
 @admin_required
 def admin_page(request):
@@ -1339,14 +1301,9 @@ def delete_comment(request, comment_id, paper_id):
 def search_paper(request):
     user_name = request.session.get('user_name', 'Guest')
     query = request.GET.get('search_query', '').strip() # Added strip() to clean whitespace
-    category = request.GET.get('category', '').strip()
 
     # Base queryset
     base_results = ResearchPaper.objects.filter(paper_status='approved')
-
-    # Apply category filter first when provided.
-    if category:
-        base_results = base_results.filter(paper_category__icontains=category)
 
     if query:
         # Search within the approved results
@@ -1367,7 +1324,6 @@ def search_paper(request):
         'is_admin': is_admin,
         'researchpapers': researchpapers,
         'search_query': query ,
-        'selected_category': category,
         'user_id': request.session.get('user_id')
     }
     
@@ -1537,16 +1493,16 @@ def inspect_profile(request, user_id):
 
 @login_required
 def profile_page(request):
-    user_id = request.session.get('user_id')
     user_name = request.session.get('user_name', 'Guest')
+    user_id = request.session.get('user_id')
     user_data = get_object_or_404(User, user_id=user_id)
     violation_count = Violations.objects.filter(user=user_data).count()
-    
+
     return render(request, 'profile_page.html', {
-        'user_name': user_name, 
+        'user_name': user_name,
         'user_data': user_data,
-        'inspect_mode': False,
-        'user_id': user_id ,
+        'inspect_mode': False,  # Not admin inspection mode
+        'user_id': user_id,
         'violation_count': violation_count
     })
 

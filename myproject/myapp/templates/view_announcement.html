@@ -32,11 +32,7 @@
 
     {% if announcements.0.attachment %}
     <img src="{{ announcements.0.attachment.url }}" style ="width: 100%;
-    height: 500px; object-fit: cover; object-position: center; border-radius: 8px;" alt="Announcement Image" onerror="this.style.display='none'">
-        {% else %}
-    <div style="width: 100%; height: 500px; background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); border-radius: 8px; display: flex; align-items: center; justify-content: center;">
-        <span style="color: white; font-size: 24px;">No Image Available</span>
-    </div>
+    height: 500px; object-fit: cover; object-position: center; border-radius: 8px;" alt="Announcement Image">
         {% endif %}
     <br><br>
 

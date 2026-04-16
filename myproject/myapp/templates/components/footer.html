@@ -1,41 +1,31 @@
 
   <section class="contact-us-page">
       <div style="background-color:darkblue ;">
-        <div class="container">
-       <div class="row text-center p-2 ">
+        <div class="container">      
+       <div class="row text-center p-2 "> 
   <div class="col-sm-4 mb-sm-0 ">
     <div class="card mb-5 " style="background-color:transparent;border: none;" data-aos="fade-middle" data-aos-duration="1000">
       <div class="card-body">
         <h5 class="card-title mb-3" style=" color: white;">Support</h5>
         <p class="card-text text-white" style="font-size:18px; font-weight: 100;">MMU</p>
-        <a href="mailto:support@mmu.edu.my" style="text-decoration: none;">
-          <p class="card-text text-white" style="font-size:18px; font-weight: 100;">support@mmu.edu.my</p>
-        </a>
-        <a href="tel:+60123456789" style="text-decoration: none;">
-          <p class="card-text text-white" style="font-size:18px; font-weight: 100;">+6012-3456789</p>
-        </a>
+        <p class="card-text text-white" style="font-size:18px; font-weight: 100;">{% if user.is_authenticated %}{{ user.email }}{% else %}support@mmu.edu.my{% endif %}</p>
+        <p class="card-text text-white" style="font-size:18px; font-weight: 100;">+6012-3456789</p>
+
+
+
       </div>
     </div>
   </div>
    <div class="col-sm-4 mb-3">
-    <div class="card" style="background-color:transparent;border: none;" data-aos="fade-middle" data-aos-duration="1000">
+    <div class="card" style="background-color:transparent;border: none;"data-aos="fade-middle" data-aos-duration="1000">
       <div class="card-body">
         <h5 class="card-title mb-3" style=" color: white;">Account</h5>
-          {% if request.session.user_id %}
-            <a style="text-decoration: none;" href="{% url 'profile' %}"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">My Account</p></a>
-            <a style="text-decoration: none;" href="{% url 'notification_page' %}"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">Notifications</p></a>
-            <a style="text-decoration: none;" href="{% url 'researchpaper' %}"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">Papers</p></a>
-            <a style="text-decoration: none;" href="{% url 'inventory_page' %}"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">Inventory</p></a>
-            {% if request.session.role == 'program_coordinator' %}
-              <a style="text-decoration: none;" href="{% url 'coordinator_home' user_id=request.session.user_id %}"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">Coordinator Home</p></a>
-            {% endif %}
-            <a style="text-decoration: none;" href="{% url 'logout' %}"><p class="card-text text-white" style="font-size:18px; font-weight: 100;">Logout</p></a>
-          {% else %}
-            <a style="text-decoration: none;" href="{% url 'signin' %}"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">Login</p></a>
-            <a style="text-decoration: none;" href="{% url 'signup' %}"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">Register</p></a>
-            <a style="text-decoration: none;" href="{% url 'researchpaper' %}"><p class="card-text text-white" style="font-size:18px; font-weight: 100;">Papers</p></a>
-          {% endif %}
-
+          <a style="text-decoration: none;" href="/signin"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">My Account</p></a>
+          <a style="text-decoration: none;" href="/signup"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">Register</p></a>
+          <a style="text-decoration: none;" href="/signin"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">Login</p></a>
+          <a style="text-decoration: none;" href="/researchpaper"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">Papers</p></a>
+          <a style="text-decoration: none;" href="/inventory_page"><p class="card-text text-white" style="font-size:18px; font-weight: 100;">Inventory</p></a>
+        
       </div>
     </div>
   </div>
@@ -43,8 +33,8 @@
     <div class="card" style="background-color:transparent;border: none;" data-aos="fade-middle" data-aos-duration="1000">
       <div class="card-body">
         <h5 class="card-title mb-3"  style=" color: white;">Quick Link</h5>
-         <a href="{% url 'term_condition_page' %}" style="text-decoration: none;"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">Terms and Condition</p></a>
-         <a href="{% url 'faq_page' %}" style="text-decoration: none;"><p class="card-text text-white" style="font-size:18px; font-weight: 100;">FAQ</p></a>
+         <a href="/term_condition_page" style="text-decoration: none;"><p class="card-text text-white" style="font-size:18px; font-weight: 100;">Terms and Condition</p></a> 
+          <p class="card-text text-white" style="font-size:18px; font-weight: 100;">FAQ</p>
 
       </div>
     </div>

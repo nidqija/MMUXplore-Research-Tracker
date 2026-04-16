@@ -91,7 +91,6 @@ class ResearchPaper(models.Model):
     paper_desc = models.TextField()
     paper_doi = models.CharField(max_length=100, blank=True, verbose_name="DOI")
     paper_pdf = models.FileField(upload_to='research_papers/')
-    paper_cover = models.ImageField(upload_to='research_papers/', blank=True, null=True)
     paper_status = models.CharField(max_length=20, choices=PAPER_STATUS_CHOICES, default='Pending')
     paper_coauthor = models.ManyToManyField(User, related_name='coauthored_papers', blank=True)
     total_bookmarked = models.IntegerField(default=0)

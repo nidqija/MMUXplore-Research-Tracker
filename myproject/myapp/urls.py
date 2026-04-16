@@ -32,7 +32,6 @@ urlpatterns = [
     path('remove_bookmark/<int:paper_id>/', views.unlike_bookmark_research_paper, name='remove_bookmark'),
     path('warn_specific_user/<int:user_id>/<int:paper_id>/', views.warn_specific_user, name='warn_specific_user'),
     path('update_comment/<int:comment_id>/<int:paper_id>/', views.update_comment, name='update_comment'),
-    path('faq/', views.faq_page, name='faq_page'),
     # End General URLs
 
     #researcher URLs
