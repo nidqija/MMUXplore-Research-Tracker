@@ -146,28 +146,41 @@
                                     <i class="bi bi-three-dots-vertical"></i>
                                 </button>
                                 <ul class="dropdown-menu dropdown-menu-end">
-                                    {% if comment.user_id.fullname == user_name or is_admin %}
-                                    {% if is_admin %}
-                                    <li>
-                                        <a class="dropdown-item text-danger"
-                                            href="{% url 'delete_comment' comment.comment_id research_papers.paper_id %}"
-                                            onclick="return confirm('Delete for violating T&C?')">
-                                            Delete Comment
-                                        </a>
-                                    </li>
-                                    <li>
-                                        <a class="dropdown-item text-warning" 
-                                            href="{% url 'warn_specific_user' user_id=comment.user_id.user_id paper_id=research_papers.paper_id %}"
-                                            onclick="return confirm('Send an official warning to this user?')">
-                                            <i class="bi bi-exclamation-triangle me-2"></i>Warn User
-                                        </a>
-                                    </li>
+                                    {% if comment.user_id and comment.user_id.fullname == user_name %}
+                                        {% if is_admin %}
+                                            <li>
+                                                <a class="dropdown-item text-danger"
+                                                   href="{% url 'delete_comment' comment.comment_id research_papers.paper_id %}"
+                                                   onclick="return confirm('Delete for violating T&C?')">Delete Comment</a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item text-warning"
+                                                   href="{% url 'warn_specific_user' user_id=comment.user_id.user_id paper_id=research_papers.paper_id %}?comment_id={{ comment.comment_id }}"
+                                                   onclick="return confirm('Send an official warning to this user?')">
+                                                   <i class="bi bi-exclamation-triangle me-2"></i>Warn User
+                                                </a>
+                                            </li>
+                                        {% else %}
+                                            <li>
+                                                <a class="dropdown-item d-flex align-items-center" href="#" data-bs-toggle="modal"
+                                                   data-bs-target="#updateCommentModal{{ comment.comment_id }}">
+                                                   <i class="bi bi-pencil me-2"></i> Update Comment
+                                                </a>
+                                            </li>
+                                            <li>
+                                                <a class="dropdown-item text-danger d-flex align-items-center"
+                                                   href="{% url 'delete_comment' comment_id=comment.comment_id paper_id=research_papers.paper_id %}"
+                                                   onclick="return confirm('Are you sure?')">
+                                                   <i class="bi bi-trash me-2"></i> Delete Comment
+                                                </a>
+                                            </li>
+                                        {% endif %}
                                     {% else %}
                                         {% if not comment.user_id or comment.user_id.fullname != user_name %}
                                             {% if not is_admin %}
                                                 <li>
                                                     <a class="dropdown-item text-warning d-flex align-items-center" href="#" data-bs-toggle="modal"
-                                                           data-bs-target="#reportCommentModal" data-comment-id="{{ comment.comment_id }}" onclick="prepareReportModal(this.dataset.commentId)">
+                                                       data-bs-target="#reportCommentModal" onclick="prepareReportModal({{ comment.comment_id }})">
                                                        <i class="bi bi-flag me-2"></i> Report Comment
                                                     </a>
                                                 </li>

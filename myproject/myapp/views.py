@@ -1,6 +1,7 @@
 
 import datetime
 import csv
+from fpdf import FPDF
 from multiprocessing import context
 from django.shortcuts import get_object_or_404, render, redirect
 from django.conf import settings
@@ -53,7 +54,6 @@ def index(request):
     announcements = Announcements.objects.all().order_by('-date_posted')
 
     research_papers = ResearchPaper.objects.filter(paper_status='approved')
-    user_id = request.session.get('user_id') # Make sure this is being set during sign-in!
 
     latest_tc = TermsAndConditions.objects.order_by('-last_updated').first()
     user = User.objects.filter(fullname=user_name).first()
@@ -141,7 +141,7 @@ def user_signup(request):
             request.session['role'] = user.role
             request.session.save()
         elif role == 'program_coordinator':
-            ProgrammeCoordinator.objects.create(user_id=user, prog_name = user.fullname)
+            ProgrammeCoordinator.objects.create(user_id=user)
             request.session['user_name'] = 'Coordinator'
             request.session['user_id'] = user.user_id  #  store ID for URL redirects
             request.session['role'] = user.role
@@ -161,28 +161,23 @@ def user_signup(request):
 
 
 
+        
 
 
 def user_avatar_register(request):
     if request.method == 'POST':
         fullname = request.POST.get('fullname')
         avatar = request.FILES.get('avatar')
-        program_name = request.POST.get('program_name')
-        year_of_study = request.POST.get('year_of_study')
-        
 
         # Retrieve the email we just stored in the signup view
         temp_email = request.session.get('temp_user_email')
         user = User.objects.filter(email=temp_email).first()
-        student = Student.objects.filter(user_id=user).first() if user and user.role == 'student' else None
 
         if user:
             user.fullname = fullname
             user.avatar = avatar
-            student.program_of_studies = program_name
-            student.year_of_studies = year_of_study
             user.save()
-            
+
             # Now that the profile is complete, set the main session
             request.session['user_name'] = user.fullname
             request.session['user_id'] = user.user_id
@@ -394,11 +389,16 @@ def researcher_profile(request, researcher_id):
 def view_research_paper(request, paper_id):
     research_papers = ResearchPaper.objects.get(paper_id=paper_id)
     researcher = research_papers.researcher_id
-    researchname = researcher.user_id.fullname
+    if researcher:
+        researchname = researcher.user_id.fullname
+    else:
+        # If no researcher, it's a student paper
+        researcher = research_papers.student_id
+        researchname = researcher.user_id.fullname if researcher else "Unknown"
     comments = Comment.objects.filter(paper_id=research_papers)
     user_name = request.session.get('user_name', 'Guest')
     user_id = request.session.get('user_id')
-    
+
     notifications = Notification.objects.filter(user_id__fullname=user_name).order_by('-created_at') if user_name != 'Guest' else []
 
 
@@ -411,16 +411,25 @@ def view_research_paper(request, paper_id):
 
 
     if user_name != 'Guest':
-        
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
     user_role = request.session.get('role')
-    is_coordinator = False 
+    is_coordinator = False
 
     if user_role == 'program_coordinator':
         is_coordinator = ProgrammeCoordinator.objects.filter(user_id=request.user).exists()
 
-    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_coordinator': is_coordinator, 'is_admin': is_admin ,'researchname': researchname, 'comments': comments , 'notifications': notifications , 'has_liked': has_liked, 'has_bookmarked': has_bookmarked , 'user_id': user_id} )
+    # Calculate inventory coverage for the student // for their research papers
+    liked_count = 0
+    bookmarked_count = 0
+    co_authored_count = 0
+    if user_id:
+        user_instance = User.objects.get(user_id=user_id)
+        liked_count = Likes.objects.filter(user_id=user_instance).count()
+        bookmarked_count = Bookmarks.objects.filter(user_id=user_instance).count()
+        co_authored_count = ResearchPaper.objects.filter(paper_coauthor=user_instance, paper_status='approved').count()
+
+    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_coordinator': is_coordinator, 'is_admin': is_admin ,'researchname': researchname, 'comments': comments , 'notifications': notifications , 'has_liked': has_liked, 'has_bookmarked': has_bookmarked , 'user_id': user_id, 'liked_count': liked_count, 'bookmarked_count': bookmarked_count, 'co_authored_count': co_authored_count} )
 
 
 def like_research_paper(request, paper_id):
@@ -544,42 +553,6 @@ def coordinator_home(request, user_id):
     # and we are looking for the 'user_id' field on the User model.
     coordinator = get_object_or_404(ProgrammeCoordinator, user_id__user_id=user_id)
     user_name = request.session.get('user_name')
-    
-    
-    #Analytics Dashboard
-    papers = ResearchPaper.objects.all()
-    total_papers = papers.count()
-    
-
-
-    approved_count = papers.filter(paper_status='approved').count()
-    approval_rate = (
-        round((approved_count / total_papers) * 100, 2)
-        if total_papers > 0 else 0
-    )
-
-
-
-    #submissions
-    submission = Submissions.objects.all()
-    pending_submissions = Submissions.objects.filter(status__in=['pending', 'revision'])
-    completed_submissions = Submissions.objects.filter(status__in=['approved', 'rejected'])
-
-    pending_submissions = pending_submissions.count()
-    completed_submissions = completed_submissions.count()
-
-   
-
-    #Researchers
-    researchers = Researcher.objects.all()
-    num_researcher = researchers.count()
-
-    #Students
-    students = Student.objects.all()
-    num_student = students.count()
-
-    coordinators = ProgrammeCoordinator.objects.all()
-    num_coordinator = coordinators.count()
 
 
     latest_submission_id = Submissions.objects.filter(
@@ -600,18 +573,6 @@ def coordinator_home(request, user_id):
         'user_name': user_name,
         'submissions': submission,
         'pastSubmissions': pastSubmission,
-
-        'total_papers': total_papers,
-        'approval_rate': approval_rate,
-        'approved_count' : approved_count,
-
-        'pending_submissions': pending_submissions,
-        'completed_submissions': completed_submissions,
-
-
-        'num_researcher' : num_researcher,
-        'num_student' : num_student,
-        'num_coordinator' : num_coordinator
     })
 
 def submissions(request):
@@ -779,6 +740,24 @@ def coordinator_view_research_paper(request, paper_id):
 
     return render(request, 'coordinator/view_research_paper.html', context)
 
+
+def analytics_page(request):
+
+    user_id = request.session.get('user_id')
+    user_name = request.session.get('user_name')
+    coordinator = ProgrammeCoordinator.objects.get(user_id__user_id=user_id)
+    researchpapers = ResearchPaper.objects.filter(paper_status='approved').order_by('-published_date')
+
+    context = {
+        'coordinator' : coordinator,
+        'researchpapers' : researchpapers,
+        'user_name': user_name
+
+
+    }
+
+    return render(request, 'coordinator/analytics_page.html', context)
+
 def generate_report(request) :
 
     user_id = request.session.get('user_id')
@@ -799,7 +778,7 @@ def generate_report(request) :
         
 
 
-   
+    file_format = request.POST.get("format")
 
     if request.method == "POST" and request.POST.get("generate"):
 
@@ -814,95 +793,101 @@ def generate_report(request) :
 
         paper_titles = ResearchPaper.objects.filter(researcher_id= researcher).values_list('paper_title', flat=True)
 
-   
-        # Create CSV response
-        response = HttpResponse(content_type='text/csv')
-        response['Content-Disposition'] = f'attachment; filename="{researcher.user_id.fullname}_report.csv"'
+        if file_format == "csv":
+            # Create CSV response
+            response = HttpResponse(content_type='text/csv')
+            response['Content-Disposition'] = f'attachment; filename="{researcher.user_id.fullname}_report.csv"'
 
-        writer = csv.writer(response)
+            writer = csv.writer(response)
 
-        # CSV header
-        writer.writerow([
-            'Researcher Name',
-            'email',
-            'OCRID',
-            'Google Scholar ID',
-            'Bio Description',
-            'Total Publications'
-        ])
+            # CSV header
+            writer.writerow([
+                'Researcher Name',
+                'email',
+                'OCRID',
+                'Google Scholar ID',
+                'Bio Description',
+                'Total Publications'
+            ])
 
-        # CSV data
-        writer.writerow([
-            researcher.user_id.fullname,
-            email,
-            OCRID,
-            google_sch,
-            bio_desc,
-            publication_count
-        ])
+            # CSV data
+            writer.writerow([
+                researcher.user_id.fullname,
+                email,
+                OCRID,
+                google_sch,
+                bio_desc,
+                publication_count
+            ])
 
-        return response   # ⬅ return file, NOT render
+            return response   # ⬅ return file, NOT render
         
 
+        if file_format == "pdf":
+
+            pdf = FPDF()
+            pdf.add_page()
+            pdf.set_font("Arial","B",16)
+            pdf.cell(0, 10, f"Research Report: {researcher.user_id.fullname}", ln=True, align='C')
+            pdf.set_font("Arial", "", 12)
+            pdf.cell(0, 10, f"Email: {email}", ln=True)
+            pdf.cell(0, 10, f"ORCID: {OCRID}", ln=True)
+            pdf.cell(0, 10, f"Google Scholar: {google_sch}", ln=True)
+            pdf.cell(0, 10, f"Number of Publications: {publication_count}", ln=True)
+
+            pdf.ln(10)
+            pdf.set_font("Arial", "B", 12)
+            pdf.cell(0, 10, "Publications:", ln=True)
+            pdf.set_font("Arial", "", 12)
+            for paper in paper_titles:
+                    pdf.multi_cell(pdf.w - 2*pdf.l_margin, 10, f"- {paper}")
+            
+            response = HttpResponse( content_type="application/pdf")
+            clean_filename = f"{researcher.user_id.fullname}_report.pdf".replace(" ", "_")
+            response['Content-Disposition'] = f'attachment; filename="{clean_filename}"'
+            pdf_output = pdf.output(dest='S')
+            response.write(pdf_output)
+            return response
 
     if request.method == "POST" and request.POST.get("faculty_gen"):
 
-        filename = (
-            f"Faculty_of_Computing_Report_"
-            f"{timezone.now().strftime('%Y-%m-%d')}.csv"
-        )
 
+        
+        filename = f"Faculty_of_Computing_Report_{timezone.now().strftime('%Y-%m-%d')}.csv"
         response = HttpResponse(content_type='text/csv')
         response['Content-Disposition'] = f'attachment; filename="{filename}"'
 
         writer = csv.writer(response)
 
+        # 2. Define the Header Row
         writer.writerow([
-            'Paper ID',
-            'Research Title',
-            'Researcher',
-            'Category',
-            'Status',
-            'DOI',
-            'Total Likes',
-            'Total Bookmarks',
+            'Paper ID', 
+            'Research Title', 
+            'Researcher', 
+            'Category', 
+            'Status', 
+            'DOI', 
+            'Total Likes', 
+            'Total Bookmarks', 
             'Published Date',
-            'Co-Authors'
+            'Co-Author Count'
         ])
 
-        papers = ResearchPaper.objects.select_related(
-            'researcher_id',
-            'researcher_id__user_id',
-            'student_id',
-            'student_id__user_id'
-        )
+        # 3. Filter Papers
+        # We filter papers where the linked ProgrammeCoordinator's faculty is 'Faculty of Computing'
+        papers = ResearchPaper.objects.all()
 
+        # 4. Write Data Rows
         for paper in papers:
-
-            # ---------- SAFE ACCESS ----------
-            researcher_name = (
-                paper.researcher_id.user_id.fullname
-                if paper.researcher_id and paper.researcher_id.user_id
-                else "None"
-            )
-
-            student_name =  (
-                paper.student_id.user_id.fullname
-                if paper.student_id and paper.student_id.user_id
-                else "None"
-            )
-
+            # Get count of co-authors for this paper
             co_author_count = paper.paper_coauthor.count()
-            # csv only wants to pick student name or researcher name only smh, this fixes it
-            author_name = ", ".join(name for name in [researcher_name, student_name] if name and name != "None") or "N/A" 
             
-
             writer.writerow([
                 paper.paper_id,
                 paper.paper_title,
-                author_name,
+                paper.researcher_id.user_id.fullname,
                 paper.paper_category,
-                paper.paper_status,
+                paper.paper_status, # Shows 'Approved' instead of 'approved'
                 paper.paper_doi if paper.paper_doi else "N/A",
                 paper.total_likes,
                 paper.total_bookmarked,
@@ -1000,6 +985,8 @@ def user_signin(request):
         if admin:
             if admin.password == password:
                 request.session['user_name'] = admin.user_name
+                request.session['is_admin'] = True
+                request.session['role'] = 'admin'
                 messages.success(request, 'Admin Signed in successfully.')
                 return redirect('admin_homepage')
             else:
@@ -1014,10 +1001,6 @@ def user_signin(request):
                 request.session['user_id'] = user.user_id
                 request.session['role'] = user.role
 
-                if user.is_banned :
-                    messages.error(request, "Your account has been banned. Please contact support.")
-                    return render(request, 'signin.html')
-
                 if user.role == 'researcher':
                     # Check if researcher profile exists
                     try:
@@ -1030,8 +1013,6 @@ def user_signin(request):
                         return redirect('home')
 
                 elif user.role == 'student':
-
-                    
                     messages.success(request, 'Student Signed in successfully.')
                     return redirect('home')
 
@@ -1238,33 +1219,6 @@ def announcement_page(request):
     return render(request , 'adminguy/announcement_page.html', {'user_name': user_name , 'announcement_list': announcement_list} )
 
 
-@require_POST
-def update_announcement(request, announcement_id):
-    if request.method == 'POST':
-     try:
-        announcement = Announcements.objects.get(announcement_id=announcement_id)
-        new_title = request.POST.get('announcementtitle')
-        new_desc = request.POST.get('announcementdescription')
-        new_attachment = request.FILES.get('announcementattachment')
-
-        if new_title and new_desc :
-            announcement.announcement_title = new_title
-            announcement.announcement_desc = new_desc
-
-            if new_attachment:
-                announcement.attachment = new_attachment
-
-            announcement.save()
-            messages.success(request, 'Announcement updated successfully.')
-
-        else:
-            messages.error(request , 'Failed to update announcement. Please try again.')
-     
-     except Announcements.DoesNotExist:
-        messages.error(request, 'Announcement not found.')
-        return redirect('announcement_page')
-     
-    return redirect('announcement_page')
 
 
 @require_POST
@@ -1283,20 +1237,14 @@ def delete_announcement(request, announcement_id):
 
 def manage_users(request):
     user_name = request.session.get('user_name', 'Guest')
-    users = User.objects.all()
+    users = User.objects.annotate( violation_count=Count('violations_received') ).order_by('-violation_count') # Optional: show most reported users first
     total_users = users.count()
+
     return render(request , 'adminguy/manage_users.html', {'user_name': user_name , 'users': users, 'total_users': total_users} )
 
 
 
-def profile_page(request):
 
-
-    user_name = request.session.get('user_name', 'Guest')
-
-    user_data = User.objects.filter(fullname=user_name).first()
-
-    return render(request , 'profile_page.html', {'user_name': user_name, 'user_data': user_data} )
 
 
 
@@ -1364,6 +1312,21 @@ def delete_comment(request, comment_id, paper_id):
         # Security Check: Is the user an admin OR the owner of the comment?
         if is_admin or comment.user_id.fullname == user_name:
             comment.delete()
+
+            # Determine who deleted the comment for the notification message
+            if is_admin:
+                deleter = "an admin"
+            else:
+                deleter = "you"
+
+            warning = Notification(
+                user_id=comment.user_id,
+                notify_title="Comment Deleted",
+                notify_message=f"Your comment on paper ID {paper_id} was deleted by {deleter}.",
+                created_at=timezone.now()
+            )
+            warning.save()
+
             messages.success(request, 'Comment deleted successfully.')
         else:
             messages.error(request, 'You do not have permission to delete this comment.')
@@ -1419,7 +1382,13 @@ def search_paper(request):
         'user_name': user_name,
         'is_admin': is_admin,
         'researchpapers': researchpapers,
-        'search_query': query
+        'search_query': query,
+        'selected_category': category,
+        'user_id': user_id,
+        'role': role,
+        'user': user,
+        'researcher': researcher,
+        'coordinator': coordinator,
     }
     
     return render(request, 'researchpaper.html', context)
@@ -1719,4 +1688,123 @@ def submit_fyp(request, user_id):
         else:
             messages.error(request, "Please fill in all required fields.")
 
-    return render(request, 'submit_fyp.html', {'user_name': user_name, 'user_id': user_id , 'fyp_paper': fyp_paper})
+    user = User.objects.filter(user_id=user_id).first()
+    return render(request, 'submit_fyp.html', {'user_name': user_name, 'user_id': user_id , 'fyp_paper': fyp_paper, 'user': user})
+
+
+def warn_specific_user(request, user_id, paper_id):
+    target_user = get_object_or_404(User, pk=user_id)
+    admin_name = request.session.get('user_name')
+    comment_id = request.GET.get('comment_id', None)
+    sender_instance = User.objects.filter(fullname=admin_name).first()
+    reporter_id = sender_instance.pk if sender_instance else None
+
+    Notification.objects.create(
+        user_id_id=target_user.pk, 
+        notify_title="System Warning",
+        notify_message="You have received a formal warning regarding your recent activity.",
+        sender_id_id= reporter_id,
+        created_at=timezone.now()
+    )
+
+    Violations.objects.create(
+        user_id=target_user.pk, 
+        reporter_id= reporter_id,
+        violation_type="Official Warning",
+        date_reported=timezone.now(),
+        comment_id=comment_id      
+    )
+
+    
+
+    messages.success(request, f"Warning successfully sent to {target_user.fullname}.")
+    return redirect('view_research_paper', paper_id=paper_id)
+
+
+
+def manage_user_reports(request):
+    user_name = request.session.get('user_name', 'Guest')
+    reports = Notification.objects.all().filter(notify_title="Comment Reported").order_by('-created_at')
+
+
+
+
+    context = {
+        'user_name': user_name,
+        'reports': reports
+    }
+
+    return render(request, 'adminguy/manage_report.html', context)
+
+
+
+def view_comments(request, comment_id):
+    user_name = request.session.get('user_name', 'Guest')
+    user_id = request.session.get('user_id')
+
+    reported_comment = get_object_or_404(Comment, comment_id=comment_id)
+    
+    research_papers = reported_comment.paper_id
+    
+    
+    comments = Comment.objects.filter(paper_id=research_papers).order_by('-created_at')
+
+    context = {
+        'user_name': user_name,
+        'user_id': user_id,
+        'research_papers': research_papers, # Now the template has the title, PDF, ID, etc.
+        'comments': comments,
+        'paper_id': research_papers.paper_id, # Keeps your existing logic working
+    }
+
+    return render(request, 'view_research_paper.html', context)
+
+def user_avatar_register(request):
+    if request.method == 'POST':
+        fullname = request.POST.get('fullname')
+        avatar = request.FILES.get('avatar')
+        program_name = request.POST.get('program_name')
+        year_of_study = request.POST.get('year_of_study')
+
+        # Retrieve the email we just stored in the signup view
+        temp_email = request.session.get('temp_user_email')
+        user = User.objects.filter(email=temp_email).first()
+        student = Student.objects.filter(user_id=user).first() if user and user.role == 'student' else None
+
+        if user:
+            user.fullname = fullname
+            user.avatar = avatar
+            user.save()
+
+            # Only set student-specific fields if the user is a student
+            if user.role == 'student' and student:
+                if not program_name or not year_of_study:
+                    messages.error(request, 'Program of studies and year of study are required for students.')
+                    return render(request, 'user_avatar_register.html', {'role': user.role})
+                student.program_of_studies = program_name
+                student.year_of_studies = year_of_study
+                student.save()
+
+            # Now that the profile is complete, set the main session
+            request.session['user_name'] = user.fullname
+            request.session['user_id'] = user.user_id
+            request.session['role'] = user.role
+
+            # Clean up the temporary session
+            del request.session['temp_user_email']
+
+            messages.success(request, 'Profile updated successfully.')
+            if user.role == 'program_coordinator':
+                return redirect('coordinator_home', user_id=user.user_id)
+
+            return redirect('home')
+        else:
+            messages.error(request, 'Session expired. Please sign up again.')
+            return redirect('user_signup')
+
+    # Get the role from the user for template conditional rendering
+    temp_email = request.session.get('temp_user_email')
+    user = User.objects.filter(email=temp_email).first() if temp_email else None
+    role = user.role if user else None
+
+    return render(request, 'user_avatar_register.html', {'role': role})
