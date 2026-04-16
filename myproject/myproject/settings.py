@@ -33,6 +33,17 @@ DEBUG = os.getenv('DEBUG', 'True').lower() == 'true'
 raw_allowed_hosts = os.getenv('ALLOWED_HOSTS', '127.0.0.1,localhost,.railway.app')
 ALLOWED_HOSTS = [host.strip() for host in raw_allowed_hosts.split(',') if host.strip()]
 
+# Trust Railway deployment origin for CSRF-protected POST requests.
+raw_csrf_trusted_origins = os.getenv(
+    'CSRF_TRUSTED_ORIGINS',
+    'https://mmuxplore-research-tracker-production.up.railway.app'
+)
+CSRF_TRUSTED_ORIGINS = [
+    origin.strip().rstrip('/')
+    for origin in raw_csrf_trusted_origins.split(',')
+    if origin.strip()
+]
+
 
 # Application definition
 
