@@ -404,6 +404,7 @@ def view_research_paper(request, paper_id):
 
     has_liked = False
     has_bookmarked = False
+    is_admin = False
 
     if user_id:
       has_liked = Likes.objects.filter(paper_id=research_papers, user_id=user_id).exists()
@@ -416,8 +417,8 @@ def view_research_paper(request, paper_id):
     user_role = request.session.get('role')
     is_coordinator = False
 
-    if user_role == 'program_coordinator':
-        is_coordinator = ProgrammeCoordinator.objects.filter(user_id=request.user).exists()
+    if user_role == 'program_coordinator' and user_id:
+        is_coordinator = ProgrammeCoordinator.objects.filter(user_id__user_id=user_id).exists()
 
     # Calculate inventory coverage for the student // for their research papers
     liked_count = 0
@@ -429,7 +430,13 @@ def view_research_paper(request, paper_id):
         bookmarked_count = Bookmarks.objects.filter(user_id=user_instance).count()
         co_authored_count = ResearchPaper.objects.filter(paper_coauthor=user_instance, paper_status='approved').count()
 
-    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_coordinator': is_coordinator, 'is_admin': is_admin ,'researchname': researchname, 'comments': comments , 'notifications': notifications , 'has_liked': has_liked, 'has_bookmarked': has_bookmarked , 'user_id': user_id, 'liked_count': liked_count, 'bookmarked_count': bookmarked_count, 'co_authored_count': co_authored_count} )
+    # Safe PDF URL - check if file exists before generating URL
+    paper_pdf_url = None
+    if research_papers.paper_pdf and research_papers.paper_pdf.name:
+        if research_papers.paper_pdf.storage.exists(research_papers.paper_pdf.name):
+            paper_pdf_url = research_papers.paper_pdf.url
+
+    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_coordinator': is_coordinator, 'is_admin': is_admin ,'researchname': researchname, 'comments': comments , 'notifications': notifications , 'has_liked': has_liked, 'has_bookmarked': has_bookmarked , 'user_id': user_id, 'liked_count': liked_count, 'bookmarked_count': bookmarked_count, 'co_authored_count': co_authored_count, 'paper_pdf_url': paper_pdf_url} )
 
 
 def like_research_paper(request, paper_id):
@@ -1287,8 +1294,15 @@ def add_comment(request, paper_id):
 
         # 3. Trigger Notification for the Paper Author
         # Logic: Don't notify the author if they are the one commenting
-        author_user = research_paper.researcher_id.user_id
-        if user != author_user:
+        # Check if paper has a researcher or student author
+        if research_paper.researcher_id:
+            author_user = research_paper.researcher_id.user_id
+        elif research_paper.student_id:
+            author_user = research_paper.student_id.user_id
+        else:
+            author_user = None
+        
+        if author_user and user != author_user:
             Notification.objects.create(
                 user_id=author_user,
                 notify_title="New Comment",
