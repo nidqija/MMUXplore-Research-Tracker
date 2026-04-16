@@ -14,7 +14,7 @@ from django.contrib import messages
 from django.views.decorators.http import require_POST
 from functools import wraps
 from django.utils import timezone
-from django.db.models import Q , Count
+from django.db.models import Q , Count, OuterRef, Subquery
 from django.http import HttpResponse
 
 
@@ -34,19 +34,34 @@ def admin_required(view_func):
     return _wrapped_view
 
 
+def login_required(view_func):
+    @wraps(view_func)
+    def _wrapped_view(request, *args, **kwargs):
+        user_name = request.session.get('user_name')
+        if not user_name or user_name == 'Guest':
+            messages.error(request, "You must be logged in to access this page.")
+            return redirect('signin')
+        return view_func(request, *args, **kwargs)
+    return _wrapped_view
+
+
 def index(request):
     user_name = request.session.get('user_name', 'Guest')
-    announcements = Announcements.objects.all().order_by('-date_posted') 
+    user_id = request.session.get('user_id')
+
+    # ADD THIS LINE: Fetch the announcements from the database
+    announcements = Announcements.objects.all().order_by('-date_posted')
+
     research_papers = ResearchPaper.objects.filter(paper_status='approved')
-    user_id = request.session.get('user_id')    
+    user_id = request.session.get('user_id') # Make sure this is being set during sign-in!
 
     latest_tc = TermsAndConditions.objects.order_by('-last_updated').first()
     user = User.objects.filter(fullname=user_name).first()
-    notifications = Notification.objects.filter(user_id=user).order_by('-created_at') if user else []       
+    notifications = Notification.objects.filter(user_id=user).order_by('-created_at') if user else []
     # Check if the latest terms and conditions were updated within the last 7 days
     new_tc_update = False
 
-    # if there is at least one terms and conditions entry 
+    # if there is at least one terms and conditions entry
     if latest_tc:
 
         # calculate the time limit
@@ -58,11 +73,20 @@ def index(request):
             new_tc_update = True
 
     is_admin = False
+    role = None
+    researcher = None
+    coordinator = None
 
     if user_name != 'Guest':
         is_admin = Admin.objects.filter(user_name=user_name).exists()
+        if user:
+            role = user.role
+            if role == 'researcher':
+                researcher = Researcher.objects.filter(user_id=user).first()
+            elif role == 'program_coordinator':
+                coordinator = ProgrammeCoordinator.objects.filter(user_id=user).first()
 
-    return render(request, 'home.html', {'user_name': user_name , 'announcements': announcements, 'is_admin': is_admin , 'new_tc_update': new_tc_update, 'research_papers': research_papers, 'user_id': user_id } )
+    return render(request, 'home.html', {'user_name': user_name , 'announcements': announcements, 'is_admin': is_admin , 'new_tc_update': new_tc_update, 'research_papers': research_papers, 'user_id': user_id, 'role': role, 'user': user, 'researcher': researcher, 'coordinator': coordinator } )
 
 
 
@@ -91,7 +115,7 @@ def user_signup(request):
 
         # 2. Check if user already exists to prevent crashes
         if User.objects.filter(email=email).exists():
-            messages.error(request, 'Email already registered.')
+            messages.error(request, 'User already exists.')
             return render(request, 'signup.html')
 
         
@@ -106,20 +130,32 @@ def user_signup(request):
       
         if role == 'researcher':
             Researcher.objects.create(user_id=user) #
+            request.session['user_name'] = 'Researcher'
+            request.session['user_id'] = user.user_id
+            request.session['role'] = user.role
+            request.session.save()
         elif role == 'student':
             Student.objects.create(user_id=user) #
-        elif role == 'program_coordinator': 
+            request.session['user_name'] = 'Student'
+            request.session['user_id'] = user.user_id
+            request.session['role'] = user.role
+            request.session.save()
+        elif role == 'program_coordinator':
             ProgrammeCoordinator.objects.create(user_id=user, prog_name = user.fullname)
+            request.session['user_name'] = 'Coordinator'
             request.session['user_id'] = user.user_id  #  store ID for URL redirects
+            request.session['role'] = user.role
+            request.session.save()
        
 
        
         request.session['temp_user_email'] = email
+        request.session.save()
 
         messages.success(request, 'Account created! Now let\'s set up your profile.')
         return redirect('avatar_register')
 
-    return render(request, 'signup.html') 
+    return render(request, 'signup.html')  
 
 
 
@@ -146,24 +182,32 @@ def user_avatar_register(request):
             student.program_of_studies = program_name
             student.year_of_studies = year_of_study
             user.save()
-            student.save()
             
             # Now that the profile is complete, set the main session
             request.session['user_name'] = user.fullname
-            
+            request.session['user_id'] = user.user_id
+            request.session['role'] = user.role
+
             # Clean up the temporary session
             del request.session['temp_user_email']
-            
+
+            request.session.save()
+
             messages.success(request, 'Profile updated successfully.')
             if user.role == 'program_coordinator':
                 return redirect('coordinator_home', user_id=user.user_id)
-            
+
             return redirect('home')
         else:
             messages.error(request, 'Session expired. Please sign up again.')
             return redirect('user_signup')
-            
-    return render(request, 'user_avatar_register.html')
+
+    # Get the role from the user for template conditional rendering
+    role = None
+    if user:
+        role = user.role
+
+    return render(request, 'user_avatar_register.html', {'role': role})
 
 
 
@@ -303,18 +347,7 @@ def researcher_upload_page(request, researcher_id):
                 paper_pdf=paper_file,
                 paper_status='pending'
             )
-
-            new_submission = Submissions(
-                paper_id=new_paper,
-                status='pending',
-                submitted_at=timezone.now()
-            )
-
-            
-
-        
             new_paper.save()
-            new_submission.save()
 
             if paper_coauthor:
                 new_paper.paper_coauthor.set(paper_coauthor)
@@ -361,12 +394,10 @@ def researcher_profile(request, researcher_id):
 def view_research_paper(request, paper_id):
     research_papers = ResearchPaper.objects.get(paper_id=paper_id)
     researcher = research_papers.researcher_id
-    coordinator = "dummy"
     researchname = researcher.user_id.fullname
     comments = Comment.objects.filter(paper_id=research_papers)
     user_name = request.session.get('user_name', 'Guest')
     user_id = request.session.get('user_id')
-   
     
     notifications = Notification.objects.filter(user_id__fullname=user_name).order_by('-created_at') if user_name != 'Guest' else []
 
@@ -383,13 +414,13 @@ def view_research_paper(request, paper_id):
         
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
-    
-   
-    if user_name != 'Guest':
-        coordinator = ProgrammeCoordinator.objects.filter(user_id__user_id=user_id).first()
-        is_coordinator = coordinator is not None
+    user_role = request.session.get('role')
+    is_coordinator = False 
 
-    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_coordinator': is_coordinator, 'is_admin': is_admin ,'researchname': researchname, 'comments': comments , 'notifications': notifications , 'has_liked': has_liked, 'has_bookmarked': has_bookmarked , 'user_id': user_id, 'coordinator':coordinator} )
+    if user_role == 'program_coordinator':
+        is_coordinator = ProgrammeCoordinator.objects.filter(user_id=request.user).exists()
+
+    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'is_coordinator': is_coordinator, 'is_admin': is_admin ,'researchname': researchname, 'comments': comments , 'notifications': notifications , 'has_liked': has_liked, 'has_bookmarked': has_bookmarked , 'user_id': user_id} )
 
 
 def like_research_paper(request, paper_id):
@@ -551,8 +582,18 @@ def coordinator_home(request, user_id):
     num_coordinator = coordinators.count()
 
 
-    submission = Submissions.objects.filter(status__in=['pending', 'revision']).select_related('paper_id')
-    pastSubmission = Submissions.objects.filter(status__in=['approved', 'rejected']).select_related('paper_id')
+    latest_submission_id = Submissions.objects.filter(
+        paper_id=OuterRef('paper_id')
+    ).order_by('-submission_id').values('submission_id')[:1]
+
+    submission = Submissions.objects.filter(
+        status__in=['pending', 'revision'],
+        submission_id=Subquery(latest_submission_id)
+    ).select_related('paper_id')
+    pastSubmission = Submissions.objects.filter(
+        status__in=['approved', 'rejected'],
+        submission_id=Subquery(latest_submission_id)
+    ).select_related('paper_id')
     
     return render(request, 'coordinator/coordinator_home.html', {
         'coordinator': coordinator,
@@ -585,8 +626,18 @@ def submissions(request):
     user_id = request.session.get('user_id')
     user_name = request.session.get('user_name')
     coordinator = ProgrammeCoordinator.objects.filter(user_id__user_id=user_id).first()
-    submission = Submissions.objects.filter(status__in=['pending', 'revision']).select_related('paper_id')
-    pastSubmission = Submissions.objects.filter(status__in=['approved', 'rejected']).select_related('paper_id')
+    latest_submission_id = Submissions.objects.filter(
+        paper_id=OuterRef('paper_id')
+    ).order_by('-submission_id').values('submission_id')[:1]
+
+    submission = Submissions.objects.filter(
+        status__in=['pending', 'revision'],
+        submission_id=Subquery(latest_submission_id)
+    ).select_related('paper_id')
+    pastSubmission = Submissions.objects.filter(
+        status__in=['approved', 'rejected'],
+        submission_id=Subquery(latest_submission_id)
+    ).select_related('paper_id')
     context = {
         'coordinator': coordinator,
         'submissions': submission,
@@ -613,31 +664,37 @@ def submission_detail(request, submission_id):
         action = request.POST.get('action')
         reason = request.POST.get('reason', 'No specific reason provided.')
         
+        # Determine the author user (researcher or student)
+        if paper.researcher_id:
+            author_user = paper.researcher_id.user_id
+        else:
+            author_user = paper.student_id.user_id
+
         if action == 'approve':
             paper.paper_status = 'approved'
             paper.published_date = timezone.now()
             submission.status = 'approved'
 
             Notification.objects.create(
-                user_id=paper.researcher_id.user_id,
+                user_id=author_user,
                 notify_title="Paper Approval",
                 notify_message=f"{coordinator.user_id.fullname} approved your paper: '{paper.paper_title}'",
                 created_at=timezone.now(),
-                sender_id = coordinator.user_id 
+                sender_id = coordinator.user_id
             )
             messages.success(request, "Paper Approved! Submission entry removed.")
-            
+
         elif action == 'reject':
             paper.paper_status = 'rejected'
             submission.status = 'rejected'
             messages.error(request, "Paper Rejected. Submission entry removed.")
 
             Notification.objects.create(
-                user_id=paper.researcher_id.user_id,
+                user_id=author_user,
                 notify_title="Paper Rejected",
                 notify_message=f"{coordinator.user_id.fullname} rejected your paper: '{paper.paper_title}' \n Reason:",
                 created_at=timezone.now(),
-                sender_id = coordinator.user_id 
+                sender_id = coordinator.user_id
             )
 
         elif action == 'reopen':
@@ -645,21 +702,21 @@ def submission_detail(request, submission_id):
             submission.status = 'pending'
 
             Notification.objects.create(
-                user_id=paper.researcher_id.user_id,
+                user_id=author_user,
                 notify_title="Paper reopened for evaluation",
                 notify_message=f"{coordinator.user_id.fullname} has reopened your paper submission: '{paper.paper_title}' for evaluation again.",
                 created_at=timezone.now(),
-                sender_id = coordinator.user_id 
+                sender_id = coordinator.user_id
             )
             messages.success(request, "Paper reopened for evaluation.")
-            
+
         elif action == 'revision':
 
             paper.paper_status = 'revision'
             submission.status = 'revision'
 
             Notification.objects.create(
-                user_id=paper.researcher_id.user_id,
+                user_id=author_user,
                 notify_title="Revision Requested",
                 # We inject the reason here
                 notify_message=f"{coordinator.user_id.fullname} requested a revision for: '{paper.paper_title}'.\nComments: {reason}",
@@ -943,8 +1000,6 @@ def user_signin(request):
         if admin:
             if admin.password == password:
                 request.session['user_name'] = admin.user_name
-                request.session['user_id'] = admin.admin_id  
-                request.session['is_admin'] = True
                 messages.success(request, 'Admin Signed in successfully.')
                 return redirect('admin_homepage')
             else:
@@ -956,7 +1011,8 @@ def user_signin(request):
         if user:
             if user.password == password:
                 request.session['user_name'] = user.fullname
-                request.session['user_id'] = user.user_id  
+                request.session['user_id'] = user.user_id
+                request.session['role'] = user.role
 
                 if user.is_banned :
                     messages.error(request, "Your account has been banned. Please contact support.")
@@ -978,23 +1034,23 @@ def user_signin(request):
                     
                     messages.success(request, 'Student Signed in successfully.')
                     return redirect('home')
-                
+
 
                 elif user.role == 'program_coordinator':
                         try:
-                            # We need the coordinator object to verify they exist, 
+                            # We need the coordinator object to verify they exist,
                             # but for the redirect, we pass the User's ID
                             coordinator_profile = ProgrammeCoordinator.objects.get(user_id=user)
-                            
+
                             messages.success(request, 'Programme Coordinator Signed in successfully.')
-                            
+
                             # Redirect passes the INTEGER user_id
                             return redirect('coordinator_home', user_id=user.user_id)
-        
+
                         except ProgrammeCoordinator.DoesNotExist:
                             messages.warning(request, "Coordinator profile missing.")
                             return redirect('home')
-                        
+
             else:
                 messages.error(request, "Invalid password.")
                 return render(request, 'signin.html')
@@ -1017,13 +1073,17 @@ def research_paper_page(request):
     researcher = None
     role = None
 
+    # Get category filter from query params
+    category = request.GET.get('category', '')
+
+    if category:
+        researchpapers = researchpapers.filter(paper_category__icontains=category)
+
     if user_name != 'Guest':
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
-    if not user_id and not is_admin:
-        return redirect('signin')
-    
     # Fetch user to check role
+    coordinator = None
     if user_id:
         user = User.objects.filter(user_id=user_id).first()
         if user:
@@ -1035,12 +1095,13 @@ def research_paper_page(request):
 
     context = {
         'user_name': user_name,
-        'is_admin': is_admin, 
+        'is_admin': is_admin,
         'user_id': user_id,
         'researchpapers': researchpapers,
         'role': role,
         'researcher': researcher,
-        'coordinator': coordinator if 'coordinator' in locals() else None
+        'coordinator': coordinator if 'coordinator' in locals() else None,
+        'selected_category': category
     }
 
     return render(request , 'researchpaper.html', context)
@@ -1080,6 +1141,37 @@ def term_condition_page(request):
         'is_admin': is_admin  
     }
     return render(request, 'term_condition_page.html', context)
+
+
+def faq_page(request):
+    user_name = request.session.get('user_name', 'Guest')
+    user_id = request.session.get('user_id')
+
+    is_admin = False
+    role = None
+    researcher = None
+    coordinator = None
+
+    if user_name != 'Guest':
+        is_admin = Admin.objects.filter(user_name=user_name).exists()
+
+    if user_id:
+        user = User.objects.filter(user_id=user_id).first()
+        if user:
+            role = user.role
+            if role == 'researcher':
+                researcher = Researcher.objects.filter(user_id=user).first()
+            elif role == 'program_coordinator':
+                coordinator = ProgrammeCoordinator.objects.filter(user_id=user).first()
+
+    context = {
+        'user_name': user_name,
+        'is_admin': is_admin,
+        'role': role,
+        'researcher': researcher,
+        'coordinator': coordinator,
+    }
+    return render(request, 'faq.html', context)
 
 @require_POST
 def delete_term_condition(request, term_id):
@@ -1191,29 +1283,20 @@ def delete_announcement(request, announcement_id):
 
 def manage_users(request):
     user_name = request.session.get('user_name', 'Guest')
-    users = User.objects.annotate( violation_count=Count('violations_received') ).order_by('-violation_count') # Optional: show most reported users first
-    total_users = users.filter(is_banned=False).count()
-    total_bans = users.filter(is_banned=True).count()
-
-    return render(request , 'adminguy/manage_users.html', {'user_name': user_name , 'users': users, 'total_users': total_users, 'total_bans': total_bans    } )
+    users = User.objects.all()
+    total_users = users.count()
+    return render(request , 'adminguy/manage_users.html', {'user_name': user_name , 'users': users, 'total_users': total_users} )
 
 
 
 def profile_page(request):
 
-    coordinator="placeholder"
+
     user_name = request.session.get('user_name', 'Guest')
-    user_id = request.session.get('user_id')
+
     user_data = User.objects.filter(fullname=user_name).first()
 
-    is_coordinator = False
-    if user_name != 'Guest':
-        coordinator = ProgrammeCoordinator.objects.filter(user_id__user_id=user_id).first()
-        is_coordinator = coordinator is not None
-
-
-
-    return render(request , 'profile_page.html', {'user_id': user_id,'user_name': user_name, 'user_data': user_data, 'is_coordinator': is_coordinator, 'coordinator':coordinator} )
+    return render(request , 'profile_page.html', {'user_name': user_name, 'user_data': user_data} )
 
 
 
@@ -1281,15 +1364,6 @@ def delete_comment(request, comment_id, paper_id):
         # Security Check: Is the user an admin OR the owner of the comment?
         if is_admin or comment.user_id.fullname == user_name:
             comment.delete()
-
-            warning = Notification(
-                user_id=comment.user_id,
-                notify_title="Comment Deleted",
-                notify_message=f"Your comment on paper ID {paper_id} was deleted by an admin.",
-                created_at=timezone.now()
-            )
-            warning.save()
-
             messages.success(request, 'Comment deleted successfully.')
         else:
             messages.error(request, 'You do not have permission to delete this comment.')
@@ -1303,7 +1377,9 @@ def delete_comment(request, comment_id, paper_id):
 
 def search_paper(request):
     user_name = request.session.get('user_name', 'Guest')
+    user_id = request.session.get('user_id')
     query = request.GET.get('search_query', '').strip() # Added strip() to clean whitespace
+    category = request.GET.get('category', '').strip()
 
     # Base queryset
     base_results = ResearchPaper.objects.filter(paper_status='approved')
@@ -1318,22 +1394,71 @@ def search_paper(request):
     else:
         researchpapers = base_results
 
+    if category:
+        researchpapers = researchpapers.filter(paper_category__icontains=category)
+
     is_admin = False
+    role = None
+    researcher = None
+    coordinator = None
+    user = None
+
     if user_name != 'Guest':
         is_admin = Admin.objects.filter(user_name=user_name).exists()
+
+    if user_id:
+        user = User.objects.filter(user_id=user_id).first()
+        if user:
+            role = user.role
+            if role == 'researcher':
+                researcher = Researcher.objects.filter(user_id=user).first()
+            elif role == 'program_coordinator':
+                coordinator = ProgrammeCoordinator.objects.filter(user_id=user).first()
 
     context = {
         'user_name': user_name,
         'is_admin': is_admin,
         'researchpapers': researchpapers,
-        'search_query': query ,
-        'user_id': request.session.get('user_id')
+        'search_query': query
     }
     
     return render(request, 'researchpaper.html', context)
 
 
 
+@require_POST
+def update_comment(request, comment_id, paper_id):
+    # Fetch the comment object
+    comment = get_object_or_404(Comment, comment_id=comment_id)
+
+    # Identify the current user from session
+    user_name = request.session.get('user_name', 'Guest')
+    is_admin = Admin.objects.filter(user_name=user_name).exists()
+
+    # Security Check: Only the owner of the comment or an admin can edit it
+    if is_admin or (comment.user_id and comment.user_id.fullname == user_name):
+        new_message = request.POST.get('message_desc')
+
+        if new_message:
+            comment.message_desc = new_message
+            comment.save()
+
+            # Send notification to the updater (student) about their own update
+            Notification.objects.create(
+                user_id=comment.user_id,
+                notify_title="Comment Updated",
+                notify_message=f"You updated your comment on paper '{comment.paper_id.paper_title}'.",
+                created_at=timezone.now()
+            )
+
+            messages.success(request, 'Comment updated successfully.')
+        else:
+            messages.error(request, 'Comment content cannot be empty.')
+    else:
+        messages.error(request, 'You do not have permission to edit this comment.')
+
+    # Redirect back to the research paper view
+    return redirect('view_research_paper', paper_id=paper_id)
 @require_POST
 def report_comment(request):
     comment_id = request.POST.get('comment_id')
@@ -1409,7 +1534,31 @@ def notification_page(request):
 def notification_context(request):
     user_name = request.session.get('user_name', 'Guest')
     user_id = request.session.get('user_id')
+    role = request.session.get('role')
     read_ids = request.session.get('read_notifications', [])
+    user = None
+    researcher = None
+    coordinator = None
+    is_admin = False
+
+    if user_name != 'Guest':
+        is_admin = Admin.objects.filter(user_name=user_name).exists()
+
+    if user_id:
+        user = User.objects.filter(user_id=user_id).first()
+    elif user_name != 'Guest':
+        user = User.objects.filter(fullname=user_name).first()
+
+    if user:
+        if not role:
+            role = user.role
+        if role == 'researcher':
+            researcher = Researcher.objects.filter(user_id=user).first()
+        elif role == 'program_coordinator':
+            coordinator = ProgrammeCoordinator.objects.filter(user_id=user).first()
+
+    if is_admin:
+        role = 'admin'
     
     notifications = [] # This will essentially be "unread_notifications" for the navbar
     
@@ -1426,7 +1575,16 @@ def notification_context(request):
              all_notifs = Notification.objects.filter(user_id=user).order_by('-created_at')
              notifications = [n for n in all_notifs if n.notify_id not in read_ids]
 
-    return {'notifications': notifications}
+    return {
+        'notifications': notifications,
+        'user_name': user_name,
+        'user_id': user_id,
+        'user': user,
+        'role': role,
+        'researcher': researcher,
+        'coordinator': coordinator,
+        'is_admin': is_admin,
+    }
 
 def mark_notification_read(request, notify_id):
     if not request.session.get('user_id'):
@@ -1461,21 +1619,34 @@ def inspect_profile(request, user_id):
 
 
 
-def inventory_page(request):
+@login_required
+def profile_page(request):
     user_name = request.session.get('user_name', 'Guest')
     user_id = request.session.get('user_id')
-    
-    active_view = request.GET.get('view', 'all') 
+    user_data = get_object_or_404(User, user_id=user_id)
+    violation_count = Violations.objects.filter(user=user_data).count()
+
+    return render(request, 'profile_page.html', {
+        'user_name': user_name,
+        'user_data': user_data,
+        'inspect_mode': False,  # Not admin inspection mode
+        'user_id': user_id,
+        'violation_count': violation_count
+    })
+
+@login_required
+def inventory_page(request): # User's Liked and Bookmarked Papers
+    user_name = request.session.get('user_name', 'Guest')
+    user_id = request.session.get('user_id')
+
+    active_view = request.GET.get('view', 'all')
 
     liked_papers = []
     bookmarked_papers = []
     co_authored_papers = []
 
-    if not user_id:
-        return redirect('signin')
-
     user = User.objects.filter(user_id=user_id).first()
-    
+
     if user:
         if active_view in ['all', 'likes']:
             liked_entries = Likes.objects.filter(user_id=user).select_related('paper_id')
@@ -1486,17 +1657,17 @@ def inventory_page(request):
             bookmarked_papers = [entry.paper_id for entry in bookmarked_entries]
 
         if active_view in ['all', 'co_authored']:
-            co_authored_papers = ResearchPaper.objects.filter(paper_coauthor=user).distinct()
+            co_authored_papers = ResearchPaper.objects.filter(paper_coauthor=user, paper_status='approved')
 
 
-            
     context = {
         'user_name': user_name,
         'liked_papers': liked_papers,
         'bookmarked_papers': bookmarked_papers,
         'active_view': active_view,  # Send this to the template
         'user_id': user_id ,
-        'co_authored_papers': co_authored_papers
+        'co_authored_papers': co_authored_papers,
+        'user': user
     }
     return render(request, 'inventory_page.html', context)
 
@@ -1540,17 +1711,7 @@ def submit_fyp(request, user_id):
                     total_bookmarked=0,
                     researcher_id=None
                 )
-
-
-                new_submission = Submissions(
-                paper_id=new_fyp,
-                status='pending',
-                submitted_at=timezone.now()
-                )
-
-                
                 new_fyp.save()
-                new_submission.save()
                 messages.success(request, "FYP submitted successfully!")
                 return redirect('researchpaper')
             except Exception as e:
@@ -1559,91 +1720,3 @@ def submit_fyp(request, user_id):
             messages.error(request, "Please fill in all required fields.")
 
     return render(request, 'submit_fyp.html', {'user_name': user_name, 'user_id': user_id , 'fyp_paper': fyp_paper})
-
-
-def warn_specific_user(request, user_id, paper_id):
-    target_user = get_object_or_404(User, pk=user_id)
-    admin_name = request.session.get('user_name')
-    comment_id = request.GET.get('comment_id', None)
-    sender_instance = User.objects.filter(fullname=admin_name).first()
-    reporter_id = sender_instance.pk if sender_instance else None
-
-    Notification.objects.create(
-        user_id_id=target_user.pk, 
-        notify_title="System Warning",
-        notify_message="You have received a formal warning regarding your recent activity.",
-        sender_id_id= reporter_id,
-        created_at=timezone.now()
-    )
-
-    Violations.objects.create(
-        user_id=target_user.pk, 
-        reporter_id= reporter_id,
-        violation_type="Official Warning",
-        date_reported=timezone.now(),
-        comment_id=comment_id      
-    )
-
-    
-
-    messages.success(request, f"Warning successfully sent to {target_user.fullname}.")
-    return redirect('view_research_paper', paper_id=paper_id)
-
-
-
-def manage_user_reports(request):
-    user_name = request.session.get('user_name', 'Guest')
-    reports = Notification.objects.all().filter(notify_title="Comment Reported").order_by('-created_at')
-
-
-
-
-    context = {
-        'user_name': user_name,
-        'reports': reports
-    }
-
-    return render(request, 'adminguy/manage_report.html', context)
-
-
-
-def view_comments(request, comment_id):
-    user_name = request.session.get('user_name', 'Guest')
-    user_id = request.session.get('user_id')
-
-
-    reported_comment = get_object_or_404(Comment, comment_id=comment_id)
-    
-    research_papers = reported_comment.paper_id
-    
-    
-    comments = Comment.objects.filter(paper_id=research_papers).order_by('-created_at')
-
-    context = {
-        'user_name': user_name,
-        'user_id': user_id,
-        'research_papers': research_papers, # Now the template has the title, PDF, ID, etc.
-        'comments': comments,
-        'paper_id': research_papers.paper_id, # Keeps your existing logic working
-
-    }
-
-    return render(request, 'view_research_paper.html', context)
-
-
-
-def ban_users(request, user_id):
-    target_user = get_object_or_404(User, pk=user_id)
-    admin_id = request.session.get('user_id') 
-    
-
-    if target_user.pk == admin_id:
-        messages.error(request, "You cannot ban your own account.")
-        return redirect('manage_users')
-    
-    else:
-      target_user.is_banned = True 
-      target_user.save()
-
-    messages.success(request, f"User {target_user.fullname} has been banned.")
-    return redirect('manage_users')

@@ -37,3 +37,38 @@ Ensure you are in the directory containing manage.py and start the development s
 Bash
 python manage.py runserver
 You can now access the project at http://127.0.0.1:8000/.
+
+## Testing
+
+To run the tests for this Django project, use the following commands:
+
+### Run All Tests
+```bash
+python manage.py test
+```
+
+### Run Tests for a Specific App
+```bash
+python manage.py test myapp
+```
+
+### Run Tests with Verbose Output
+```bash
+python manage.py test --verbosity=2
+```
+
+### Run Tests with Coverage (if coverage is installed)
+First, install coverage:
+```bash
+pip install coverage
+```
+
+Then run:
+```bash
+coverage run manage.py test
+coverage report
+```
+
+## Using Amara
+
+Amara is not directly integrated into this Django project. If you are referring to a separate testing or automation tool, please provide more details. For Django-specific testing, refer to the testing section above.

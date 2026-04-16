@@ -51,6 +51,8 @@
                     <div class="card-body">
                         <h5 class="card-title">{{ paper.paper_title }}</h5>
                         <p class="card-text text-muted small">{{ paper.paper_desc|truncatewords:20 }}</p>
+                        <p class="card-text text-muted small">Author: {{ paper.researcher_id.user_id.fullname }}</p>
+                        <p class="card-text text-muted small">Co-Authors: {% for coauthor in paper.paper_coauthor.all %}{{ coauthor.fullname }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
                     </div>
                     <div class="card-footer bg-transparent border-0">
                         <a href="{% url 'view_research_paper' paper.paper_id %}" class="btn btn-success btn-sm w-100">View</a>
@@ -102,7 +104,9 @@
                     </div>
                     <div class="card-body">
                         <h5 class="card-title">{{ paper.paper_title }}</h5>
-                        <p class="card-text text-muted small">{{ paper.paper_desc|truncatewords:20 }}</p>   
+                        <p class="card-text text-muted small">{{ paper.paper_desc|truncatewords:20 }}</p>
+                        <p class="card-text text-muted small">Author: {{ paper.researcher_id.user_id.fullname }}</p>
+                        <p class="card-text text-muted small">Co-Authors: {% for coauthor in paper.paper_coauthor.all %}{{ coauthor.fullname }}{% if not forloop.last %}, {% endif %}{% endfor %}</p>
                     </div>
                     <div class="card-footer bg-transparent border-0">
                         <a href="{% url 'view_research_paper' paper.paper_id %}" class="btn btn-info btn-sm w-100">View</a>
