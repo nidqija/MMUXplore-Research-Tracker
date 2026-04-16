@@ -388,21 +388,18 @@ def researcher_profile(request, researcher_id):
 
 def view_research_paper(request, paper_id):
     research_papers = ResearchPaper.objects.get(paper_id=paper_id)
-    researcher = research_papers.researcher_id
-    if researcher:
-        researchname = researcher.user_id.fullname
+    paper_owner = research_papers.researcher_id
+    if paper_owner:
+        researchname = paper_owner.user_id.fullname
     else:
         # If no researcher, it's a student paper
-        researcher = research_papers.student_id
-        researchname = researcher.user_id.fullname if researcher else "Unknown"
+        paper_owner = research_papers.student_id
+        researchname = paper_owner.user_id.fullname if paper_owner else "Unknown"
     comments = Comment.objects.filter(paper_id=research_papers)
     user_name = request.session.get('user_name', 'Guest')
     user_id = request.session.get('user_id')
-    role = request.session.get('role')
-    if not role and user_id:
-        current_user = User.objects.filter(user_id=user_id).first()
-        if current_user:
-            role = current_user.role
+    current_user = User.objects.filter(user_id=user_id).first() if user_id else None
+    role = current_user.role if current_user else request.session.get('role')
 
     notifications = Notification.objects.filter(user_id__fullname=user_name).order_by('-created_at') if user_name != 'Guest' else []
 
@@ -419,27 +416,19 @@ def view_research_paper(request, paper_id):
     if user_name != 'Guest':
         is_admin = Admin.objects.filter(user_name=user_name).exists()
 
-    user_role = request.session.get('role')
     is_coordinator = False
-
-    if user_role == 'program_coordinator' and user_id:
-        # Keep coordinator navigation stable even if the profile row is missing.
-        is_coordinator = ProgrammeCoordinator.objects.filter(user_id__user_id=user_id).exists()
-        if not is_coordinator:
-            user = User.objects.filter(user_id=user_id).first()
-            if user:
-                ProgrammeCoordinator.objects.get_or_create(user_id=user)
-                is_coordinator = True
+    if current_user and current_user.role == 'program_coordinator':
+        coordinator_obj, _ = ProgrammeCoordinator.objects.get_or_create(user_id=current_user)
+        is_coordinator = coordinator_obj is not None
 
     # Calculate inventory coverage for the student // for their research papers
     liked_count = 0
     bookmarked_count = 0
     co_authored_count = 0
-    if user_id:
-        user_instance = User.objects.get(user_id=user_id)
-        liked_count = Likes.objects.filter(user_id=user_instance).count()
-        bookmarked_count = Bookmarks.objects.filter(user_id=user_instance).count()
-        co_authored_count = ResearchPaper.objects.filter(paper_coauthor=user_instance, paper_status='approved').count()
+    if current_user:
+        liked_count = Likes.objects.filter(user_id=current_user).count()
+        bookmarked_count = Bookmarks.objects.filter(user_id=current_user).count()
+        co_authored_count = ResearchPaper.objects.filter(paper_coauthor=current_user, paper_status='approved').count()
 
     # Safe PDF URL - check if file exists before generating URL
     paper_pdf_url = None
@@ -447,7 +436,7 @@ def view_research_paper(request, paper_id):
         if research_papers.paper_pdf.storage.exists(research_papers.paper_pdf.name):
             paper_pdf_url = research_papers.paper_pdf.url
 
-    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'researcher': researcher , 'role': role, 'is_coordinator': is_coordinator, 'is_admin': is_admin ,'researchname': researchname, 'comments': comments , 'notifications': notifications , 'has_liked': has_liked, 'has_bookmarked': has_bookmarked , 'user_id': user_id, 'liked_count': liked_count, 'bookmarked_count': bookmarked_count, 'co_authored_count': co_authored_count, 'paper_pdf_url': paper_pdf_url} )
+    return render(request , 'view_research_paper.html', {'user_name': user_name , 'research_papers': research_papers , 'role': role, 'is_coordinator': is_coordinator, 'is_admin': is_admin ,'researchname': researchname, 'comments': comments , 'notifications': notifications , 'has_liked': has_liked, 'has_bookmarked': has_bookmarked , 'user_id': user_id, 'liked_count': liked_count, 'bookmarked_count': bookmarked_count, 'co_authored_count': co_authored_count, 'paper_pdf_url': paper_pdf_url} )
 
 
 def like_research_paper(request, paper_id):
