@@ -99,11 +99,7 @@
                         {% csrf_token %}
 
                         <input type="hidden" name="researcher_id" value="{{ researcher.researcher_id }}">
-                    
-                            <select name="format">
-                                <option value="csv">CSV</option>
-                                <option value="pdf">PDF</option>
-                            </select>
+
                       
                         <button type="submit"name="generate" value="generate" class="btn btn-custom btn-reject btn-sm">
                             Generate Report

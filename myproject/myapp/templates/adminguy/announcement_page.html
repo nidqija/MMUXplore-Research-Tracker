@@ -111,16 +111,20 @@
         <h1 class="modal-title fs-5">Update Announcement</h1>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
       </div>
-      <form method="post">
+      <form method="post" enctype="multipart/form-data" action="{% url 'update_announcement' announcement.announcement_id %}">
         {% csrf_token %}
         <div class="modal-body">
           <div class="mb-3">
             <label class="form-label">Title</label>
-            <input type="text" class="form-control" name="ruletitle" value="{{ announcement.announcement_title }}">
+            <input type="text" class="form-control" name="announcementtitle" value="{{ announcement.announcement_title }}">
           </div>
           <div class="mb-3">
             <label class="form-label">Description</label>
-            <textarea class="form-control" name="ruledescription" rows="3">{{ announcement.announcement_desc }}</textarea>
+            <textarea class="form-control" name="announcementdescription" rows="3">{{ announcement.announcement_desc }}</textarea>
+          </div>
+           <div class="mb-3">
+            <label class="form-label">Description</label>
+              <input class="form-control" type="file" id="formImage"  name="announcementattachment">
           </div>
         </div>
         <div class="modal-footer">
