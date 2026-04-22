@@ -2,7 +2,12 @@ from django.db import models
 from django.contrib.auth.models import AbstractUser
 from django.utils import timezone
 from datetime import timedelta
-
+#models.py is where we define the database schema for our application. 
+# Each class represents a table in the database, and 
+# each attribute of the class represents a field in that table.
+#  We can also define relationships between tables using ForeignKey, ManyToManyField, etc.
+#  The __str__ method is used to provide a human-readable representation of the model instances, 
+#  which is helpful when we interact with the Django admin interface or when we print model instances in the console.
 
 # =================================== User Model ======================================== 
 

@@ -17,7 +17,9 @@ from django.utils import timezone
 from django.db.models import Q , Count
 from django.http import HttpResponse
 
-
+#views.py is where we write the logic for each page, and link it to the urls.py. Each function corresponds to a page, 
+# and handles the logic for that page (e.g. fetching data, processing forms, etc.) 
+# before rendering the appropriate template with the context data.
 
 # function to check if user is admin
 

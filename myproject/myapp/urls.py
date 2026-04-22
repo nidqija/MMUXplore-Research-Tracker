@@ -7,6 +7,11 @@ from django.conf.urls.static import static
 urlpatterns = [
 
     # General URLs
+    #urls.py is where we define the URL patterns for our application. 
+    # Each pattern is associated with a view function that handles the logic for that URL. 
+    # The 'name' parameter allows us to refer to these URLs in our templates and views, making it easier to manage links 
+    # throughout the application.
+    # path (arg 1: url pattern, arg 2: view function, arg 3: name of the url)
     path('', views.index, name='home'),
     path('signup/', views.user_signup, name='signup'),
     path('signin/', views.user_signin, name='signin'),
