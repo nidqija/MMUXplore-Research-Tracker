@@ -4,6 +4,10 @@ from django.utils import timezone
 from datetime import timedelta
 
 
+#models is where we define the structure of our database tables using Django's ORM. 
+# Each class represents a table, and
+#  each attribute represents a column in that table. 
+# The relationships between tables are defined using ForeignKey and ManyToManyField.
 # =================================== User Model ======================================== 
 
 class User(models.Model):

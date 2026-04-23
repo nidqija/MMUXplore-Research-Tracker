@@ -568,8 +568,7 @@ def coordinator_home(request, user_id):
 
     submission = Submissions.objects.filter(
         status__in=['pending', 'revision'],
-        submission_id=Subquery(latest_submission_id)
-    ).select_related('paper_id')
+        submission_id=Subquery(latest_submission_id)).select_related('paper_id')
     pastSubmission = Submissions.objects.filter(
         status__in=['approved', 'rejected'],
         submission_id=Subquery(latest_submission_id)
@@ -755,11 +754,59 @@ def analytics_page(request):
     coordinator = ProgrammeCoordinator.objects.get(user_id__user_id=user_id)
     researchpapers = ResearchPaper.objects.filter(paper_status='approved').order_by('-published_date')
 
+     #submissions
+    submission = Submissions.objects.all()
+    pending_submissions = Submissions.objects.filter(status__in=['pending', 'revision'])
+    completed_submissions = Submissions.objects.filter(status__in=['approved', 'rejected'])
+
+    pending_submissions = pending_submissions.count()
+    completed_submissions = completed_submissions.count()
+
+    #papers
+    papers = ResearchPaper.objects.all()
+    total_papers = papers.count()
+
+    approved_count = researchpapers.filter(paper_status='approved').count()
+    approval_rate = (
+        round((approved_count / total_papers) * 100, 2)
+        if total_papers > 0 else 0
+    )
+
+    #Researcher
+    researchers = Researcher.objects.all()
+    num_researcher = researchers.count()
+
+    #Students
+    students = Student.objects.all()
+    num_student = students.count()
+
+    coordinators = ProgrammeCoordinator.objects.all()
+    num_coordinator = coordinators.count()
+
+
+    submission_analytics = Submissions.objects.filter(status__in=['pending', 'revision']).select_related('paper_id')
+    pastSubmission_analytics = Submissions.objects.filter(status__in=['approved', 'rejected']).select_related('paper_id')
+    
+    
+
     context = {
         'coordinator' : coordinator,
         'researchpapers' : researchpapers,
-        'user_name': user_name
+        'user_name': user_name,
+        'submissions': submission_analytics,
+        'pastSubmissions': pastSubmission_analytics,
 
+        'total_papers': total_papers,
+        'approval_rate': approval_rate,
+        'approved_count' : approved_count,
+
+        'pending_submissions': pending_submissions,
+        'completed_submissions': completed_submissions,
+
+
+        'num_researcher' : num_researcher,
+        'num_student' : num_student,
+        'num_coordinator' : num_coordinator
 
     }
 
@@ -771,6 +818,8 @@ def generate_report(request) :
     user_name = request.session.get('user_name')
     coordinator = ProgrammeCoordinator.objects.get(user_id__user_id=user_id)
     researchers = Researcher.objects.all()
+
+    
     
 
     query = request.GET.get('q', '').strip()
@@ -914,7 +963,9 @@ def generate_report(request) :
         'user_name': user_name,
         'researchers': researchers,
         'researchers': researchers, #only pass researchers that match the query
-        'query' : query
+        'query' : query,
+
+     
 
     }
     
