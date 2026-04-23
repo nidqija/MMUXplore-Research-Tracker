@@ -1,58 +1,51 @@
+<section class="contact-us-page" style="background-color: darkblue;">
+  <div class="container">      
+    <div class="row text-center p-2"> 
+      <div class="col-sm-4 mb-sm-0">
+        <div class="card mb-5" style="background-color:transparent; border: none;" data-aos="fade-middle" data-aos-duration="1000">
+          <div class="card-body">
+            <h5 class="card-title mb-3" style="color: white;">Support</h5>
+            <p class="card-text text-white" style="font-size:18px; font-weight: 100;">MMU</p>
+            <p class="card-text text-white" style="font-size:18px; font-weight: 100;">support@mmu.edu.my</p>
+            <p class="card-text text-white" style="font-size:18px; font-weight: 100;">+6012-3456789</p>
+          </div>
+        </div>
+      </div>
 
-  <section class="contact-us-page">
-      <div style="background-color:darkblue ;">
-        <div class="container">      
-       <div class="row text-center p-2 "> 
-  <div class="col-sm-4 mb-sm-0 ">
-    <div class="card mb-5 " style="background-color:transparent;border: none;" data-aos="fade-middle" data-aos-duration="1000">
-      <div class="card-body">
-        <h5 class="card-title mb-3" style=" color: white;">Support</h5>
-        <p class="card-text text-white" style="font-size:18px; font-weight: 100;">MMU</p>
-        <p class="card-text text-white" style="font-size:18px; font-weight: 100;">support@mmu.edu.my</p>
-        <p class="card-text text-white" style="font-size:18px; font-weight: 100;">+6012-3456789</p>
+      <div class="col-sm-4 mb-3">
+        <div class="card" style="background-color:transparent; border: none;" data-aos="fade-middle" data-aos-duration="1000">
+          <div class="card-body">
+            <h5 class="card-title mb-3" style="color: white;">Account</h5>
+            {% if request.session.user_name and request.session.user_name != 'Guest' %}
+              <a style="text-decoration: none;" href="{% url 'profile' %}"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">My Account</p></a>
+            {% else %}
+              <a style="text-decoration: none;" href="{% url 'signin' %}"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">My Account</p></a>
+            {% endif %}
+            <a style="text-decoration: none;" href="{% url 'signup' %}"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">Register</p></a>
+            <a style="text-decoration: none;" href="{% url 'signin' %}"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">Login</p></a>
+            <a style="text-decoration: none;" href="{% url 'researchpaper' %}"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">Papers</p></a>
+            <a style="text-decoration: none;" href="{% url 'inventory_page' %}"><p class="card-text text-white" style="font-size:18px; font-weight: 100;">Inventory</p></a>
+          </div>
+        </div>
+      </div>
 
-
-
+      <div class="col-sm-4">
+        <div class="card" style="background-color:transparent; border: none;" data-aos="fade-middle" data-aos-duration="1000">
+          <div class="card-body">
+            <h5 class="card-title mb-3" style="color: white;">Quick Link</h5>
+            <a href="{% url 'term_condition_page' %}" style="text-decoration: none;"><p class="card-text text-white" style="font-size:18px; font-weight: 100;">Terms and Conditions</p></a>
+            <a href="{% url 'faq' %}" style="text-decoration: none;"><p class="card-text text-white" style="font-size:18px; font-weight: 100;">FAQ</p></a>
+          </div>
+        </div>
       </div>
     </div>
   </div>
-   <div class="col-sm-4 mb-3">
-    <div class="card" style="background-color:transparent;border: none;"data-aos="fade-middle" data-aos-duration="1000">
-      <div class="card-body">
-        <h5 class="card-title mb-3" style=" color: white;">Account</h5>
-          {% if request.session.user_name and request.session.user_name != 'Guest' %}
-          <a style="text-decoration: none;" href="{% url 'profile' %}"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">My Account</p></a>
-          {% else %}
-          <a style="text-decoration: none;" href="{% url 'signin' %}"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">My Account</p></a>
-          {% endif %}
-          <a style="text-decoration: none;" href="{% url 'signup' %}"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">Register</p></a>
-          <a style="text-decoration: none;" href="{% url 'signin' %}"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">Login</p></a>
-          <a style="text-decoration: none;" href="{% url 'researchpaper' %}"><p class="card-text text-white mb-2" style="font-size:18px; font-weight: 100;">Papers</p></a>
-          <a style="text-decoration: none;" href="{% url 'inventory_page' %}"><p class="card-text text-white" style="font-size:18px; font-weight: 100;">Inventory</p></a>
-        
-      </div>
-    </div>
+</section>
+
+<section class="copyright-section">
+  <div class="bg-danger">
+    <p style="font-size:15px;" class="text-white p-2 m-0 text-center">copyright @ MMU Xplore</p>
   </div>
-  <div class="col-sm-4">
-    <div class="card" style="background-color:transparent;border: none;" data-aos="fade-middle" data-aos-duration="1000">
-      <div class="card-body">
-        <h5 class="card-title mb-3"  style=" color: white;">Quick Link</h5>
-         <a href="{% url 'term_condition_page' %}" style="text-decoration: none;"><p class="card-text text-white" style="font-size:18px; font-weight: 100;">Terms and Conditions</p></a>
-         <a href="{% url 'faq' %}" style="text-decoration: none;"><p class="card-text text-white" style="font-size:18px; font-weight: 100;">FAQ</p></a>
+</section>
 
-      </div>
-    </div>
-  </div>
-</div>
-      </div>
-    </section>
-
-     <section class="contact-us-page">
-      <div class="bg-danger">
-        <p style=" font-size:15px;" class="text-white p-2 text-center">copyright @ MMU Xplore</p>
-      </div>
-    </section>
-
-<!--------------------------------------------------------------------------------------------------------------------------------------------------------------------->
-
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js" integrity="sha384-kenU1KFdBIe4zVF0s0G1M5b4hcpxyD9F7jL+jjXkk+Q2h455rYXK/7HAuoJl+0I4" crossorigin="anonymous"></script>
+<script src="https://cdn.jsdelivr.net/npm/bootstrap@5.2.3/dist/js/bootstrap.bundle.min.js"></script>
